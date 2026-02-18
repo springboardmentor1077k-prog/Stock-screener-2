@@ -1,0 +1,204 @@
+{
+    "ticker": "INFY.NS",
+    "company_profile": {
+        "name": "Infosys Limited",
+        "sector": "Technology",
+        "industry": "Information Technology Services",
+        "summary": "Infosys Limited, together with its subsidiaries, provides consulting, technology, outsourcing, and digital services in North America, Europe, India, Switzerland, and internationally. It provides digital marketing and digital workplace, digital commerce, digital experience and interactions, and metaverse; data analytics and AI, applied AI, generative AI, and sustainability; blockchain, engineering, and Internet of Things; enterprise agile DevOps, API economy and microservices, application modernization, cloud, digital process automation, digital supply chain, Microsoft business application and cloud business, service experience transformation, energy transition, Network Transformation Services, Infrastructure Services cyber security, and quality engineering solutions; Oracle, SAP, and Saleforce solutions; Topaz, an AI-first set of services, solutions, and platforms using generative AI technologies; and Aster, a set of AI-amplified marketing services, solutions, and platforms. The company also offers Finacle, a core banking solution; Edge suite of products; Panaya platform, Infosys Equinox, Infosys Live Enterprise Suite, Infosys Wingspan, Infosys Helix, Infosys Meridian, Infosys Polycloud, Infosys Cortex, and Stater digital platforms; and Infosys McCamish, an insurance platform. It serves aerospace and defense, agriculture, automotive, chemical manufacturing, communication, consumer packaged goods, education, engineering procurement and construction, financial, healthcare, high technology, industrial manufacturing, information services and publishing, insurance, life science, logistics and distribution, media, entertainment, mining, oil and gas, private equity, professional, public, retail, semiconductor, travel, hospitality, utilities, and waste management industries. The company was formerly known as Infosys Technologies Limited and changed its name to Infosys Limited in June 2011. Infosys Limited was incorporated in 1981 and is headquartered in Bengaluru, India."
+    },
+    "fundamentals": {
+        "pe_ratio": 19.936945,
+        "market_cap": 5628364324864
+    },
+    "historical_prices": {
+        "2026-01-18T18:30:00.000Z": {
+            "Open": 1685.0,
+            "High": 1685.0,
+            "Low": 1666.5,
+            "Close": 1681.1999511719,
+            "Volume": 5104958,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-19T18:30:00.000Z": {
+            "Open": 1673.0,
+            "High": 1680.1999511719,
+            "Low": 1652.9000244141,
+            "Close": 1658.9000244141,
+            "Volume": 6406503,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-20T18:30:00.000Z": {
+            "Open": 1651.0,
+            "High": 1657.0,
+            "Low": 1631.1999511719,
+            "Close": 1654.4000244141,
+            "Volume": 6224582,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-21T18:30:00.000Z": {
+            "Open": 1666.0,
+            "High": 1671.1999511719,
+            "Low": 1653.8000488281,
+            "Close": 1663.5,
+            "Volume": 6228892,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-22T18:30:00.000Z": {
+            "Open": 1667.1999511719,
+            "High": 1675.6999511719,
+            "Low": 1662.1999511719,
+            "Close": 1670.8000488281,
+            "Volume": 5869137,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-26T18:30:00.000Z": {
+            "Open": 1685.8000488281,
+            "High": 1689.4000244141,
+            "Low": 1661.0999755859,
+            "Close": 1682.6999511719,
+            "Volume": 10673087,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-27T18:30:00.000Z": {
+            "Open": 1680.0,
+            "High": 1688.8000488281,
+            "Low": 1650.0,
+            "Close": 1666.5,
+            "Volume": 8588664,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-28T18:30:00.000Z": {
+            "Open": 1658.0,
+            "High": 1666.5,
+            "Low": 1642.0999755859,
+            "Close": 1659.5,
+            "Volume": 4749582,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-01-29T18:30:00.000Z": {
+            "Open": 1655.0,
+            "High": 1655.0,
+            "Low": 1618.0999755859,
+            "Close": 1641.0,
+            "Volume": 9207926,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-01T18:30:00.000Z": {
+            "Open": 1662.0,
+            "High": 1662.0,
+            "Low": 1618.0,
+            "Close": 1629.4000244141,
+            "Volume": 6784887,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-02T18:30:00.000Z": {
+            "Open": 1727.1999511719,
+            "High": 1728.0,
+            "Low": 1653.0,
+            "Close": 1656.0,
+            "Volume": 8805868,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-03T18:30:00.000Z": {
+            "Open": 1574.0,
+            "High": 1584.9000244141,
+            "Low": 1510.0999755859,
+            "Close": 1535.8000488281,
+            "Volume": 28828622,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-04T18:30:00.000Z": {
+            "Open": 1534.0,
+            "High": 1551.0,
+            "Low": 1515.6999511719,
+            "Close": 1520.1999511719,
+            "Volume": 10628127,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-05T18:30:00.000Z": {
+            "Open": 1522.0999755859,
+            "High": 1525.0,
+            "Low": 1480.0,
+            "Close": 1507.0999755859,
+            "Volume": 13900866,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-08T18:30:00.000Z": {
+            "Open": 1522.0999755859,
+            "High": 1528.0,
+            "Low": 1493.0,
+            "Close": 1497.1999511719,
+            "Volume": 8294615,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-09T18:30:00.000Z": {
+            "Open": 1500.0,
+            "High": 1515.9000244141,
+            "Low": 1491.0,
+            "Close": 1497.8000488281,
+            "Volume": 8657000,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-10T18:30:00.000Z": {
+            "Open": 1501.1999511719,
+            "High": 1505.9000244141,
+            "Low": 1469.0,
+            "Close": 1471.9000244141,
+            "Volume": 7934411,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-11T18:30:00.000Z": {
+            "Open": 1428.9000244141,
+            "High": 1435.6999511719,
+            "Low": 1380.5,
+            "Close": 1386.0,
+            "Volume": 26048896,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-12T18:30:00.000Z": {
+            "Open": 1293.9000244141,
+            "High": 1377.3000488281,
+            "Low": 1281.5,
+            "Close": 1369.0999755859,
+            "Volume": 45785709,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-15T18:30:00.000Z": {
+            "Open": 1373.6999511719,
+            "High": 1376.0,
+            "Low": 1338.3000488281,
+            "Close": 1365.5999755859,
+            "Volume": 14621891,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        },
+        "2026-02-16T18:30:00.000Z": {
+            "Open": 1370.0,
+            "High": 1431.0,
+            "Low": 1367.0,
+            "Close": 1391.1999511719,
+            "Volume": 25347684,
+            "Dividends": 0.0,
+            "Stock Splits": 0.0
+        }
+    }
+}
