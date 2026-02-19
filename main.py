@@ -1,6 +1,6 @@
 import streamlit as st
 import yfinance as yf
-import json
+# import json
 import psycopg2 as ps
 
 
@@ -15,10 +15,6 @@ def get_connection():
         user="postgres",
         password="admin"
     )
-
-
-
-       
 
 
 
