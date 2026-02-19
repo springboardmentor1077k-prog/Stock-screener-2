@@ -40,11 +40,67 @@ if st.button("Click"):
             
             company_name = info.get("longName", "N/A")
             current_price = info.get("currentPrice", None)
-            pe = info.get("trailingPE", None)
-            peg = info.get("pegRatio", None)
-            sector = info.get("sector", "N/A")
             
-           
+            pe = info.get("trailingPE", None)
+            e_growth = info.get("earningsGrowth", None)
+            peg = None
+            
+            
+            #the peg ratio is nothing but (PE/earning_growth)
+            if pe and e_growth and e_growth != 0:
+                peg = pe / (e_growth * 100)
+            
+            
+            sector = info.get("sector", "N/A")
+            promoter_holding = 50.00  # default for now
+            
+            
+            st.subheader("Stock Details")
+            st.write("Company Name:", company_name)
+            st.write("Current Price:", current_price)
+            st.write("PE Ratio:", pe)
+            st.write("PEG Ratio:", peg)
+            st.write("Sector:", sector)
+            
+            
+            conn = get_connection()
+            cursor = conn.cursor()
+            
+            # insert the data into symbol table
+            
+            cursor.execute("""
+                INSERT INTO symbol (company_name, company_symbol, sector)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (company_symbol) DO NOTHING
+                RETURNING symbol_id;
+            """, (company_name, stock.upper(), sector))
+            
+            
+            result = cursor.fetchone()
+            
+            
+            if result:
+                symbol_id = result[0]
+            else:
+                cursor.execute(
+                    "SELECT symbol_id FROM symbol WHERE company_symbol = %s",
+                    (stock.upper(),)
+                )
+                symbol_id = cursor.fetchone()[0]
+                
+        # insert the data into fundamental table
+                
+            cursor.execute("""
+                INSERT INTO fundamentals
+                (symbol_id, pe, peg, promoter_holding)
+                VALUES (%s, %s, %s, %s);
+            """, (symbol_id, pe, peg, promoter_holding))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            st.success("Data stored successfully")
             
             
             

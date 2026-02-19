@@ -16,6 +16,8 @@ SELECT * FROM symbol;
 
 DROP TABLE SYMBOL;
 
+SELECT * FROM fundamentals;
+
 -- CREATE DATABASE stock_db;
 
 -- SELECT current_database();

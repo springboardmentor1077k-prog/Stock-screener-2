@@ -7,3 +7,5 @@ def save_stock(stock_data):
 
         #st.success(f"Data saved successfully")
          # save_stock(stock_data)
+
+         #peg = info.get("pegRatio", None)
