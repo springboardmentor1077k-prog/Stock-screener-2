@@ -1,16 +1,22 @@
 import streamlit as st
 import yfinance as yf
 import json
+import psycopg2 as ps
 
 
-def save_stock(stock_data):
-    
-    file = "stock_data.json"
-            
-    with open(file, "w") as f:
-        json.dump(stock_data, f, indent=4, default=str)
 
-        #st.success(f"Data saved successfully")
+
+
+def get_connection():
+    return ps.connect(
+        host="localhost",
+        port="5433",
+        database="stock_db",
+        user="postgres",
+        password="admin"
+    )
+
+
 
        
 
@@ -32,14 +38,13 @@ if st.button("Click"):
             info = ticker.info
             hist = ticker.history(period="1d", interval="5m")
             
-            stock_data = {
-            st.subheader("Stock Details"),
-            st.write("Company Name:", info.get("longName", "N/A")),
-            st.write("Current Price:", info.get("currentPrice", "N/A")),
-            st.write("PE Ratio:", info.get("trailingPE", "N/A"))
-            }
+            company_name = info.get("longName", "N/A")
+            current_price = info.get("currentPrice", None)
+            pe = info.get("trailingPE", None)
+            peg = info.get("pegRatio", None)
+            sector = info.get("sector", "N/A")
             
-            save_stock(stock_data)
+           
             
             
             

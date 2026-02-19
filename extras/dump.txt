@@ -1,0 +1,9 @@
+def save_stock(stock_data):
+    
+    file = "stock_data.json"
+            
+    with open(file, "w") as f:
+        json.dump(stock_data, f, indent=4, default=str)
+
+        #st.success(f"Data saved successfully")
+         # save_stock(stock_data)
