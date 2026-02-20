@@ -271,7 +271,7 @@ def screener(
     """
             )
 
-            # 🔥 Proper Gemini extraction
+            #  Proper Gemini extraction
             gemini_text = response.candidates[0].content.parts[0].text
 
             print("Gemini raw text:")

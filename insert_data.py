@@ -38,7 +38,7 @@ for ticker_symbol in symbols:
         history = ticker.history(period="1y")
 
         if not info or history.empty:
-            print(f"❌ Skipping {ticker_symbol} (No valid data)")
+            print(f" Skipping {ticker_symbol} (No valid data)")
             continue
 
         # ======================================================
@@ -111,13 +111,13 @@ for ticker_symbol in symbols:
         with open(file_path, "w") as f:
             json.dump(stock_json, f, indent=4)
 
-        print(f"✅ JSON saved for {ticker_symbol}")
+        print(f" JSON saved for {ticker_symbol}")
 
         # ======================================================
         # DATABASE INSERTION
         # ======================================================
 
-        # 1️⃣ Insert into symbols
+        # 1️ Insert into symbols
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO symbols (symbol, company_name, sector)
@@ -129,14 +129,14 @@ for ticker_symbol in symbols:
                 "sector": company_profile["sector"]
             })
 
-        # 2️⃣ Get symbol_id
+        # 2️ Get symbol_id
         with engine.connect() as conn:
             result = conn.execute(text("""
                 SELECT id FROM symbols WHERE symbol = :symbol
             """), {"symbol": ticker_symbol})
             symbol_id = result.fetchone()[0]
 
-        # 3️⃣ Insert fundamentals (ONLY ONCE)
+        # 3️ Insert fundamentals (ONLY ONCE)
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO fundamentals
@@ -159,7 +159,7 @@ for ticker_symbol in symbols:
                 "reported_date": datetime.today().date()
             })
 
-        # 4️⃣ Insert historical prices properly
+        # 4️ Insert historical prices properly
         with engine.begin() as conn:
             for price in historical_prices:
                 conn.execute(text("""
@@ -178,11 +178,11 @@ for ticker_symbol in symbols:
                     "volume": price["volume"]
                 })
 
-        print(f"✅ Database updated for {ticker_symbol}")
+        print(f" Database updated for {ticker_symbol}")
 
         time.sleep(2)
 
     except Exception as e:
         print(f"⚠ Error processing {ticker_symbol}: {e}")
 
-print("\n🎯 Snapshot + database ingestion completed successfully.")
+print("\n Snapshot + database ingestion completed successfully.")
