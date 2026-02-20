@@ -3,7 +3,7 @@ from apis.alpha_client import AlphaVantageClient
 from apis.yahoo_client import YahooFinanceClient
 
 
-API_KEY = "SVZ3I50EL8V5YCZG"
+API_KEY = "Use your original api key"
 STOCKS = ["AAPL", "MSFT"]
 
 
