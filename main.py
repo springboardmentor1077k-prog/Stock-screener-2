@@ -1,15 +1,23 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Request
 from sqlalchemy import text
 from pydantic import BaseModel, Field
 from typing import Literal
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 from google import genai
+from typing import Optional
+from datetime import date
+from datetime import datetime
 import os
 import json
 import re
-
+import redis
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
 from database import engine
 from auth import (
     hash_password,
@@ -17,6 +25,17 @@ from auth import (
     create_access_token,
     get_current_user
 )
+# ============================================================
+# REDIS CONFIG (ADDED)
+# ============================================================
+
+redis_client = None
+
+# ============================================================
+# RATE LIMITING
+# ============================================================
+
+limiter = Limiter(key_func=get_remote_address)
 # ============================================================
 # STANDARD RESPONSE FORMAT (ADDED FOR CONSISTENCY)
 # ============================================================
@@ -54,6 +73,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    lambda r, e: JSONResponse(
+        status_code=429,
+        content={"detail": "Too many requests"}
+    )
+)
+
 # ============================================================
 # Pydantic MODELS (Validation Layer)
 # ============================================================
@@ -75,6 +103,151 @@ class AlertCreate(BaseModel):
     metric: Literal["pe_ratio", "eps"]
     condition: Literal["<", ">"]
     threshold: float = Field(..., gt=0)
+    
+# ============================================================
+# DSL CONFIGURATION (STEP 1)
+# ============================================================
+
+ALLOWED_FIELDS = {
+    "pe_ratio": "numeric",
+    "eps": "numeric",
+    "revenue": "numeric",
+    "debt": "numeric",
+    "market_cap": "numeric",
+    "revenue_growth": "numeric",
+    "price_change_1y": "numeric",
+    "sector": "string",
+    "reported_date": "date"
+}
+
+ALLOWED_OPERATORS = ["<", "<=", ">", ">=", "="]
+ALLOWED_LOGIC = ["AND", "OR"]
+
+# ============================================================
+# DSL SCHEMA (STEP 2)
+# ============================================================
+
+class Condition(BaseModel):
+    field: str
+    operator: str
+    value: str | float | int
+
+
+class TimeFilter(BaseModel):
+    type: Literal["latest", "year", "range"]
+    value: Optional[int] = None
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+
+
+class DSLRequest(BaseModel):
+    filters: list[Condition]
+    logic: Literal["AND", "OR"] = "AND"
+    time_filter: Optional[TimeFilter] = None
+    sort_field: Optional[str] = None
+    sort_order: Optional[Literal["asc", "desc"]] = "desc"
+    limit: Optional[int] = 50
+
+# ============================================================
+# STEP 3: DSL VALIDATION LAYER
+# ============================================================
+def validate_dsl(dsl: DSLRequest):
+
+    # -----------------------------
+    # 1) Filters must exist
+    # -----------------------------
+    if not dsl.filters or len(dsl.filters) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one filter is required"
+        )
+
+    # -----------------------------
+    # 2) Validate each condition
+    # -----------------------------
+    for condition in dsl.filters:
+
+        # ---- Field whitelist check ----
+        if condition.field not in ALLOWED_FIELDS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid field: {condition.field}"
+            )
+
+        # ---- Operator whitelist check ----
+        if condition.operator not in ALLOWED_OPERATORS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid operator: {condition.operator}"
+            )
+
+        # ---- Type validation ----
+        field_type = ALLOWED_FIELDS[condition.field]
+
+        if field_type == "numeric":
+            try:
+                float(condition.value)
+            except:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{condition.field} requires numeric value"
+                )
+
+        elif field_type == "string":
+            if not isinstance(condition.value, str):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{condition.field} requires string value"
+                )
+
+        elif field_type == "date":
+            try:
+                datetime.strptime(condition.value, "%Y-%m-%d")
+            except:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Date must be in YYYY-MM-DD format"
+                )
+
+    # -----------------------------
+    # 3️) Validate Logic
+    # -----------------------------
+    if dsl.logic not in ALLOWED_LOGIC:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid logical operator"
+        )
+
+    # -----------------------------
+    # 4️) Validate Time Filter
+    # -----------------------------
+    if dsl.time_filter:
+        if dsl.time_filter.type == "year":
+            if not dsl.time_filter.value:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Year value required for time_filter"
+                )
+
+        if dsl.time_filter.type == "range":
+            if not dsl.time_filter.from_date or not dsl.time_filter.to_date:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Both from_date and to_date required"
+                )
+
+    # -----------------------------
+    # 5️) Validate Limit
+    # -----------------------------
+    if dsl.limit:
+        if not (1 <= dsl.limit <= 100):
+            raise HTTPException(
+                status_code=400,
+                detail="Limit must be between 1 and 100"
+            )
+
+    return True
+
 
 # ============================================================
 # ROOT
@@ -84,6 +257,47 @@ class AlertCreate(BaseModel):
 def root():
     return success_response(message="AI Stock Platform Backend Running 🚀")
 
+# ============================================================
+# COMPANIES ENDPOINTS (NEW)
+# ============================================================
+
+@app.get("/companies")
+def get_companies():
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT id, symbol, company_name, sector
+            FROM symbols
+        """)).fetchall()
+
+    return success_response(data=[
+        {
+            "id": r[0],
+            "symbol": r[1],
+            "company_name": r[2],
+            "sector": r[3]
+        }
+        for r in rows
+    ])
+
+
+@app.get("/companies/{symbol}")
+def get_company(symbol: str):
+    with engine.connect() as conn:
+        row = conn.execute(text("""
+            SELECT id, symbol, company_name, sector
+            FROM symbols
+            WHERE symbol = :symbol
+        """), {"symbol": symbol.upper()}).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    return success_response(data={
+        "id": row[0],
+        "symbol": row[1],
+        "company_name": row[2],
+        "sector": row[3]
+    })
 # ============================================================
 # AUTH ENDPOINTS
 # ============================================================
@@ -139,14 +353,84 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "token_type": "bearer"
     }
 
+
 # ============================================================
-# SCREENER ENGINE
+# STEP 4: LLM PARSER SERVICE
 # ============================================================
 
-def run_screener(filters: dict):
+def parse_query_with_llm(query_text: str):
 
+    if not ai_client:
+        raise HTTPException(status_code=500, detail="LLM not configured")
 
-    query = text("""
+    response = ai_client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"""
+Return ONLY valid JSON.
+
+Schema:
+{{
+  "filters": [
+    {{
+      "field": "pe_ratio | eps | revenue | debt | market_cap | revenue_growth | price_change_1y | sector | reported_date",
+      "operator": "< | <= | > | >= | =",
+      "value": number or string
+    }}
+  ],
+  "logic": "AND or OR",
+  "time_filter": {{
+      "type": "latest | year | range",
+      "value": number (if type=year),
+      "from_date": "YYYY-MM-DD" (if type=range),
+      "to_date": "YYYY-MM-DD" (if type=range)
+  }},
+  "sort_field": "optional field name",
+  "sort_order": "asc or desc",
+  "limit": number
+}}
+
+Query:
+{query_text}
+"""
+    )
+
+    raw = response.candidates[0].content.parts[0].text.strip()
+
+    # Remove markdown if Gemini adds it
+    raw = raw.replace("```json", "").replace("```", "").strip()
+
+    try:
+        parsed = json.loads(raw)
+    except:
+        raise HTTPException(status_code=400, detail="LLM returned invalid JSON")
+
+    return parsed
+# ============================================================
+# SQL COMPILER
+# ============================================================
+
+def build_dynamic_query(dsl: DSLRequest):
+    where_clauses = []
+    params = {}
+
+    for i, condition in enumerate(dsl.filters):
+        param_name = f"value_{i}"
+
+        # Choose correct table alias
+        if condition.field == "sector":
+            column = f"s.{condition.field}"
+        else:
+            column = f"f.{condition.field}"
+
+        where_clauses.append(
+            f"{column} {condition.operator} :{param_name}"
+        )
+
+        params[param_name] = condition.value
+
+    logic_string = f" {dsl.logic} ".join(where_clauses)
+
+    final_query = f"""
         SELECT s.symbol,
                s.sector,
                f.pe_ratio,
@@ -162,28 +446,16 @@ def run_screener(filters: dict):
                 FROM fundamentals f2
                 WHERE f2.symbol_id = s.id
             )
-        WHERE (:pe_limit IS NULL OR f.pe_ratio < :pe_limit)
-        AND (:min_eps IS NULL OR f.eps > :min_eps)
-        AND (:min_growth IS NULL OR f.revenue_growth > :min_growth)
-        AND (:min_price_change IS NULL OR f.price_change_1y > :min_price_change)
-        AND (:sector IS NULL OR LOWER(s.sector) = LOWER(:sector))
-    """)
+        WHERE {logic_string}
+    """
+    print("\n SQL COMPILER INTERNALS")
+    print("WHERE CLAUSES:", where_clauses)
+    print("LOGIC USED:", dsl.logic)
+    
+    return text(final_query), params
 
-    with engine.connect() as conn:
-        rows = conn.execute(query, filters).fetchall()
 
-    return [
-        {
-            "symbol": r[0],
-            "sector": r[1],
-            "pe_ratio": r[2],
-            "eps": r[3],
-            "market_cap": r[4],
-            "revenue_growth": r[5],
-            "price_change_1y": r[6]
-        }
-        for r in rows
-    ]
+
 
 def score_stock(stock):
     pe = float(stock.get("pe_ratio") or 0)
@@ -204,114 +476,123 @@ def score_stock(stock):
     )
 
 # ============================================================
-# SCREENER ENDPOINT (REST + GEMINI + LOGGING)
+# SCREENER ENDPOINT (UPGRADED – SAFE + CACHE + STABLE)
 # ============================================================
 
 @app.post("/screener")
+#@limiter.limit("5/minute")
 def screener(
-    request: NLRequest,
+    request: Request,                 # REQUIRED for slowapi
+    payload: NLRequest,               # Your body model
     current_user: dict = Depends(get_current_user)
 ):
-    print(">>> SCREENER ENDPOINT HIT <<<")
+    print("\n==============================")
+    print(" SCREENER PIPELINE STARTED")
+    print("User Query:", payload.query)
+    print("==============================")
 
-    query_text = request.query.lower()
+    # NEW DSL FLOW
+    try:
+        parsed_json = parse_query_with_llm(payload.query)
 
-    filters = {
-        "pe_limit": None,
-        "min_eps": None,
-        "min_growth": None,
-        "min_price_change": None,
-        "sector": None
-    }
+    except Exception as e:
+        print("⚠ Gemini failed:", str(e))
 
-    pe_match = re.search(r"(?:pe|p/e)[^\d]*(\d+)", query_text)
-    if pe_match:
-        filters["pe_limit"] = float(pe_match.group(1))
+        # If quota exceeded or AI fails
+        raise HTTPException(
+            status_code=503,
+            detail="AI service temporarily unavailable. Please try again later."
+        )
 
-    eps_match = re.search(r"eps[^\d]*(\d+)", query_text)
-    if eps_match:
-        filters["min_eps"] = float(eps_match.group(1))
+    print("\n LLM OUTPUT:")
+    print("RAW DSL FROM LLM:", parsed_json)
 
-    if ai_client:
-        print("Gemini is active")
-        print("User query:", request.query)
+    try:
+        dsl = DSLRequest(**parsed_json)
+        validate_dsl(dsl)
+        print(" DSL VALIDATION PASSED")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
 
+    # --------------------------------------------------------
+    # REDIS CACHE
+    # --------------------------------------------------------
+
+    cache_key = f"screener:{json.dumps(parsed_json, sort_keys=True)}"
+    cached = None
+    if redis_client:
         try:
-            response = ai_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=f"""
-    You are a financial query parser.
+            cached = redis_client.get(cache_key)
+        except:
+            cached = None
 
-    Valid sectors:
-    Technology
-    Consumer Cyclical
-    IT Services
-    Energy
-    Finance
-    Healthcare
+    if cached:
+        print(" CACHE HIT — Returning Cached Results")
+        print("==============================\n")
+        return success_response(data=json.loads(cached))
 
-    If user mentions tech or technology, map it to "Technology".
+    # --------------------------------------------------------
+    # DATABASE QUERY
+    # --------------------------------------------------------
+    print("\n SQL COMPILER STAGE")
+    print(" Compiling DSL → SQL...")
 
-    Return ONLY valid JSON.
-    No explanation.
-    No markdown.
-    No extra text.
+    query, params = build_dynamic_query(dsl)
 
-    Schema:
-    {{
-    "pe_limit": number or null,
-    "min_eps": number or null,
-    "min_growth": number or null,
-    "min_price_change": number or null,
-    "sector": string or null
-    }}
+    print(" COMPILED SQL:")
+    print(query)
 
-    User query:
-    {request.query}
-    """
-            )
+    print(" SQL PARAMETERS:")
+    print(params)
 
-            #  Proper Gemini extraction
-            gemini_text = response.candidates[0].content.parts[0].text
+    with engine.connect() as conn:
+        print("\n GENERATED SQL:")
+        print(query)
+        print("SQL Params:", params)
+        rows = conn.execute(query, params).fetchall()
 
-            print("Gemini raw text:")
-            print(gemini_text)
+    results = [
+        {
+            "symbol": r[0],
+            "sector": r[1],
+            "pe_ratio": r[2],
+            "eps": r[3],
+            "market_cap": r[4],
+            "revenue_growth": r[5],
+            "price_change_1y": r[6]
+        }
+        for r in rows
+    ]
 
-            cleaned = gemini_text.strip()
-            cleaned = cleaned.replace("```json", "").replace("```", "").strip()
+    print("\n DB Results Count:", len(results))
 
-            parsed = json.loads(cleaned)
-
-            # Normalize sector
-            if parsed.get("sector"):
-                sector_map = {
-                    "tech": "Technology",
-                    "technology": "Technology",
-                    "it": "IT Services",
-                    "it services": "IT Services"
-                }
-
-                lower_sector = parsed["sector"].lower()
-                if lower_sector in sector_map:
-                    parsed["sector"] = sector_map[lower_sector]
-
-            filters.update({
-                k: v for k, v in parsed.items()
-                if k in filters and v is not None
-            })
-
-            print("Parsed filters:", filters)
-
-        except Exception as e:
-            print("Gemini parsing failed:", e)
-        print("FINAL FILTERS SENT TO SQL:", filters)
-
-    results = run_screener(filters)
+    # --------------------------------------------------------
+    # SCORING (UNCHANGED)
+    # --------------------------------------------------------
 
     for r in results:
         r["score"] = score_stock(r)
 
     results = sorted(results, key=lambda x: x["score"], reverse=True)
+    print("\n SCORING PHASE COMPLETE")
+    print("Top 3 Stocks After Ranking:")
+    for stock in results[:3]:
+        print(stock["symbol"], "Score:", stock["score"])
+
+    # --------------------------------------------------------
+    # STORE CACHE (10 minutes)
+    # --------------------------------------------------------
+
+    if redis_client:
+        try:
+            redis_client.setex(cache_key, 600, json.dumps(results))
+        except:
+            pass
+
+    # --------------------------------------------------------
+    # QUERY HISTORY LOG (UNCHANGED)
+    # --------------------------------------------------------
 
     with engine.begin() as conn:
         conn.execute(text("""
@@ -319,8 +600,8 @@ def screener(
             VALUES (:user_id, :raw_query, :parsed_filters)
         """), {
             "user_id": current_user["id"],
-            "raw_query": request.query,
-            "parsed_filters": json.dumps(filters)
+            "raw_query": payload.query,
+            "parsed_filters": json.dumps(parsed_json)
         })
 
     return success_response(data=results)
