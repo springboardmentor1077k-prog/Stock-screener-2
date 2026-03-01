@@ -2,6 +2,11 @@ import streamlit as st
 import requests
 import logging as log
 
+st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
 
 log.basicConfig(
     level=log.INFO,
