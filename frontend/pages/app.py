@@ -13,7 +13,7 @@ log.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-BACKEND_URL = "http://localhost:8000/query"
+BACKEND_URL = "http://localhost:9000/query"
 
 if "loading" not in st.session_state:
     st.session_state.loading = False
@@ -23,6 +23,7 @@ if "loading" not in st.session_state:
 st.title("AI Powered Stock Screener")
 
 nl_query = st.text_input("Enter your prompt here")
+st.write("Sending:", {"nl_query": nl_query})
 
 submit_btn = st.button(
     "Submit",
@@ -40,7 +41,7 @@ if submit_btn:
             try:
                 response = requests.post(
                     BACKEND_URL,
-                    params={"nl_query": nl_query}
+                    json={"nl_query": nl_query}
                 )
 
                 if response.status_code == 200:
