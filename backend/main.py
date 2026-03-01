@@ -148,7 +148,7 @@ def build_safe_query(dsl: dict):
 @app.post("/query")
 def query_endpoint(request: QueryRequest):
 
-    # 1️⃣ Rate Limiting Example
+   
     cache_key = f"rate:{request.nl_query}"
     if cache.get(cache_key):
         raise HTTPException(status_code=429, detail="Too many requests")
@@ -162,19 +162,19 @@ def query_endpoint(request: QueryRequest):
             "data": json.loads(cache.get(request.nl_query))
         }
 
-    # 3️⃣ Parse with LLM
+
     try:
         dsl = parse_with_llm(request.nl_query)
     except Exception:
         raise HTTPException(status_code=422, detail="Query not understood")
 
-    # 4️⃣ Strict Validation
+  
     validate_dsl(dsl)
 
-    # 5️⃣ Safe SQL Build
+   
     sql, values = build_safe_query(dsl)
 
-    # 6️⃣ Execute
+    
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -185,14 +185,14 @@ def query_endpoint(request: QueryRequest):
     except Exception:
         raise HTTPException(status_code=500, detail="Database fetch error")
 
-    # 7️⃣ Controlled Response
+
     response_data = {
         "dsl": dsl,
         "count": len(rows),
         "results": rows
     }
 
-    # 8️⃣ Cache Result
+
     cache.setex(request.nl_query, 60, json.dumps(response_data))
 
     return {
