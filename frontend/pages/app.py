@@ -23,8 +23,7 @@ if "loading" not in st.session_state:
 st.title("AI Powered Stock Screener")
 
 nl_query = st.text_input("Enter your prompt here")
-st.write("Sending:", {"nl_query": nl_query})
-
+#st.write("Sending:", {"nl_query": nl_query})
 submit_btn = st.button(
     "Submit",
     disabled=st.session_state.loading
