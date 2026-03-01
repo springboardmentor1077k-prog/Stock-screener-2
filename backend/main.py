@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 import psycopg2
-import jwt
 import json
 import redis
 import os
@@ -154,7 +153,6 @@ def query_endpoint(request: QueryRequest):
         raise HTTPException(status_code=429, detail="Too many requests")
     cache.setex(cache_key, 5, "1")
 
-    # 2️⃣ Check cache first
     if cache.get(request.nl_query):
         return {
             "status": "success",
@@ -165,6 +163,7 @@ def query_endpoint(request: QueryRequest):
 
     try:
         dsl = parse_with_llm(request.nl_query)
+        print(dsl)
     except Exception:
         raise HTTPException(status_code=422, detail="Query not understood")
 
