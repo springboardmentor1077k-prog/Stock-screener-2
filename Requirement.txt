@@ -1,2 +1,11 @@
 Streamlit, version 1.54.0
 yfinance
+fastapi
+uvicorn
+psycopg2-binary
+bcrypt
+pyjwt
+redis
+pydantic
+openai
+requests
