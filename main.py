@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
 from typing import Literal
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
@@ -10,6 +13,7 @@ from google import genai
 from typing import Optional
 from datetime import date
 from datetime import datetime
+import traceback
 import os
 import json
 import re
@@ -17,7 +21,7 @@ import redis
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from fastapi.responses import JSONResponse
+from slowapi.middleware import SlowAPIMiddleware
 from database import engine
 from auth import (
     hash_password,
@@ -39,13 +43,26 @@ limiter = Limiter(key_func=get_remote_address)
 # ============================================================
 # STANDARD RESPONSE FORMAT (ADDED FOR CONSISTENCY)
 # ============================================================
-
 def success_response(data=None, message="Success"):
     return {
-        "status": "success",
+        "success": True,
         "message": message,
         "data": data
     }
+
+def error_response(code: str, message: str, layer: str, status_code: int):
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": code,
+                "message": message,
+                "layer": layer,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }
+    )
 # ============================================================
 # GEMINI CONFIG
 # ============================================================
@@ -72,15 +89,44 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
-
-app.state.limiter = limiter
-app.add_exception_handler(
-    RateLimitExceeded,
-    lambda r, e: JSONResponse(
-        status_code=429,
-        content={"detail": "Too many requests"}
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return error_response(
+        code="HTTP_ERROR",
+        message=exc.detail,
+        layer="APPLICATION",
+        status_code=exc.status_code
     )
-)
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(request: Request, exc: RequestValidationError):
+    return error_response(
+        code="INVALID_REQUEST_BODY",
+        message="Invalid request format.",
+        layer="API_GATEWAY",
+        status_code=400
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return error_response(
+        code="INTERNAL_SERVER_ERROR",
+        message="Unexpected system error.",
+        layer="SYSTEM",
+        status_code=500
+    )
+
+
+app.add_middleware(SlowAPIMiddleware)
+app.state.limiter = limiter
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return error_response(
+        code="RATE_LIMIT_EXCEEDED",
+        message="Too many requests. Slow down.",
+        layer="API_GATEWAY",
+        status_code=429
+    )
 
 # ============================================================
 # Pydantic MODELS (Validation Layer)
@@ -141,6 +187,7 @@ class TimeFilter(BaseModel):
 
 
 class DSLRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     filters: list[Condition]
     logic: Literal["AND", "OR"] = "AND"
     time_filter: Optional[TimeFilter] = None
@@ -245,7 +292,32 @@ def validate_dsl(dsl: DSLRequest):
                 status_code=400,
                 detail="Limit must be between 1 and 100"
             )
+            
+            
+            
+    # Detect numeric contradictions
+    field_ranges = {}
 
+    for condition in dsl.filters:
+        if ALLOWED_FIELDS[condition.field] == "numeric":
+            value = float(condition.value)
+
+            if condition.field not in field_ranges:
+                field_ranges[condition.field] = {"min": None, "max": None}
+
+            if condition.operator in [">", ">="]:
+                field_ranges[condition.field]["min"] = value
+
+            if condition.operator in ["<", "<="]:
+                field_ranges[condition.field]["max"] = value
+
+    for field, bounds in field_ranges.items():
+        if bounds["min"] is not None and bounds["max"] is not None:
+            if bounds["min"] > bounds["max"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Conflicting conditions detected."
+                )
     return True
 
 
@@ -361,7 +433,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 def parse_query_with_llm(query_text: str):
 
     if not ai_client:
-        raise HTTPException(status_code=500, detail="LLM not configured")
+        raise HTTPException(status_code=500, detail="AI service not configured.")
 
     response = ai_client.models.generate_content(
         model="gemini-2.5-flash",
@@ -402,7 +474,9 @@ Query:
     try:
         parsed = json.loads(raw)
     except:
-        raise HTTPException(status_code=400, detail="LLM returned invalid JSON")
+        raise HTTPException(
+    status_code=400,
+    detail="AI returned invalid structured output.")
 
     return parsed
 # ============================================================
@@ -427,7 +501,20 @@ def build_dynamic_query(dsl: DSLRequest):
         )
 
         params[param_name] = condition.value
+    
+    
+    # Apply time filter
+    if dsl.time_filter:
+        if dsl.time_filter.type == "year":
+            where_clauses.append("EXTRACT(YEAR FROM f.reported_date) = :year")
+            params["year"] = dsl.time_filter.value
 
+        elif dsl.time_filter.type == "range":
+            where_clauses.append("f.reported_date BETWEEN :from_date AND :to_date")
+            params["from_date"] = dsl.time_filter.from_date
+            params["to_date"] = dsl.time_filter.to_date
+
+    # ALWAYS build logic_string
     logic_string = f" {dsl.logic} ".join(where_clauses)
 
     final_query = f"""
@@ -480,7 +567,7 @@ def score_stock(stock):
 # ============================================================
 
 @app.post("/screener")
-#@limiter.limit("5/minute")
+@limiter.limit("5/minute")
 def screener(
     request: Request,                 # REQUIRED for slowapi
     payload: NLRequest,               # Your body model
@@ -511,8 +598,11 @@ def screener(
         dsl = DSLRequest(**parsed_json)
         validate_dsl(dsl)
         print(" DSL VALIDATION PASSED")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid structured query."
+        )
     
 
     # --------------------------------------------------------
