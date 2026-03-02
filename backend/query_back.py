@@ -22,7 +22,8 @@ def query_endpoint(request: QueryRequest):
 
     # Step 1: Generate DSL
     dsl = generate_dsl(request.nl_query)
-
+    
+    print("DSL OUTPUT:", dsl)
     if not dsl:
         raise HTTPException(
             status_code=422,
