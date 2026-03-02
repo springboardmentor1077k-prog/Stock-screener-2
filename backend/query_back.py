@@ -23,7 +23,7 @@ def query_endpoint(request: QueryRequest):
     # Step 1: Generate DSL
     dsl = generate_dsl(request.nl_query)
     
-    print("DSL OUTPUT:", dsl)
+    
     if not dsl:
         raise HTTPException(
             status_code=422,
@@ -33,6 +33,7 @@ def query_endpoint(request: QueryRequest):
                 "message": "We could not understand your query. Please retype it clearly using supported financial metrics."
             }
         )
+    print("DSL OUTPUT:", dsl)
 
     logger.info("Generated DSL:\n%s", json.dumps(dsl, indent=2))
 

@@ -1,39 +1,75 @@
-def build_safe_query(dsl: dict):
+FIELD_TABLE_MAP = {
+    "pe": ("fundamentals", "f"),
+    "peg": ("fundamentals", "f"),
+    "promoter_holding": ("fundamentals", "f"),
 
-    entity = dsl["entity"]
+    "revenue": ("historical_metrics", "h"),
+    "ebitda": ("historical_metrics", "h"),
+    "net_profit": ("historical_metrics", "h"),
+    "debt_free_cash": ("historical_metrics", "h"),
+}
+def compile_conditions(node):
 
+    logic = node.get("logic", "AND")
+    conditions = node.get("conditions", [])
 
-    
-    if entity == "fundamentals":
+    sql_parts = []
+    values = []
+    required_tables = set()
 
-        base_query = "SELECT * FROM fundamentals WHERE "
-        values = []
-        conditions_sql = []
+    for cond in conditions:
 
-        for cond in dsl["conditions"]:
-            field = cond["field"]
-            operator = cond["operator"]
-            value = cond["value"]
+        # Nested block
+        if "conditions" in cond:
+            nested_sql, nested_vals, nested_tables = compile_conditions(cond)
+            sql_parts.append(f"({nested_sql})")
+            values.extend(nested_vals)
+            required_tables.update(nested_tables)
+            continue
 
-            conditions_sql.append(f"{field} {operator} %s")
-            values.append(value)
+        field = cond["field"]
+        operator = cond["operator"]
+        value = cond["value"]
 
-        logic = dsl.get("logic", "AND")
-        where_clause = f" {logic} ".join(conditions_sql)
+        table_name, alias = FIELD_TABLE_MAP[field]
+        required_tables.add((table_name, alias))
 
-        sql = base_query + where_clause
+        sql_parts.append(f"{alias}.{field} {operator} %s")
+        values.append(value)
 
-        if "limit" in dsl:
-            sql += " LIMIT %s"
-            values.append(dsl["limit"])
+    return f" {logic} ".join(sql_parts), values, required_tables
 
-        return sql, values
+def build_safe_query(dsl):
 
+    # =========================
+    # FUNDAMENTALS MODE
+    # =========================
+    if dsl["entity"] == "fundamentals":
 
-    
-   
-    
-    elif entity == "historical_metrics":
+        where_sql, values, tables = compile_conditions(dsl)
+
+        # Always start from symbol
+        query = "SELECT s.symbol FROM symbol s "
+
+        # Join required tables only
+        for table_name, alias in tables:
+            query += f"JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
+
+        query += "WHERE " + where_sql
+
+        # Optional time filter
+        if "time_filter" in dsl:
+            if dsl["time_filter"]["type"] == "last_n_quarters":
+                query += " AND h.reported_date >= CURRENT_DATE - INTERVAL '1 year'"
+
+        query += f" LIMIT {dsl.get('limit', 50)}"
+
+        return query, values
+
+    # =========================
+    # HISTORICAL GROWTH MODE
+    # =========================
+    elif dsl["entity"] == "historical_metrics":
 
         metric = dsl["metric"]
         period = dsl["period"]
@@ -41,9 +77,10 @@ def build_safe_query(dsl: dict):
 
         operator = ">" if direction == "increase" else "<"
 
-        sql = f"""
-        SELECT symbol_id
-        FROM (
+        query = f"""
+        SELECT s.symbol
+        FROM symbol s
+        JOIN (
             SELECT symbol_id,
                    {metric},
                    LAG({metric}) OVER (
@@ -51,17 +88,15 @@ def build_safe_query(dsl: dict):
                        ORDER BY financial_year, quarter
                    ) AS prev_value
             FROM historical_metrics
-        ) t
+        ) h ON s.symbol_id = h.symbol_id
         WHERE prev_value IS NOT NULL
-          AND {metric} {operator} prev_value
-        GROUP BY symbol_id
+          AND h.{metric} {operator} prev_value
+        GROUP BY s.symbol
         HAVING COUNT(*) >= %s
+        LIMIT {dsl.get('limit', 50)}
         """
 
-        values = [period - 1]
-
-        return sql, values
-
+        return query, [period - 1]
 
     else:
-        raise Exception("Unsupported entity in SQL builder")
+        raise ValueError("Unsupported entity")

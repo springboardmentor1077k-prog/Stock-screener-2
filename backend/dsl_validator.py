@@ -8,6 +8,9 @@ FIELD_RANGES = {
     "net_profit": (-1_000_000_000_000, 1_000_000_000_000),
 }
 
+
+ALL_FIELDS = list(FIELD_RANGES.keys())
+
 ALLOWED_ENTITIES = [
     "symbol",
     "fundamentals",
@@ -36,6 +39,47 @@ ALLOWED_DIRECTIONS = ["increase", "decrease"]
 
 MAX_LIMIT = 200
 
+#Recursive condition
+def validate_conditions(node, allowed_fields):
+
+    logic = str(node.get("logic", "AND")).upper()
+    if logic not in ALLOWED_LOGIC:
+        return error("INVALID_LOGIC", f"Unsupported logic: {logic}")
+
+    conditions = node.get("conditions")
+    if not isinstance(conditions, list) or len(conditions) == 0:
+        return error("INVALID_CONDITIONS", "Conditions must be a non-empty list")
+
+    for cond in conditions:
+
+        # Nested block
+        if "conditions" in cond:
+            nested_error = validate_conditions(cond, allowed_fields)
+            if nested_error:
+                return nested_error
+            continue
+
+        field = str(cond.get("field", "")).lower()
+        operator = cond.get("operator")
+        value = cond.get("value")
+
+        if field not in allowed_fields:
+            return error("INVALID_FIELD", f"{field} not allowed")
+
+        if operator not in ALLOWED_OPERATORS:
+            return error("INVALID_OPERATOR", f"Unsupported operator: {operator}")
+
+        if not isinstance(value, (int, float)):
+            return error("INVALID_VALUE_TYPE", "Value must be numeric")
+
+        if field in FIELD_RANGES:
+            min_val, max_val = FIELD_RANGES[field]
+            if value < min_val or value > max_val:
+                return range_error(field, min_val, max_val, value)
+
+    return None
+
+
 
 def validate_dsl(dsl: dict):
 
@@ -52,42 +96,19 @@ def validate_dsl(dsl: dict):
         return error("INVALID_ENTITY", f"Unsupported entity: {entity}")
 
 
+    # FUNDAMENTALS MODE
+
     if entity == "fundamentals":
-
-        conditions = dsl.get("conditions")
-        if not isinstance(conditions, list) or len(conditions) == 0:
-            return error("INVALID_CONDITIONS", "Conditions must be a non-empty list")
-
-        logic = str(dsl.get("logic", "")).upper()
-        if logic not in ALLOWED_LOGIC:
-            return error("INVALID_LOGIC", f"Unsupported logic: {logic}")
-
-        for cond in conditions:
-
-            if not isinstance(cond, dict):
-                return error("INVALID_CONDITION_FORMAT", "Each condition must be an object")
-
-            field = str(cond.get("field", "")).lower()
-            operator = cond.get("operator")
-            value = cond.get("value")
-
-            if field not in FUNDAMENTAL_FIELDS:
-                return error("INVALID_FIELD", f"{field} not allowed in fundamentals")
-
-            if operator not in ALLOWED_OPERATORS:
-                return error("INVALID_OPERATOR", f"Unsupported operator: {operator}")
-
-            if not isinstance(value, (int, float)):
-                return error("INVALID_VALUE_TYPE", "Value must be numeric")
-
-            # Range validation
-            if field in FIELD_RANGES:
-                min_val, max_val = FIELD_RANGES[field]
-                if value < min_val or value > max_val:
-                    return range_error(field, min_val, max_val, value)
+        return validate_conditions(dsl, FUNDAMENTAL_FIELDS)
 
 
+    # SYMBOL MODE (MIXED TABLES)
 
+    elif entity == "symbol":
+        return validate_conditions(dsl, ALL_FIELDS)
+
+
+    # HISTORICAL GROWTH MODE
 
     elif entity == "historical_metrics":
 
@@ -118,8 +139,7 @@ def validate_dsl(dsl: dict):
                 "INVALID_DIRECTION",
                 "Direction must be increase or decrease"
             )
-
-
+            
     # LIMIT VALIDATION
 
     if "limit" in dsl:
@@ -135,8 +155,6 @@ def validate_dsl(dsl: dict):
             )
 
     return None
-
-
 
 def range_error(field, min_val, max_val, value):
 

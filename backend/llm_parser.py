@@ -22,45 +22,38 @@ def generate_dsl(nl_query: str):
     prompt = f"""
 You are a STRICT DSL generator.
 
-There are TWO MODES:
+Convert the user query into JSON with this structure:
 
---------------------------------
-1) SNAPSHOT MODE (fundamentals)
---------------------------------
 {{
   "entity": "fundamentals",
+  "logic": "AND | OR",
   "conditions": [
     {{
-      "field": "pe | peg | promoter_holding",
+      "field": "pe | peg | promoter_holding | ebitda | debt_free_cash",
       "operator": "= | != | > | < | >= | <=",
       "value": number
+    }},
+    {{
+      "logic": "AND | OR",
+      "conditions": [
+        {{
+          "field": "...",
+          "operator": "...",
+          "value": number
+        }}
+      ]
     }}
   ],
-  "logic": "AND",
-  "limit": 50
-}}
-
---------------------------------
-2) GROWTH MODE (historical_metrics)
---------------------------------
-{{
-  "entity": "historical_metrics",
-  "analysis": "growth",
-  "metric": "revenue | ebitda | net_profit | debt_free_cash | pe",
-  "period": number_of_quarters,
-  "direction": "increase | decrease",
   "limit": 50
 }}
 
 Rules:
-- If query contains time words like:
-  "last 4 quarters", "past 3 quarters", "over 2 quarters"
-  → MUST use historical_metrics mode.
-- If query contains comparisons like:
-  "greater than", "less than", ">", "<"
-  → MUST use fundamentals mode.
-- Output STRICT JSON only.
-- No explanations.
+- Nested logic is allowed.
+- If parentheses are present in the query, use nested "conditions".
+- Use AND/OR exactly as written in the query.
+- Only allowed fields.
+- Only allowed operators.
+- Return JSON only.
 - If unclear return:
   {{ "error": "QUERY_NOT_UNDERSTOOD" }}
 

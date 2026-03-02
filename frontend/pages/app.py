@@ -40,38 +40,6 @@ submit_btn = st.button(
     disabled=st.session_state.loading
 )
 
-# if submit_btn:
-
-#     if nl_query.strip() == "":
-#         st.warning("Please enter a query.")
-#     else:
-#         st.session_state.loading = True
-
-#         with st.spinner("Processing your query... Please wait"):
-#             try:
-#                 response = requests.post(
-#                     BACKEND_URL,
-#                     json={"nl_query": nl_query}
-#                 )
-
-#                 if response.status_code == 200:
-#                     data = response.json()
-#                     log.info("Generated Successfully")
-#                     #st.json(data["dsl"])
-#                     log.info("Query processed successfully")
-                    
-#                 elif response.status_code == 422:
-#                     error_detail = response.json().get("detail", {})
-#                     st.warning(error_detail.get("message", "We could not understand your query. Please retype."))
-                    
-#                 else:
-#                     log.error(f"HTTP Error {response.status_code}: {response.text}")
-#                     #st.error(f"Request failed with status code {response.status_code}")
-
-#             except Exception:
-#                 log.info("Backend connection failed")
-
-#         st.session_state.loading = False
 
 
 if submit_btn:
