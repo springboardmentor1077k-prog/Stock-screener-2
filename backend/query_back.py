@@ -1,76 +1,54 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import redis
-import json
 
-from database_back import get_connection
-from llm_parser import parse_with_llm
+from llm_parser import generate_dsl
 from dsl_validator import validate_dsl
 from sql_builder import build_safe_query
-from error_handel import structured_error
 
 app = FastAPI()
-cache = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 class QueryRequest(BaseModel):
     nl_query: str
 
+
 @app.post("/query")
 def query_endpoint(request: QueryRequest):
 
-    # Rate limiting
-    rate_key = f"rate:{request.nl_query}"
-    if cache.get(rate_key):
-        structured_error(429, "RATE_LIMIT_EXCEEDED",
-                         "Too many requests. Try later.")
-    cache.setex(rate_key, 5, "1")
+    # Step 1: Generate DSL
+    dsl = generate_dsl(request.nl_query)
 
-    # Cache check
-    if cache.get(request.nl_query):
-        return {
-            "status": "success",
-            "source": "cache",
-            "data": json.loads(cache.get(request.nl_query))
-        }
+    if not dsl:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "status": "error",
+                "code": "QUERY_NOT_UNDERSTOOD",
+                "message": "Unable to interpret query"
+            }
+        )
 
-    # LLM Parse
-    try:
-        dsl = parse_with_llm(request.nl_query)
-    except:
-        structured_error(422, "QUERY_NOT_UNDERSTOOD",
-                         "Unable to interpret query")
+    print("\n GENERATED DSL:")
+    print(dsl)
 
-    # Validate DSL
-    error = validate_dsl(dsl)
-    if error:
-        structured_error(400, error,
-                         "Invalid DSL structure")
+    # Step 2: Validate DSL
+    validation_error = validate_dsl(dsl)
 
-    # Build SQL
+    if validation_error:
+        raise HTTPException(status_code=422, detail=validation_error)
+
+    # Step 3: Convert DSL → Structured Query (SQL)
     sql, values = build_safe_query(dsl)
 
-    # DB Execution
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(sql, values)
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
-    except:
-        structured_error(500, "DATABASE_FETCH_ERROR",
-                         "Unable to retrieve data")
+    print("\n STRUCTURED QUERY:")
+    print("SQL:", sql)
+    print("VALUES:", values)
 
-    response = {
-        "dsl": dsl,
-        "count": len(rows),
-        "results": rows
-    }
-
-    cache.setex(request.nl_query, 60, json.dumps(response))
-
+    # Only return structured information (no DB execution)
     return {
         "status": "success",
-        "source": "database",
-        "data": response
+        "dsl": dsl,
+        "structured_query": {
+            "sql": sql,
+            "values": values
+        }
     }
