@@ -48,6 +48,9 @@ if submit_btn:
                     log.info("Generated Successfully")
                     st.json(data["dsl"])
                     log.info("Query processed successfully")
+                elif response.status_code == 422:
+                    error_detail = response.json().get("detail", {})
+                    st.warning(error_detail.get("message", "We could not understand your query. Please retype."))
                 else:
                     log.error(f"HTTP Error {response.status_code}: {response.text}")
                     #st.error(f"Request failed with status code {response.status_code}")

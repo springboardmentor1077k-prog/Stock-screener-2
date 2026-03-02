@@ -1,4 +1,10 @@
-# backend/dsl_validator.py
+FIELD_RANGES = {
+    "pe": (0, 1500),
+    "peg": (0, 100),
+    "promoter_holding": (0, 100),
+    "ebitda": (-1_000_000_000_000, 1_000_000_000_000),
+    "debt_free_cash": (-1_000_000_000_000, 1_000_000_000_000)
+}
 
 ALLOWED_ENTITIES = [
     "symbol",
@@ -35,62 +41,64 @@ def validate_dsl(dsl: dict):
         return error("INVALID_STRUCTURE", "DSL must be a JSON object")
 
     # ---------- Entity ----------
-    if "entity" not in dsl:
+    entity = dsl.get("entity")
+    if not entity:
         return error("MISSING_ENTITY", "Entity is required")
 
-    entity = str(dsl["entity"]).lower()
-
+    entity = str(entity).lower()
     if entity not in ALLOWED_ENTITIES:
         return error("INVALID_ENTITY", f"Unsupported entity: {entity}")
 
     # ---------- Conditions ----------
-    if "conditions" not in dsl:
-        return error("MISSING_CONDITIONS", "Conditions are required")
-
-    if not isinstance(dsl["conditions"], list) or len(dsl["conditions"]) == 0:
+    conditions = dsl.get("conditions")
+    if not isinstance(conditions, list) or len(conditions) == 0:
         return error("INVALID_CONDITIONS", "Conditions must be a non-empty list")
 
     # ---------- Logic ----------
-    if "logic" not in dsl:
-        return error("MISSING_LOGIC", "Logical operator is required")
-
-    logic = str(dsl["logic"]).upper()
-
+    logic = str(dsl.get("logic", "")).upper()
     if logic not in ALLOWED_LOGIC:
         return error("INVALID_LOGIC", f"Unsupported logic: {logic}")
 
     # ---------- Validate Each Condition ----------
-    for cond in dsl["conditions"]:
+    for cond in conditions:
 
         if not isinstance(cond, dict):
             return error("INVALID_CONDITION_FORMAT", "Each condition must be an object")
 
         # Field
-        if "field" not in cond:
-            return error("MISSING_FIELD", "Condition missing field")
-
-        field = str(cond["field"]).lower()
-
+        field = str(cond.get("field", "")).lower()
         if field not in ALLOWED_FIELDS:
             return error("INVALID_FIELD", f"Unsupported metric: {field}")
 
         # Operator
-        if "operator" not in cond:
-            return error("MISSING_OPERATOR", "Condition missing operator")
-
-        operator = cond["operator"]
-
+        operator = cond.get("operator")
         if operator not in ALLOWED_OPERATORS:
             return error("INVALID_OPERATOR", f"Unsupported operator: {operator}")
 
         # Value
-        if "value" not in cond:
-            return error("MISSING_VALUE", "Condition missing value")
-
-        value = cond["value"]
-
+        value = cond.get("value")
         if not isinstance(value, (int, float)):
             return error("INVALID_VALUE_TYPE", "Value must be numeric")
+
+        # ---------- Range Validation ----------
+        if field in FIELD_RANGES:
+            min_val, max_val = FIELD_RANGES[field]
+
+            if value < min_val or value > max_val:
+
+                suggestion = None
+
+                if value > max_val:
+                    suggestion = f"Try a value less than or equal to {max_val}."
+                elif value < min_val:
+                    suggestion = f"Try a value greater than or equal to {min_val}."
+
+                return {
+                    "status": "error",
+                    "code": "VALUE_OUT_OF_RANGE",
+                    "message": f"{field.upper()} must be between {min_val} and {max_val}.",
+                    "suggestion": suggestion
+                }
 
     # ---------- Limit ----------
     if "limit" in dsl:
@@ -100,7 +108,10 @@ def validate_dsl(dsl: dict):
             return error("INVALID_LIMIT_TYPE", "Limit must be integer")
 
         if limit <= 0 or limit > MAX_LIMIT:
-            return error("INVALID_LIMIT_RANGE", f"Limit must be between 1 and {MAX_LIMIT}")
+            return error(
+                "INVALID_LIMIT_RANGE",
+                f"Limit must be between 1 and {MAX_LIMIT}"
+            )
 
     return None
 

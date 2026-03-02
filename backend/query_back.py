@@ -5,10 +5,16 @@ from llm_parser import generate_dsl
 from dsl_validator import validate_dsl
 from sql_builder import build_safe_query
 
+
+
+
+
 app = FastAPI()
 
 class QueryRequest(BaseModel):
     nl_query: str
+
+
 
 
 @app.post("/query")
@@ -21,11 +27,11 @@ def query_endpoint(request: QueryRequest):
         raise HTTPException(
             status_code=422,
             detail={
-                "status": "error",
-                "code": "QUERY_NOT_UNDERSTOOD",
-                "message": "Unable to interpret query"
-            }
-        )
+            "status": "error",
+            "code": "QUERY_NOT_UNDERSTOOD",
+            "message": "We could not understand your query. Please retype it clearly using supported financial metrics."
+        }
+    )
 
     print("\n GENERATED DSL:")
     print(dsl)
