@@ -1,26 +1,9 @@
-# def build_safe_query(dsl):
-
-#     base_query = f"SELECT * FROM {dsl['entity']} WHERE "
-#     conditions = []
-#     values = []
-
-#     for cond in dsl["conditions"]:
-#         conditions.append(f"{cond['field']} {cond['operator']} %s")
-#         values.append(cond["value"])
-
-#     final_query = base_query + f" {dsl['logic']} ".join(conditions)
-#     final_query += f" LIMIT {dsl.get('limit',50)}"
-
-#     return final_query, values
-
-
 def build_safe_query(dsl: dict):
 
     entity = dsl["entity"]
 
-    # ================================
-    # SNAPSHOT MODE (fundamentals)
-    # ================================
+
+    
     if entity == "fundamentals":
 
         base_query = "SELECT * FROM fundamentals WHERE "
@@ -47,9 +30,9 @@ def build_safe_query(dsl: dict):
         return sql, values
 
 
-    # ================================
-    # GROWTH MODE (historical_metrics)
-    # ================================
+    
+   
+    
     elif entity == "historical_metrics":
 
         metric = dsl["metric"]
