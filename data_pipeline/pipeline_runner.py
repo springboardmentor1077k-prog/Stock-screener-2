@@ -48,7 +48,7 @@ from data_pipeline.utils.storage import (
 )
 
 from data_pipeline.utils.structured_storage import save_structured_data
-
+from data_pipeline.normalizer import normalize_stock
 
 # ============================
 # CONTROL FLAGS
@@ -192,3 +192,15 @@ for symbol in symbols:
             print("Yahoo structured data skipped due to missing components.")
 
     print("\nFinished processing:", symbol)
+
+
+
+
+    normalized = normalize_stock(
+        alpha_data=structured_alpha if parsed_alpha_overview and parsed_alpha_daily else None,
+        yahoo_data=structured_yahoo if parsed_yahoo_info and parsed_yahoo_hist else None
+    )
+    
+    if normalized:
+        save_structured_data(symbol, "normalized", normalized)
+        print("Normalized data saved.")
