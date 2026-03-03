@@ -16,7 +16,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-#  IMPORTANT FIX: match your login route exactly
+# 🔥 IMPORTANT FIX: match your login route exactly
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # ============================================================

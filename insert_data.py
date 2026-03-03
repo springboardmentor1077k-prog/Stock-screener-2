@@ -38,7 +38,7 @@ for ticker_symbol in symbols:
         history = ticker.history(period="1y")
 
         if not info or history.empty:
-            print(f" Skipping {ticker_symbol} (No valid data)")
+            print(f"❌ Skipping {ticker_symbol} (No valid data)")
             continue
 
         # ======================================================
@@ -111,13 +111,13 @@ for ticker_symbol in symbols:
         with open(file_path, "w") as f:
             json.dump(stock_json, f, indent=4)
 
-        print(f" JSON saved for {ticker_symbol}")
+        print(f"✅ JSON saved for {ticker_symbol}")
 
         # ======================================================
         # DATABASE INSERTION
         # ======================================================
 
-        # 1️ Insert into symbols
+        # 1️⃣ Insert into symbols
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO symbols (symbol, company_name, sector)
@@ -129,24 +129,35 @@ for ticker_symbol in symbols:
                 "sector": company_profile["sector"]
             })
 
-        # 2️ Get symbol_id
+        # 2️⃣ Get symbol_id
         with engine.connect() as conn:
             result = conn.execute(text("""
                 SELECT id FROM symbols WHERE symbol = :symbol
             """), {"symbol": ticker_symbol})
             symbol_id = result.fetchone()[0]
 
-        # 3️ Insert fundamentals (ONLY ONCE)
+        # 3️⃣ Insert fundamentals (ONLY ONCE)
+        # 3️⃣ Insert fundamentals (SAFE + UPDATE IF EXISTS)
+
         with engine.begin() as conn:
             conn.execute(text("""
                 INSERT INTO fundamentals
                 (symbol_id, pe_ratio, eps, revenue,
-                 debt, market_cap, revenue_growth,
-                 price_change_1y, reported_date)
+                debt, market_cap, revenue_growth,
+                price_change_1y, reported_date)
                 VALUES
                 (:symbol_id, :pe_ratio, :eps, :revenue,
-                 :debt, :market_cap, :revenue_growth,
-                 :price_change_1y, :reported_date)
+                :debt, :market_cap, :revenue_growth,
+                :price_change_1y, :reported_date)
+                ON CONFLICT (symbol_id, reported_date)
+                DO UPDATE SET
+                    pe_ratio = EXCLUDED.pe_ratio,
+                    eps = EXCLUDED.eps,
+                    revenue = EXCLUDED.revenue,
+                    debt = EXCLUDED.debt,
+                    market_cap = EXCLUDED.market_cap,
+                    revenue_growth = EXCLUDED.revenue_growth,
+                    price_change_1y = EXCLUDED.price_change_1y
             """), {
                 "symbol_id": symbol_id,
                 "pe_ratio": float(pe_ratio),
@@ -156,10 +167,10 @@ for ticker_symbol in symbols:
                 "market_cap": float(market_cap),
                 "revenue_growth": float(revenue_growth),
                 "price_change_1y": float(price_change_1y),
-                "reported_date": datetime.today().date()
+                "reported_date": datetime.now().date()
             })
 
-        # 4️ Insert historical prices properly
+        # 4️⃣ Insert historical prices properly
         with engine.begin() as conn:
             for price in historical_prices:
                 conn.execute(text("""
@@ -178,11 +189,11 @@ for ticker_symbol in symbols:
                     "volume": price["volume"]
                 })
 
-        print(f" Database updated for {ticker_symbol}")
+        print(f"✅ Database updated for {ticker_symbol}")
 
         time.sleep(2)
 
     except Exception as e:
         print(f"⚠ Error processing {ticker_symbol}: {e}")
 
-print("\n Snapshot + database ingestion completed successfully.")
+print("\n🎯 Snapshot + database ingestion completed successfully.")

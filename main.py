@@ -4,6 +4,7 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from compiler import build_sql_from_dsl
 from pydantic import BaseModel, Field
 from pydantic import ConfigDict
 from typing import Literal
@@ -15,6 +16,9 @@ from datetime import date
 from datetime import datetime
 import traceback
 import os
+from dotenv import load_dotenv
+load_dotenv(override=True)
+print("Loaded API KEY:", os.getenv("GEMINI_API_KEY"))
 import json
 import re
 import redis
@@ -69,11 +73,14 @@ def error_response(code: str, message: str, layer: str, status_code: int):
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+#if ai_client:
+    #print("Listing available models...")
+    #for model in ai_client.models.list():
+      #  print(model.name)
 if ai_client:
-    print("Listing available models...")
-    for model in ai_client.models.list():
-        print(model.name)
-
+    print("Gemini client initialized.")
+else:
+    print("Gemini client NOT initialized.")
 
 # ============================================================
 # SCHEDULER SETUP
@@ -107,14 +114,6 @@ async def request_validation_handler(request: Request, exc: RequestValidationErr
         status_code=400
     )
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return error_response(
-        code="INTERNAL_SERVER_ERROR",
-        message="Unexpected system error.",
-        layer="SYSTEM",
-        status_code=500
-    )
 
 
 app.add_middleware(SlowAPIMiddleware)
@@ -180,16 +179,22 @@ class Condition(BaseModel):
 
 
 class TimeFilter(BaseModel):
-    type: Literal["latest", "year", "range"]
+    type: Literal["last_n_quarters", "year", "range"]
     value: Optional[int] = None
     from_date: Optional[str] = None
     to_date: Optional[str] = None
 
 
+class DSLNode(BaseModel):
+    logic: Literal["AND", "OR"]
+    conditions: list[Condition] = []
+    nested: Optional["DSLNode"] = None
+
+DSLNode.model_rebuild()
+
 class DSLRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    filters: list[Condition]
-    logic: Literal["AND", "OR"] = "AND"
+    root: DSLNode
     time_filter: Optional[TimeFilter] = None
     sort_field: Optional[str] = None
     sort_order: Optional[Literal["asc", "desc"]] = "desc"
@@ -198,47 +203,67 @@ class DSLRequest(BaseModel):
 # ============================================================
 # STEP 3: DSL VALIDATION LAYER
 # ============================================================
-def validate_dsl(dsl: DSLRequest):
+def validate_node(node: DSLNode, field_ranges=None):
 
-    # -----------------------------
-    # 1) Filters must exist
-    # -----------------------------
-    if not dsl.filters or len(dsl.filters) == 0:
+    if field_ranges is None:
+        field_ranges = {}
+
+    if not node.conditions or len(node.conditions) == 0:
         raise HTTPException(
             status_code=400,
-            detail="At least one filter is required"
+            detail="At least one condition required"
         )
 
-    # -----------------------------
-    # 2) Validate each condition
-    # -----------------------------
-    for condition in dsl.filters:
+    if node.logic not in ALLOWED_LOGIC:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid logical operator"
+        )
 
-        # ---- Field whitelist check ----
+    for condition in node.conditions:
+
         if condition.field not in ALLOWED_FIELDS:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid field: {condition.field}"
             )
 
-        # ---- Operator whitelist check ----
         if condition.operator not in ALLOWED_OPERATORS:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid operator: {condition.operator}"
             )
 
-        # ---- Type validation ----
         field_type = ALLOWED_FIELDS[condition.field]
 
         if field_type == "numeric":
             try:
-                float(condition.value)
+                value = float(condition.value)
             except:
                 raise HTTPException(
                     status_code=400,
                     detail=f"{condition.field} requires numeric value"
                 )
+
+            # Numeric contradiction detection
+            if condition.field not in field_ranges:
+                field_ranges[condition.field] = {"min": None, "max": None}
+
+            if condition.operator in [">", ">="]:
+                if field_ranges[condition.field]["min"] is None:
+                    field_ranges[condition.field]["min"] = value
+                else:
+                    field_ranges[condition.field]["min"] = max(
+                        field_ranges[condition.field]["min"], value
+                    )
+
+            if condition.operator in ["<", "<="]:
+                if field_ranges[condition.field]["max"] is None:
+                    field_ranges[condition.field]["max"] = value
+                else:
+                    field_ranges[condition.field]["max"] = min(
+                        field_ranges[condition.field]["max"], value
+                    )
 
         elif field_type == "string":
             if not isinstance(condition.value, str):
@@ -256,18 +281,24 @@ def validate_dsl(dsl: DSLRequest):
                     detail="Date must be in YYYY-MM-DD format"
                 )
 
-    # -----------------------------
-    # 3️) Validate Logic
-    # -----------------------------
-    if dsl.logic not in ALLOWED_LOGIC:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid logical operator"
-        )
+    # Check contradictions
+    for field, bounds in field_ranges.items():
+        if bounds["min"] is not None and bounds["max"] is not None:
+            if bounds["min"] > bounds["max"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Conflicting conditions detected."
+                )
 
-    # -----------------------------
-    # 4️) Validate Time Filter
-    # -----------------------------
+    if node.nested:
+        validate_node(node.nested, field_ranges)
+
+
+def validate_dsl(dsl: DSLRequest):
+
+    validate_node(dsl.root)
+
+    # Time filter validation
     if dsl.time_filter:
         if dsl.time_filter.type == "year":
             if not dsl.time_filter.value:
@@ -283,43 +314,14 @@ def validate_dsl(dsl: DSLRequest):
                     detail="Both from_date and to_date required"
                 )
 
-    # -----------------------------
-    # 5️) Validate Limit
-    # -----------------------------
     if dsl.limit:
         if not (1 <= dsl.limit <= 100):
             raise HTTPException(
                 status_code=400,
                 detail="Limit must be between 1 and 100"
             )
-            
-            
-            
-    # Detect numeric contradictions
-    field_ranges = {}
 
-    for condition in dsl.filters:
-        if ALLOWED_FIELDS[condition.field] == "numeric":
-            value = float(condition.value)
-
-            if condition.field not in field_ranges:
-                field_ranges[condition.field] = {"min": None, "max": None}
-
-            if condition.operator in [">", ">="]:
-                field_ranges[condition.field]["min"] = value
-
-            if condition.operator in ["<", "<="]:
-                field_ranges[condition.field]["max"] = value
-
-    for field, bounds in field_ranges.items():
-        if bounds["min"] is not None and bounds["max"] is not None:
-            if bounds["min"] > bounds["max"]:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Conflicting conditions detected."
-                )
     return True
-
 
 # ============================================================
 # ROOT
@@ -438,30 +440,61 @@ def parse_query_with_llm(query_text: str):
     response = ai_client.models.generate_content(
         model="gemini-2.5-flash",
         contents=f"""
-Return ONLY valid JSON.
+You are a deterministic query translator.
 
-Schema:
+Translate the user query EXACTLY into structured JSON.
+
+Rules:
+- DO NOT invent new fields.
+- DO NOT change the meaning of the query.
+- DO NOT add extra filters.
+- Only use fields that appear in the query.
+
+Allowed fields:
+pe_ratio, eps, revenue, debt, market_cap,
+revenue_growth, price_change_1y, sector, reported_date
+
+Allowed operators:
+<, <=, >, >=, =
+
+If the query contains:
+"and" → logic = AND
+"or" → logic = OR
+
+If no time filter is mentioned:
+"time_filter": null
+
+If no sorting mentioned:
+"sort_field": null
+"sort_order": "desc"
+
+If no limit mentioned:
+"limit": 50
+
+Return EXACTLY this format:
+
 {{
-  "filters": [
-    {{
-      "field": "pe_ratio | eps | revenue | debt | market_cap | revenue_growth | price_change_1y | sector | reported_date",
-      "operator": "< | <= | > | >= | =",
-      "value": number or string
-    }}
-  ],
-  "logic": "AND or OR",
-  "time_filter": {{
-      "type": "latest | year | range",
-      "value": number (if type=year),
-      "from_date": "YYYY-MM-DD" (if type=range),
-      "to_date": "YYYY-MM-DD" (if type=range)
+  "root": {{
+    "logic": "AND or OR",
+    "conditions": [
+      {{
+        "field": "field_name",
+        "operator": "operator",
+        "value": number or string
+      }}
+    ]
   }},
-  "sort_field": "optional field name",
-  "sort_order": "asc or desc",
-  "limit": number
+  "time_filter": null,
+  "sort_field": null,
+  "sort_order": "desc",
+  "limit": 50
 }}
 
-Query:
+Return ONLY valid JSON.
+No explanation.
+No markdown.
+
+User Query:
 {query_text}
 """
     )
@@ -479,68 +512,6 @@ Query:
     detail="AI returned invalid structured output.")
 
     return parsed
-# ============================================================
-# SQL COMPILER
-# ============================================================
-
-def build_dynamic_query(dsl: DSLRequest):
-    where_clauses = []
-    params = {}
-
-    for i, condition in enumerate(dsl.filters):
-        param_name = f"value_{i}"
-
-        # Choose correct table alias
-        if condition.field == "sector":
-            column = f"s.{condition.field}"
-        else:
-            column = f"f.{condition.field}"
-
-        where_clauses.append(
-            f"{column} {condition.operator} :{param_name}"
-        )
-
-        params[param_name] = condition.value
-    
-    
-    # Apply time filter
-    if dsl.time_filter:
-        if dsl.time_filter.type == "year":
-            where_clauses.append("EXTRACT(YEAR FROM f.reported_date) = :year")
-            params["year"] = dsl.time_filter.value
-
-        elif dsl.time_filter.type == "range":
-            where_clauses.append("f.reported_date BETWEEN :from_date AND :to_date")
-            params["from_date"] = dsl.time_filter.from_date
-            params["to_date"] = dsl.time_filter.to_date
-
-    # ALWAYS build logic_string
-    logic_string = f" {dsl.logic} ".join(where_clauses)
-
-    final_query = f"""
-        SELECT s.symbol,
-               s.sector,
-               f.pe_ratio,
-               f.eps,
-               f.market_cap,
-               f.revenue_growth,
-               f.price_change_1y
-        FROM symbols s
-        JOIN fundamentals f 
-            ON s.id = f.symbol_id
-            AND f.reported_date = (
-                SELECT MAX(f2.reported_date)
-                FROM fundamentals f2
-                WHERE f2.symbol_id = s.id
-            )
-        WHERE {logic_string}
-    """
-    print("\n SQL COMPILER INTERNALS")
-    print("WHERE CLAUSES:", where_clauses)
-    print("LOGIC USED:", dsl.logic)
-    
-    return text(final_query), params
-
 
 
 
@@ -571,6 +542,7 @@ def score_stock(stock):
 def screener(
     request: Request,                 # REQUIRED for slowapi
     payload: NLRequest,               # Your body model
+    
     current_user: dict = Depends(get_current_user)
 ):
     print("\n==============================")
@@ -593,6 +565,21 @@ def screener(
 
     print("\n LLM OUTPUT:")
     print("RAW DSL FROM LLM:", parsed_json)
+    #  Wrap flat DSL into root structure if needed
+    if "root" not in parsed_json:
+        parsed_json = {
+            "root": {
+                "logic": parsed_json.get("logic", "AND"),
+                "conditions": parsed_json.get("conditions", []),
+                "nested": parsed_json.get("nested")
+            },
+            "time_filter": parsed_json.get("time_filter"),
+            "sort_field": parsed_json.get("sort_field"),
+            "sort_order": parsed_json.get("sort_order"),
+            "limit": parsed_json.get("limit")
+        }
+
+    print("FIXED DSL STRUCTURE:", parsed_json)
 
     try:
         dsl = DSLRequest(**parsed_json)
@@ -628,7 +615,7 @@ def screener(
     print("\n SQL COMPILER STAGE")
     print(" Compiling DSL → SQL...")
 
-    query, params = build_dynamic_query(dsl)
+    query, params = build_sql_from_dsl(dsl)
 
     print(" COMPILED SQL:")
     print(query)
@@ -684,7 +671,7 @@ def screener(
     # QUERY HISTORY LOG (UNCHANGED)
     # --------------------------------------------------------
 
-    with engine.begin() as conn:
+    '''with engine.begin() as conn:
         conn.execute(text("""
             INSERT INTO query_history (user_id, raw_query, parsed_filters)
             VALUES (:user_id, :raw_query, :parsed_filters)
@@ -692,7 +679,7 @@ def screener(
             "user_id": current_user["id"],
             "raw_query": payload.query,
             "parsed_filters": json.dumps(parsed_json)
-        })
+        })'''
 
     return success_response(data=results)
 
