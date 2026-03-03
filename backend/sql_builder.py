@@ -41,9 +41,9 @@ def compile_conditions(node):
 
 def build_safe_query(dsl):
 
-    # =========================
+    
     # FUNDAMENTALS MODE
-    # =========================
+    
     if dsl["entity"] == "fundamentals":
 
         where_sql, values, tables = compile_conditions(dsl)
@@ -66,9 +66,9 @@ def build_safe_query(dsl):
 
         return query, values
 
-    # =========================
+    
     # HISTORICAL GROWTH MODE
-    # =========================
+    
     elif dsl["entity"] == "historical_metrics":
 
         metric = dsl["metric"]
