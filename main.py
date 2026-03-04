@@ -187,8 +187,7 @@ class TimeFilter(BaseModel):
 
 class DSLNode(BaseModel):
     logic: Literal["AND", "OR"]
-    conditions: list[Condition] = []
-    nested: Optional["DSLNode"] = None
+    conditions: list["Condition | DSLNode"]
 
 DSLNode.model_rebuild()
 
@@ -221,6 +220,16 @@ def validate_node(node: DSLNode, field_ranges=None):
         )
 
     for condition in node.conditions:
+        # If nested dictionary, convert to DSLNode
+        if isinstance(condition, dict):
+            condition = DSLNode(**condition)
+            validate_node(condition, field_ranges)
+            continue
+
+        # If already DSLNode
+        if isinstance(condition, DSLNode):
+            validate_node(condition, field_ranges)
+            continue
 
         if condition.field not in ALLOWED_FIELDS:
             raise HTTPException(
@@ -290,8 +299,6 @@ def validate_node(node: DSLNode, field_ranges=None):
                     detail="Conflicting conditions detected."
                 )
 
-    if node.nested:
-        validate_node(node.nested, field_ranges)
 
 
 def validate_dsl(dsl: DSLRequest):
@@ -439,7 +446,7 @@ def parse_query_with_llm(query_text: str):
 
     response = ai_client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"""
+        contents="""
 You are a deterministic query translator.
 
 Translate the user query EXACTLY into structured JSON.
@@ -463,6 +470,31 @@ If the query contains:
 
 If no time filter is mentioned:
 "time_filter": null
+
+If the query contains:
+- "for year XXXX"
+Return:
+
+"time_filter": {{
+  "type": "year",
+  "value": XXXX
+}}
+
+If the query contains:
+- "from YYYY-MM-DD to YYYY-MM-DD"
+Return:
+
+"time_filter": {{
+  "type": "range",
+  "from_date": "YYYY-MM-DD",
+  "to_date": "YYYY-MM-DD"
+}}
+
+IMPORTANT:
+- Do NOT put date filters inside root.conditions.
+- Date filtering must ONLY go inside time_filter.
+- If no time reference is present, time_filter must be null.
+
 
 If no sorting mentioned:
 "sort_field": null
@@ -493,10 +525,34 @@ Return EXACTLY this format:
 Return ONLY valid JSON.
 No explanation.
 No markdown.
+If the query contains parentheses or mixed AND/OR logic,
+you MUST create nested logical groups.
 
+Nested groups must follow this structure:
+
+{
+  "logic": "AND or OR",
+  "conditions": [
+    {
+      "field": "field_name",
+      "operator": "operator",
+      "value": number or string
+    },
+    {
+      "logic": "AND or OR",
+      "conditions": [
+        { "field": "...", "operator": "...", "value": ... },
+        { "field": "...", "operator": "...", "value": ... }
+      ]
+    }
+  ]
+}
+
+IMPORTANT:
+- Do NOT use "root" inside conditions.
+- Nested groups must contain only "logic" and "conditions".
 User Query:
-{query_text}
-"""
+"""+query_text
     )
 
     raw = response.candidates[0].content.parts[0].text.strip()
@@ -566,7 +622,7 @@ def screener(
     print("\n LLM OUTPUT:")
     print("RAW DSL FROM LLM:", parsed_json)
     #  Wrap flat DSL into root structure if needed
-    if "root" not in parsed_json:
+    '''if "root" not in parsed_json:
         parsed_json = {
             "root": {
                 "logic": parsed_json.get("logic", "AND"),
@@ -577,7 +633,7 @@ def screener(
             "sort_field": parsed_json.get("sort_field"),
             "sort_order": parsed_json.get("sort_order"),
             "limit": parsed_json.get("limit")
-        }
+        }'''
 
     print("FIXED DSL STRUCTURE:", parsed_json)
 

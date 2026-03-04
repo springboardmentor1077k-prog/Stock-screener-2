@@ -16,48 +16,51 @@ FIELD_MAP = {
 def compile_node(node, param_index=0):
     clauses = []
     params = {}
-    current_index = param_index
 
     for condition in node.conditions:
+
+        #  If nested DSLNode
+        if hasattr(condition, "conditions"):
+            nested_clause, nested_params, param_index = compile_node(
+                condition,
+                param_index
+            )
+            clauses.append(f"({nested_clause})")
+            params.update(nested_params)
+            continue
+
+        #  Normal Condition
         field_info = FIELD_MAP[condition.field]
+
+        param_name = f"value_{param_index}"
+        param_index += 1
 
         alias = field_info["alias"]
         column = field_info["column"]
 
-        param_name = f"value_{current_index}"
-        current_index += 1
-
-        clauses.append(
-            f"{alias}.{column} {condition.operator} :{param_name}"
-        )
+        clause = f"{alias}.{column} {condition.operator} :{param_name}"
+        clauses.append(clause)
 
         params[param_name] = condition.value
 
-    logic = node.logic
-    expression = f" {logic} ".join(clauses)
+    where_clause = f" {node.logic} ".join(clauses)
 
-    if node.nested:
-        nested_expr, nested_params, new_index = compile_node(
-            node.nested,
-            current_index
-        )
-
-        expression = f"{expression} {logic} ({nested_expr})"
-        params.update(nested_params)
-        current_index = new_index
-
-    return expression, params, current_index
+    return where_clause, params, param_index
 
 
-def detect_tables(node, tables=None):
-    if tables is None:
-        tables = set()
+def detect_tables(node):
+    tables = set()
 
     for condition in node.conditions:
-        tables.add(FIELD_MAP[condition.field]["table"])
 
-    if node.nested:
-        detect_tables(node.nested, tables)
+        # If nested DSLNode → recurse
+        if hasattr(condition, "conditions"):
+            nested_tables = detect_tables(condition)
+            tables.update(nested_tables)
+            continue
+
+        # Normal condition
+        tables.add(FIELD_MAP[condition.field]["table"])
 
     return tables
 
