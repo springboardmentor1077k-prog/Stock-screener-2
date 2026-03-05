@@ -1,33 +1,53 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 from database import engine
+from backend.cache import redis_client
+import json
 
-router = APIRouter()
+router = APIRouter(prefix="/companies", tags=["Companies"])
 
 
-@router.get("/companies")
+# ---------------------------------------
+# Get all companies (CACHED)
+# ---------------------------------------
+@router.get("/")
 def get_companies():
 
+    cache_key = "companies_list"
+
+    # 1️⃣ Check Redis cache
+    cached_data = redis_client.get(cache_key)
+
+    if cached_data:
+        return json.loads(cached_data)
+
+    # 2️⃣ Fetch from database
     with engine.connect() as conn:
         rows = conn.execute(text("""
             SELECT id, symbol, company_name, sector
             FROM symbols
         """)).fetchall()
 
-    companies = []
+    companies = [
+        {
+            "id": r.id,
+            "symbol": r.symbol,
+            "company_name": r.company_name,
+            "sector": r.sector
+        }
+        for r in rows
+    ]
 
-    for r in rows:
-        companies.append({
-            "id": r[0],
-            "symbol": r[1],
-            "company_name": r[2],
-            "sector": r[3]
-        })
+    # 3️⃣ Store in Redis (TTL = 60 seconds)
+    redis_client.setex(cache_key, 60, json.dumps(companies))
 
     return companies
 
 
-@router.get("/companies/{symbol}")
+# ---------------------------------------
+# Get single company
+# ---------------------------------------
+@router.get("/{symbol}")
 def get_company(symbol: str):
 
     with engine.connect() as conn:
@@ -41,8 +61,8 @@ def get_company(symbol: str):
         return {"error": "Company not found"}
 
     return {
-        "id": row[0],
-        "symbol": row[1],
-        "company_name": row[2],
-        "sector": row[3]
+        "id": row.id,
+        "symbol": row.symbol,
+        "company_name": row.company_name,
+        "sector": row.sector
     }

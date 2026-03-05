@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import text
 from pydantic import BaseModel
 
@@ -26,7 +27,6 @@ def register_user(user: UserAuth):
 
     with engine.begin() as conn:
 
-        # check if user already exists
         existing_user = conn.execute(
             text("""
                 SELECT id FROM users
@@ -41,7 +41,6 @@ def register_user(user: UserAuth):
                 detail="Username already exists"
             )
 
-        # insert new user
         conn.execute(
             text("""
                 INSERT INTO users (username, password)
@@ -57,10 +56,10 @@ def register_user(user: UserAuth):
 
 
 # -----------------------------
-# Login Endpoint
+# Login Endpoint (FIXED)
 # -----------------------------
 @router.post("/login")
-def login_user(user: UserAuth):
+def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
 
     with engine.connect() as conn:
 
@@ -70,7 +69,7 @@ def login_user(user: UserAuth):
                 FROM users
                 WHERE username = :username
             """),
-            {"username": user.username}
+            {"username": form_data.username}
         ).fetchone()
 
     if not db_user:
@@ -79,18 +78,15 @@ def login_user(user: UserAuth):
             detail="Invalid username or password"
         )
 
-    # verify password
-    if not verify_password(user.password, db_user.password):
+    if not verify_password(form_data.password, db_user.password):
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
         )
 
-    # create JWT token
     token = create_access_token({"sub": db_user.username})
 
     return {
         "access_token": token,
         "token_type": "bearer"
     }
-
