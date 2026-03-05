@@ -1,3 +1,14 @@
+FUNDAMENTAL_FIELDS = {"pe", "peg", "promoter_holding"}
+
+HISTORICAL_FIELDS = {
+    "revenue",
+    "ebitda",
+    "net_profit",
+    "debt_free_cash"
+}
+
+
+
 FIELD_TABLE_MAP = {
     "pe": ("fundamentals", "f"),
     "peg": ("fundamentals", "f"),
@@ -8,6 +19,28 @@ FIELD_TABLE_MAP = {
     "net_profit": ("historical_metrics", "h"),
     "debt_free_cash": ("historical_metrics", "h"),
 }
+
+
+def detect_query_tables(dsl):
+
+    fields = set()
+
+    def collect(node):
+        for cond in node.get("conditions", []):
+            if "conditions" in cond:
+                collect(cond)
+            else:
+                fields.add(cond["field"])
+
+    collect(dsl)
+
+    needs_fundamental = any(f in FUNDAMENTAL_FIELDS for f in fields)
+    needs_historical = any(f in HISTORICAL_FIELDS for f in fields)
+
+    return needs_fundamental, needs_historical
+
+
+
 def compile_conditions(node):
 
     logic = node.get("logic", "AND")
@@ -27,7 +60,11 @@ def compile_conditions(node):
             required_tables.update(nested_tables)
             continue
 
-        field = cond["field"]
+        field = cond.get("field")
+
+        if field not in FIELD_TABLE_MAP:
+            raise ValueError(f"Unsupported field: {field}")
+        
         operator = cond["operator"]
         value = cond["value"]
 
@@ -39,64 +76,70 @@ def compile_conditions(node):
 
     return f" {logic} ".join(sql_parts), values, required_tables
 
+
+
+
 def build_safe_query(dsl):
 
-    
-    # FUNDAMENTALS MODE
-    
     if dsl["entity"] == "fundamentals":
 
         where_sql, values, tables = compile_conditions(dsl)
 
-        # Always start from symbol
-        query = "SELECT s.symbol FROM symbol s "
+        query = "SELECT s.company_name FROM symbol s "
 
-        # Join required tables only
+        # Join tables depending on metrics used
         for table_name, alias in tables:
             query += f"JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
 
-        query += "WHERE " + where_sql
+        query += " WHERE " + where_sql
 
-        # Optional time filter
-        if "time_filter" in dsl:
-            if dsl["time_filter"]["type"] == "last_n_quarters":
-                query += " AND h.reported_date >= CURRENT_DATE - INTERVAL '1 year'"
+        # time filter
+        if "time_filter" in dsl and any(t[0] == "historical_metrics" for t in tables):
+
+            tf = dsl["time_filter"]
+
+            if tf["type"] == "last_n_quarters":
+
+                quarters = tf["value"]
+
+                query += f"""
+                AND h.reported_date >=
+                CURRENT_DATE - INTERVAL '{quarters * 3} months'
+                """
+
+
+
 
         query += f" LIMIT {dsl.get('limit', 50)}"
 
         return query, values
-
     
-    # HISTORICAL GROWTH MODE
-    
-    elif dsl["entity"] == "historical_metrics":
+    elif dsl["entity"] == "symbol":
 
-        metric = dsl["metric"]
-        period = dsl["period"]
-        direction = dsl["direction"]
+        where_sql, values, tables = compile_conditions(dsl)
 
-        operator = ">" if direction == "increase" else "<"
+        query = "SELECT s.company_name FROM symbol s "
 
-        query = f"""
-        SELECT s.symbol
-        FROM symbol s
-        JOIN (
-            SELECT symbol_id,
-                   {metric},
-                   LAG({metric}) OVER (
-                       PARTITION BY symbol_id
-                       ORDER BY financial_year, quarter
-                   ) AS prev_value
-            FROM historical_metrics
-        ) h ON s.symbol_id = h.symbol_id
-        WHERE prev_value IS NOT NULL
-          AND h.{metric} {operator} prev_value
-        GROUP BY s.symbol
-        HAVING COUNT(*) >= %s
-        LIMIT {dsl.get('limit', 50)}
-        """
+    # join required tables
+        for table_name, alias in tables:
+            query += f"JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
 
-        return query, [period - 1]
+        query += " WHERE " + where_sql
 
-    else:
-        raise ValueError("Unsupported entity")
+    # time filter
+        if "time_filter" in dsl:
+
+            tf = dsl["time_filter"]
+
+            if tf["type"] == "last_n_quarters":
+
+                quarters = tf["value"]
+
+                query += f"""
+                AND h.reported_date >=
+                CURRENT_DATE - INTERVAL '{quarters*3} months'
+                """
+
+        query += f" LIMIT {dsl.get('limit',50)}"
+
+        return query, values
