@@ -7,13 +7,13 @@ CREATE TABLE symbol (
 );
 
 
+ALTER TABLE symbol
+ALTER COLUMN symbol_id
+SET DEFAULT nextval('symbol_symbol_id_seq');
 
 
 
-DROP TABLE historical_metrics;
-
-
-
+-- DROP TABLE historical_metrics;
 -- CREATE DATABASE stock_db;
 
 -- SELECT current_database();
@@ -47,6 +47,20 @@ CHECK (debt_free_cash IS NOT NULL),
 
 ADD CONSTRAINT promoter_range_check
 CHECK (promoter_holding BETWEEN 0 AND 100);
+
+
+UPDATE fundamentals f
+SET
+    ebitda = h.ebitda,
+    debt_free_cash = h.debt_free_cash
+FROM historical_metrics h
+WHERE
+    f.symbol_id = h.symbol_id
+AND h.reported_date = (
+    SELECT MAX(reported_date)
+    FROM historical_metrics
+    WHERE symbol_id = f.symbol_id
+);
 
 
 CREATE TABLE historical_metrics (
@@ -182,4 +196,3 @@ SELECT * FROM users;
 SELECT * FROM portfolio;
 SELECT * FROM alerts;
 
-TRUNCATE Table historical_metrics;
