@@ -12,6 +12,9 @@ FIELD_MAP = {
     "reported_date": {"table": "fundamentals", "column": "reported_date", "alias": "f"}
 }
 
+SAFE_OPERATORS = {"<", "<=", ">", ">=", "="}
+SAFE_FIELDS = set(FIELD_MAP.keys())
+
 
 def compile_node(node, param_index=0):
     clauses = []
@@ -30,6 +33,10 @@ def compile_node(node, param_index=0):
             continue
 
         #  Normal Condition
+        # Validate field
+        if condition.field not in SAFE_FIELDS:
+            raise ValueError(f"Invalid field: {condition.field}")
+
         field_info = FIELD_MAP[condition.field]
 
         param_name = f"value_{param_index}"
@@ -37,6 +44,10 @@ def compile_node(node, param_index=0):
 
         alias = field_info["alias"]
         column = field_info["column"]
+        
+        # Validate operator
+        if condition.operator not in SAFE_OPERATORS:
+            raise ValueError(f"Invalid operator: {condition.operator}")
 
         clause = f"{alias}.{column} {condition.operator} :{param_name}"
         clauses.append(clause)
@@ -92,6 +103,9 @@ def apply_time_filter(where_clause, params, time_filter):
 def build_sql_from_dsl(dsl):
 
     where_clause, params, _ = compile_node(dsl.root)
+    
+    if not where_clause:
+        raise ValueError("Empty WHERE clause not allowed")
 
     where_clause, params = apply_time_filter(
         where_clause,
@@ -134,8 +148,10 @@ def build_sql_from_dsl(dsl):
         column = field_info["column"]
         query += f" ORDER BY {alias}.{column} {dsl.sort_order.upper()}"
 
-    # Limit
     if dsl.limit:
+        if dsl.limit > 100:
+            raise ValueError("Limit exceeds allowed maximum")
+
         query += " LIMIT :limit"
         params["limit"] = dsl.limit
     
