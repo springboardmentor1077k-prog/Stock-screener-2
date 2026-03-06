@@ -74,7 +74,6 @@ def compile_conditions(node):
         else:
             table_name, alias = FIELD_TABLE_MAP[field]
         
-        table_name, alias = FIELD_TABLE_MAP[field]
         required_tables.add((table_name, alias))
 
         sql_parts.append(f"{alias}.{field} {operator} %s")
