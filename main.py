@@ -601,10 +601,9 @@ def screener(
     
     current_user: dict = Depends(get_current_user)
 ):
-    print("\n==============================")
+    
     print(" SCREENER PIPELINE STARTED")
     print("User Query:", payload.query)
-    print("==============================")
 
     # NEW DSL FLOW
     try:
@@ -679,11 +678,36 @@ def screener(
     print(" SQL PARAMETERS:")
     print(params)
 
-    with engine.connect() as conn:
-        print("\n GENERATED SQL:")
-        print(query)
-        print("SQL Params:", params)
-        rows = conn.execute(query, params).fetchall()
+# ============================================================
+# EXECUTION LAYER
+# Runs SQL query and fetches rows from database
+# ============================================================
+
+    print("\n EXECUTION LAYER STARTED")
+
+    try:
+        with engine.connect() as conn:
+
+            print("\n RUNNING SQL QUERY:")
+            print(query)
+
+            print("\n SQL PARAMETERS:")
+            print(params)
+
+            rows = conn.execute(query, params).fetchall()
+
+            print("\n DATABASE ROWS RETURNED:", len(rows))
+
+    except Exception:
+        print("DATABASE EXECUTION ERROR")
+        print(traceback.format_exc())
+
+        return error_response(
+            code="DB_EXECUTION_ERROR",
+            message="Database execution failed",
+            layer="DATABASE",
+            status_code=500
+        )
 
     results = [
         {
@@ -699,6 +723,11 @@ def screener(
     ]
 
     print("\n DB Results Count:", len(results))
+    if len(results) == 0:
+        return success_response(
+            data=[],
+            message="No companies satisfy the condition"
+        )
 
     # --------------------------------------------------------
     # SCORING (UNCHANGED)
