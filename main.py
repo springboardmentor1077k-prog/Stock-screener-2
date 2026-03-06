@@ -1,8 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+import sqlite3
+import os
+
 from schemas import DSLQuery
 from llm_parser import parse_natural_language_to_dsl
+from compiler import compile_dsl_to_sql
 
 app = FastAPI()
 
@@ -12,10 +16,7 @@ class QueryRequest(BaseModel):
 # Global Error Handler for Pydantic Validation Errors
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
-    # Extracts the exact error message we wrote in schemas.py
     error_msg = exc.errors()[0].get("msg")
-    
-    # Strictly following the PDF error format
     return JSONResponse(
         status_code=400,
         content={
@@ -32,7 +33,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={
             "status": "error",
-            "code": "INTERNAL_PARSING_ERROR",
+            "code": "INTERNAL_SERVER_ERROR",
             "message": str(exc)
         }
     )
@@ -42,12 +43,35 @@ async def process_query(request: QueryRequest):
     # Step 1: Send raw natural language to LLM Parser
     raw_dsl_dict = parse_natural_language_to_dsl(request.query)
     
-    # Step 2: Pass the LLM output through our strict Pydantic Validator (Guardrails)
-    # If this fails, the validation_exception_handler above catches it automatically
+    # Step 2: Pass output through strict Pydantic Validator
     validated_dsl = DSLQuery(**raw_dsl_dict)
     
-    # Step 3: Return the safely parsed and validated DSL
+    # Step 3: Compile validated DSL into parameterized SQL
+    sql_query, params = compile_dsl_to_sql(validated_dsl.model_dump())
+    
+    # Step 4: Execution Layer - Connect to DB
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(current_dir, 'stocks.db')
+    
+    conn = sqlite3.connect(db_path)
+    # This row_factory automatically converts database rows into dictionary format
+    conn.row_factory = sqlite3.Row 
+    cursor = conn.cursor()
+    
+    # Execute the query securely
+    cursor.execute(sql_query, params)
+    rows = cursor.fetchall()
+    
+    # Convert row objects to standard Python dictionaries
+    results = [dict(row) for row in rows]
+    conn.close()
+    
+    # Step 5: Return the final formatted API response
     return {
         "status": "success",
-        "parsed_dsl": validated_dsl.model_dump()
+        "count": len(results),
+        "data": results,
+        "debug_info": {
+            "compiled_sql": sql_query
+        }
     }
