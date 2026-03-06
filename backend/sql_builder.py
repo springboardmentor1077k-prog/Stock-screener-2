@@ -90,7 +90,7 @@ def build_safe_query(dsl):
 
         where_sql, values, tables = compile_conditions(dsl)
 
-        query = "SELECT s.company_name FROM symbol s "
+        query = "SELECT DISTINCT s.company_name FROM symbol s "
 
         # Join tables depending on metrics used
         for table_name, alias in tables:

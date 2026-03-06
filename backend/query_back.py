@@ -8,14 +8,23 @@ import logging
 import json
 import redis
 import json
+from datetime import datetime
 
-# Redis connection
-# cache = redis.Redis(
-#     host="localhost",
-#     port=6379,
-#     decode_responses=True
-# )
 
+
+def log_query(prompt, dsl, sql, values, results):
+
+    log_entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "prompt": prompt,
+        "dsl": dsl,
+        "sql": sql,
+        "values": values,
+        "results": results
+    }
+
+    with open("logs_outputs/query_logs.jsonl", "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,6 +64,10 @@ def query_endpoint(request: QueryRequest):
     # Step 3: Convert DSL → SQL 
     sql, values = build_safe_query(dsl)
     results = execute_query(sql, values)
+    
+    nl_query = request.nl_query
+    log_query(nl_query, dsl, sql, values, results)
+    
     
     logger.info("Structured Query:")
     logger.info("SQL: %s", sql)
