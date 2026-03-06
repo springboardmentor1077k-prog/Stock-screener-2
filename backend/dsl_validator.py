@@ -116,14 +116,14 @@ def validate_dsl(dsl: dict):
         if analysis != "growth":
             return error(
                 "INVALID_ANALYSIS",
-                "historical_metrics requires growth analysis"
+                "Enter only financial metrics"
             )
 
         metric = dsl.get("metric")
         if metric not in HISTORICAL_FIELDS:
             return error(
                 "INVALID_METRIC",
-                f"{metric} not allowed in historical_metrics"
+                f"{metric} not allowed"
             )
 
         period = dsl.get("period")

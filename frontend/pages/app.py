@@ -62,7 +62,19 @@ if submit_btn:
                 if response.status_code == 200:
                     data = response.json()
                     log.info("Query processed successfully")
-                    st.success(data.get("message", "Query validated successfully."))
+                    # st.success(data.get("message", "Query validated successfully."))
+                    results = data.get("data", [])
+                    count = data.get("count", 0)
+
+                    if count == 0:
+                        st.warning("No companies matched your query.")
+                    else:
+                        st.success(f"Found {count} matching companies.")
+
+                        st.write("### Matching Companies")
+
+                        for company in results:
+                            st.write(f"{company['company_name']} matches your criteria.")
 
             
                 elif response.status_code == 422:

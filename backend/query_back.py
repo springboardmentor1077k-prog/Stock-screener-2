@@ -3,8 +3,18 @@ from pydantic import BaseModel
 from llm_parser import generate_dsl
 from dsl_validator import validate_dsl
 from sql_builder import build_safe_query
+from execution import execute_query
 import logging
 import json
+import redis
+import json
+
+# Redis connection
+# cache = redis.Redis(
+#     host="localhost",
+#     port=6379,
+#     decode_responses=True
+# )
 
 
 logging.basicConfig(level=logging.INFO)
@@ -42,15 +52,18 @@ def query_endpoint(request: QueryRequest):
     if validation_error:
         raise HTTPException(status_code=422, detail=validation_error)
 
-    # Step 3: Convert DSL → SQL (log only)
+    # Step 3: Convert DSL → SQL 
     sql, values = build_safe_query(dsl)
-
+    results = execute_query(sql, values)
+    
     logger.info("Structured Query:")
     logger.info("SQL: %s", sql)
     logger.info("VALUES: %s", values)
 
-    # 🔒 Do NOT return DSL or SQL
+    
     return {
         "status": "success",
-        "message": "Query validated successfully."
+        "message": "Query validated successfully.",
+        "count": len(results),
+        "data": results
     }

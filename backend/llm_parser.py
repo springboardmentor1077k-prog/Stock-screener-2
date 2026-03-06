@@ -13,9 +13,11 @@ def generate_dsl(nl_query: str):
     """
 
     api_key = os.getenv("GEMINI_API_KEY")
+    
     if not api_key:
         print("GEMINI_API_KEY missing")
         return None
+    print("USING GEMINI KEY:", api_key[:15])
 
     client = genai.Client(api_key=api_key)
 
@@ -50,7 +52,7 @@ def generate_dsl(nl_query: str):
     "type": "last_n_quarters",
     "value": number
   }},
-  "limit": 12
+  "limit": 20
   }}
 
   Examples:
@@ -65,7 +67,7 @@ def generate_dsl(nl_query: str):
   "conditions":[
    {{"field":"pe","operator":"<","value":20}}
   ],
-  "limit":12
+  "limit":20
   }}
 
   User Query:
@@ -78,7 +80,7 @@ def generate_dsl(nl_query: str):
  "conditions":[
    {{"field":"ebitda","operator":">","value":1000000}}
  ],
- "limit":12
+ "limit":20
   }}
 
 User Query:
@@ -96,7 +98,7 @@ show companies with pe < 50 and ebitda for the past 3 quarters
    "type":"last_n_quarters",
    "value":3
   }},
- "limit":12
+ "limit":20
   }}
 
   Rules:
@@ -110,7 +112,7 @@ show companies with pe < 50 and ebitda for the past 3 quarters
     
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             contents=prompt,
             config={
                 "temperature": 0,
@@ -134,5 +136,9 @@ show companies with pe < 50 and ebitda for the past 3 quarters
 
     except Exception as e:
         print("GEMINI ERROR:", str(e))
-        return None
+
+        if "429" in str(e):
+          return {"error": "RATE_LIMIT_EXCEEDED"}
+
+        return {"error": "QUERY_NOT_UNDERSTOOD"}
 

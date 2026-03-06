@@ -13,11 +13,12 @@ FIELD_TABLE_MAP = {
     "pe": ("fundamentals", "f"),
     "peg": ("fundamentals", "f"),
     "promoter_holding": ("fundamentals", "f"),
-
+    "ebitda": ("fundamentals", "f"),
+    "debt_free_cash": ("fundamentals", "f"),
+    
     "revenue": ("historical_metrics", "h"),
-    "ebitda": ("historical_metrics", "h"),
     "net_profit": ("historical_metrics", "h"),
-    "debt_free_cash": ("historical_metrics", "h"),
+    
 }
 
 
@@ -42,6 +43,7 @@ def detect_query_tables(dsl):
 
 
 def compile_conditions(node):
+    use_historical = "time_filter" in node
 
     logic = node.get("logic", "AND")
     conditions = node.get("conditions", [])
@@ -67,7 +69,11 @@ def compile_conditions(node):
         
         operator = cond["operator"]
         value = cond["value"]
-
+        if use_historical and field in ["ebitda", "debt_free_cash"]:
+            table_name, alias = ("historical_metrics", "h")
+        else:
+            table_name, alias = FIELD_TABLE_MAP[field]
+        
         table_name, alias = FIELD_TABLE_MAP[field]
         required_tables.add((table_name, alias))
 
@@ -127,7 +133,7 @@ def build_safe_query(dsl):
         query += " WHERE " + where_sql
 
     # time filter
-        if "time_filter" in dsl:
+        if "time_filter" in dsl and any(t[1] == "h" for t in tables):
 
             tf = dsl["time_filter"]
 
