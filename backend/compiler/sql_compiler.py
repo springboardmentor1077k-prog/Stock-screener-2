@@ -30,6 +30,10 @@ def compile_dsl_to_sql(dsl: dict):
         operator = f["operator"]
         value = f["value"]
 
+        # normalize sector values
+        if field == "sector" and isinstance(value, str):
+            value = value.capitalize()
+
         if field not in FIELD_MAPPING:
             raise ValueError(f"Unsupported field: {field}")
 

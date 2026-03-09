@@ -46,4 +46,4 @@ def execute_query(sql_query: str, params: list):
             "count": len(results)
         },
         "data": results
-    }
+        }
