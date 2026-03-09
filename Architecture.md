@@ -1,130 +1,408 @@
-# Stock Market Data Pipeline – Layered Architecture
+# AI-Powered Stock Screener  
+## Sprint-2 Architecture Documentation
 
-## Overview
+This document describes the architecture implemented for the **Natural Language → DSL → SQL pipeline** in the AI-Powered Stock Screener backend.
 
-This project implements a layered data ingestion pipeline to fetch, process, and store stock market data using market APIs (Yahoo Finance).
-
-The system follows a **Layered Model (LM)** to ensure clean separation of concerns and modularity.
-
----
-
-# High-Level Architecture (Layered Model)
-
-
+The objective of this milestone was to build a **controlled LLM interface** that allows users to query financial data using natural language while maintaining **database safety and architectural discipline**.
 
 ---
 
-# Layer Descriptions
+# 1. System Architecture
 
-## 1️. Orchestrator Layer  
-**File:** `pipeline_runner.py`
+The system implements a **layered pipeline architecture** that converts natural language queries into safe SQL queries.
 
-**Responsibilities:**
-- Controls execution flow
-- Calls API clients
-- Invokes parsers
-- Builds structured output
-- Manages execution flags
+The implemented flow is:
 
-This layer coordinates the entire pipeline but does not implement API logic or parsing logic.
+```
+User Natural Language Query
+            │
+            ▼
+FastAPI Endpoint (/query)
+            │
+            ▼
+LLM Parser (Gemini API)
+            │
+            ▼
+DSL JSON
+            │
+            ▼
+DSL Validator
+            │
+            ▼
+SQL Compiler
+            │
+            ▼
+Query Execution Layer
+            │
+            ▼
+PostgreSQL Database
+            │
+            ▼
+Formatted JSON API Response
+```
 
----
-
-## 2️. API Client Layer  
-**Files:**
-- `yahoo_client.py`
-- `alpha_client.py`
-
-**Responsibilities:**
-- Communicates with external APIs
-- Fetches raw JSON data
-- Handles request failures and API errors
-
-This layer strictly handles external communication.
-
----
-
-## 3️. Raw Storage Layer  
-**Folder:** `data/raw/`
-
-**Responsibilities:**
-- Stores untouched API responses
-- Maintains snapshot history
-- Enables reproducibility and debugging
-
-Raw data is saved before any transformation.
+Each component in the pipeline performs a specific responsibility to ensure **security, validation, and structured query generation**.
 
 ---
 
-## 4️. Parser Layer  
-**Files:**
-- `yahoo_parser.py`
-- `alpha_parser.py`
+# 2. FastAPI Backend
 
-**Responsibilities:**
-- Extracts required metrics
-- Removes unnecessary API noise
-- Maps API-specific fields to internal structure
+The backend is implemented using **FastAPI**.
+
+The following route modules are included:
+
+```
+backend/routes/
+    auth.py
+    companies.py
+    portfolio.py
+    alerts.py
+    query.py
+```
+
+The `/query` endpoint is responsible for executing the **Natural Language query pipeline**.
+
+Example API request:
+
+```json
+POST /query
+
+{
+  "query": "technology companies with pe ratio less than 30"
+}
+```
+
+---
+
+# 3. LLM Parser Module
+
+The **LLM Parser** converts the natural language query into a structured **Domain Specific Language (DSL)** format.
+
+File:
+
+```
+backend/llm/parser.py
+```
+
+The parser uses the **Google Gemini API** to generate DSL output.
+
+Example user query:
+
+```
+technology companies with pe ratio less than 30
+```
+
+LLM generated DSL:
+
+```json
+{
+ "filters":[
+    {
+      "field":"sector",
+      "operator":"=",
+      "value":"technology"
+    },
+    {
+      "field":"pe_ratio",
+      "operator":"<",
+      "value":30
+    }
+ ],
+ "logic":"AND"
+}
+```
+
+The parser removes markdown formatting or JSON prefixes returned by the LLM to ensure the output can be parsed correctly.
+
+---
+
+# 4. DSL Structure
+
+The DSL (Domain Specific Language) defines a **structured representation of financial filters**.
+
+Example DSL format:
+
+```json
+{
+ "filters":[
+  {
+   "field":"sector",
+   "operator":"=",
+   "value":"Technology"
+  },
+  {
+   "field":"pe_ratio",
+   "operator":"<",
+   "value":30
+  }
+ ],
+ "logic":"AND"
+}
+```
+
+### DSL Components
+
+| Field | Description |
+|------|-------------|
+| filters | List of filtering conditions |
+| field | Database attribute to filter |
+| operator | Comparison operator |
+| value | Filter value |
+| logic | Logical condition joining filters |
+
+Supported fields in the current implementation:
+
+```
+sector
+pe_ratio
+revenue
+symbol
+```
+
+Supported operators:
+
+```
+= < > <= >=
+```
+
+Logical operators:
+
+```
+AND
+OR
+```
+
+---
+
+# 5. DSL Validation Layer
+
+The DSL Validator ensures that the generated DSL is **safe and valid before SQL generation**.
+
+File:
+
+```
+backend/dsl/validator.py
+```
+
+The validator checks:
+
+- Allowed fields
+- Allowed operators
+- Allowed logical operators
+- Presence of required DSL attributes
+
+Example validation rules:
+
+```python
+ALLOWED_FIELDS = {
+    "sector",
+    "pe_ratio",
+    "revenue",
+    "symbol"
+}
+```
+
+If an invalid field is detected, the system returns a controlled error response.
 
 Example:
-- `longName` → `name`
-- `trailingPE` → `pe_ratio`
 
-This layer standardizes API data into application-ready format.
+```
+Invalid field: price
+```
 
----
-
-## 5️. Structured Builder Layer  
-
-**Responsibilities:**
-- Builds domain-based schema:
-
-
-  
-This makes the system API-agnostic.
+This prevents unsafe SQL generation.
 
 ---
 
-## 6️. Structured Storage Layer  
-**Folder:** `data/structured/`
+# 6. SQL Compilation Strategy
 
-**Responsibilities:**
-- Stores cleaned, structured JSON
-- Provides final usable format for downstream systems
+The **SQL Compiler** converts DSL into parameterized SQL queries.
+
+File:
+
+```
+backend/compiler/sql_compiler.py
+```
+
+The system uses a **field-to-column mapping dictionary**:
+
+```python
+FIELD_MAPPING = {
+ "symbol": ("symbols","s.symbol"),
+ "company_name": ("symbols","s.company_name"),
+ "sector": ("symbols","s.sector"),
+ "pe_ratio": ("fundamentals","f.pe_ratio"),
+ "revenue": ("fundamentals","f.revenue")
+}
+```
+
+Generated SQL example:
+
+```sql
+SELECT s.symbol, s.company_name
+FROM symbols s
+JOIN fundamentals f ON s.id = f.company_id
+WHERE s.sector = %s AND f.pe_ratio < %s
+```
+
+SQL parameters:
+
+```
+["Technology", 30]
+```
+
+### Why parameterized SQL is used
+
+Parameterized queries prevent **SQL injection attacks** by separating query structure from user data.
 
 ---
 
-#  Full Data Flow
+# 7. Query Execution Layer
 
-1. User runs `pipeline_runner.py`
-2. API client fetches data
-3. Raw JSON saved to `data/raw/`
-4. Parser extracts relevant fields
-5. Structured schema is built
-6. Structured JSON saved to `data/structured/`
+The **execution module** runs the generated SQL against the PostgreSQL database.
+
+File:
+
+```
+backend/execution/query_executor.py
+```
+
+Responsibilities:
+
+- Execute compiled SQL
+- Fetch database rows
+- Convert tuples to dictionaries
+- Format results for API responses
+
+Example database result format:
+
+```json
+{
+ "symbol": "AAPL",
+ "company_name": "Apple Inc."
+}
+```
 
 ---
 
-#  Key Design Principles
+# 8. Result Formatting
 
-- Separation of concerns
-- Modular architecture
-- Snapshot-based raw storage
-- API-agnostic structured output
-- Scalable for future database integration
+The system returns results in a structured JSON response.
+
+Example response format:
+
+```json
+{
+ "dsl": {...},
+ "sql": "...",
+ "params": [...],
+ "results": {
+   "data":[
+      {
+        "symbol":"AAPL",
+        "company_name":"Apple Inc."
+      }
+   ],
+   "count":1
+ }
+}
+```
+
+The response also handles edge cases:
+
+- empty results
+- database execution errors
+- invalid DSL queries
 
 ---
 
-#  Future Extensions
+# 9. Testing Results
 
-- Multi-source normalization layer
-- PostgreSQL integration
-- Scheduled ingestion
-- Retry/backoff mechanisms
-- AI-based stock screener integration
+The system was tested using several natural language queries.
+
+### Query 1
+
+```
+technology companies with pe ratio less than 30
+```
+
+Generated DSL:
+
+```
+sector = Technology
+pe_ratio < 30
+```
+
+Generated SQL:
+
+```sql
+SELECT s.symbol, s.company_name
+FROM symbols s
+JOIN fundamentals f ON s.id = f.company_id
+WHERE s.sector = %s AND f.pe_ratio < %s
+```
+
+---
+
+### Query 2
+
+```
+companies with revenue greater than 100000000
+```
+
+Generated DSL:
+
+```
+revenue > 100000000
+```
+
+---
+
+### Query 3
+
+```
+technology companies or companies with pe ratio less than 20
+```
+
+Generated DSL:
+
+```
+logic: OR
+```
+
+---
+
+# 10. Key Architectural Features
+
+The system ensures:
+
+- Controlled LLM output
+- Structured DSL representation
+- Validation layer before SQL generation
+- Parameterized SQL queries
+- Graceful error handling
+- Consistent API response formatting
+
+These measures ensure the system remains **secure, reliable, and extensible** when integrating LLMs with database systems.
 
 ---
 
 # Conclusion
 
-The project demonstrates a clean layered architecture for market data ingestion, ensuring maintainability, modularity, and extensibility for future development.
+The implemented architecture successfully demonstrates a **controlled Natural Language query system** using LLMs.
+
+The pipeline ensures that user queries are converted into safe database queries through the following steps:
+
+```
+Natural Language
+→ DSL
+→ Validation
+→ SQL Compilation
+→ Database Execution
+→ API Response
+```
+
+This approach enables flexible natural language querying while maintaining strict control over database access and query safety.
+
+---
+
