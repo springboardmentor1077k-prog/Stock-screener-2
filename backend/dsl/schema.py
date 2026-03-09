@@ -1,5 +1,13 @@
-ALLOWED_FIELDS = ["sector", "pe_ratio", "revenue", "symbol"]
+from pydantic import BaseModel
+from typing import List, Any
 
-ALLOWED_OPERATORS = ["=", "<", ">", "<=", ">="]
 
-ALLOWED_LOGIC = ["AND", "OR"]
+class Filter(BaseModel):
+    field: str
+    operator: str
+    value: Any
+
+
+class DSLQuery(BaseModel):
+    filters: List[Filter]
+    logic: str
