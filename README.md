@@ -1,109 +1,41 @@
-AI-Powered Mobile Stock Screener and Advisory Platform
-📌 Project Overview
+# SQL Compiler Project
 
-The AI-Powered Mobile Stock Screener and Advisory Platform is a smart financial application designed to help users analyze stocks, screen companies based on financial parameters, and receive AI-driven insights.
+This project implements a Python SQL compiler that converts DSL queries into parameterized SQL queries.
 
-The platform allows users to enter natural language queries (for example: “Show companies with PE ratio < 20”) and converts them into structured database queries to fetch relevant stock data.
+Architecture Flow:
 
-This project aims to simplify stock market analysis by combining Artificial Intelligence, FastAPI backend services, and an interactive frontend interface.
+User Query
+↓
+DSL Query
+↓
+SQL Compiler
+↓
+SQL Query + Parameters
 
-🎯 Objectives
+Features:
 
-Provide an AI-based stock screening system
+- Field to column mapping
+- AND / OR logic support
+- Parameterized SQL queries
+- Safe query generation
 
-Allow users to query stock data using natural language
+Example DSL Query
 
-Generate SQL queries automatically
+{
+ "conditions":[
+  {"field":"pe_ratio","operator":"<","value":15}
+ ],
+ "logic":"AND"
+}
 
-Display filtered stock results quickly
+Generated SQL
 
-Provide advisory insights for better investment decisions
+SELECT * FROM companies WHERE companies.pe_ratio < %s
 
-🏗️ System Architecture
+Parameters
 
-The system consists of the following main components:
+[15]
 
-User Interface (Frontend)
-Built using Streamlit to provide an interactive dashboard for users.
+Run the Program
 
-Backend API Layer
-Developed using FastAPI to process user queries and communicate with the database.
-
-Query Compiler Module
-Converts natural language queries into SQL queries using mapping dictionaries.
-
-Database Layer
-Stores stock market data and financial metrics.
-
-AI Processing Layer
-Interprets user input and generates structured queries.
-
-⚙️ Technologies Used
-Programming Language
-
-Python
-
-Backend Framework
-
-FastAPI
-
-Frontend
-
-Streamlit
-
-Database
-
-PostgreSQL
-
-Libraries
-
-pandas
-
-psycopg2
-
-SQLAlchemy
-
-uvicorn
-
-Version Control
-
-Git & GitHub
-
-📂 Project Structure
-AI-Stock-Screener
-│
-├── backend
-│   ├── main.py
-│   ├── compiler
-│   │   ├── query_compiler.py
-│   │   └── mapping_dictionary.py
-│   ├── database
-│   │   └── db_connection.py
-│   └── models
-│
-├── frontend
-│   └── streamlit_app.py
-│
-├── requirements.txt
-└── README.md
-🚀 Features
-
-Natural language stock queries
-
-Automatic SQL query generation
-
-Fast API-based backend
-
-Interactive Streamlit dashboard
-
-Financial ratio filtering
-
-Stock screening system
-
-Modular and scalable architecture
-
-
-
-SELECT company_name, pe_ratio
-FROM companies
-WHERE pe_ratio < 20;
+python sql_compiler.py
