@@ -5,11 +5,16 @@ from pydantic import BaseModel, ValidationError
 import sqlite3
 import os
 
-from schemas import DSLQuery
-from llm_parser import parse_natural_language_to_dsl
-from compiler import compile_dsl_to_sql
+from backend.services.schemas import DSLQuery
+from backend.services.llm_parser import parse_natural_language_to_dsl
+from backend.services.compiler import compile_dsl_to_sql
 
-app = FastAPI()
+
+app = FastAPI(
+    title="AI Stock Screener API",
+    description="Natural language stock screener powered by LLM + SQL compiler",
+    version="1.0"
+)
 
 
 class QueryRequest(BaseModel):
@@ -47,7 +52,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 @app.post("/query")
 async def process_query(request: QueryRequest):
 
-    # Step 1: Convert natural language → DSL
+    # Step 1: Natural language → DSL
     raw_dsl_dict = parse_natural_language_to_dsl(request.query)
 
     # Step 2: Validate DSL using Pydantic
@@ -56,37 +61,38 @@ async def process_query(request: QueryRequest):
     # Step 3: Compile DSL → SQL
     sql_query, params = compile_dsl_to_sql(validated_dsl)
 
-    # Step 4: Connect to database
+    # Step 4: Database path
     db_path = os.path.join(
         os.path.dirname(__file__),
-        "task-2-database-schema",
+        "..",
+        "database",
         "stock_screener.db"
     )
 
-    conn = sqlite3.connect(db_path)
+    if not os.path.exists(db_path):
+        raise FileNotFoundError("Database file not found")
 
-    # convert rows into dictionary format
-    conn.row_factory = sqlite3.Row
+    # Step 5: Execute query safely
+    with sqlite3.connect(db_path) as conn:
 
-    cursor = conn.cursor()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-    # Step 5: Execute query
-    cursor.execute(sql_query, params)
+        cursor.execute(sql_query, params)
 
-    rows = cursor.fetchall()
+        rows = cursor.fetchall()
 
-    conn.close()
-
-    # Step 6: Transform rows → JSON
+    # Step 6: Convert rows → JSON
     results = [dict(row) for row in rows]
 
-    # Step 7: Return final API response
+    # Step 7: API response
     return {
         "status": "success",
         "parsed_dsl": validated_dsl.model_dump(),
         "count": len(results),
         "data": results,
         "debug": {
-            "compiled_sql": sql_query
+            "compiled_sql": sql_query,
+            "params": params
         }
     }

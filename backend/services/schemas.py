@@ -1,8 +1,17 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Union
 
-ALLOWED_FIELDS = {"pe_ratio", "debt", "market_cap", "revenue", "ebitda", "promoter_holding"}
+ALLOWED_FIELDS = {
+    "pe_ratio",
+    "peg_ratio",
+    "debt_fcf",
+    "revenue",
+    "ebitda",
+    "promoter_holding"
+}
+
 ALLOWED_OPERATORS = {"<", ">", "<=", ">=", "="}
+
 
 class Condition(BaseModel):
     field: str
@@ -21,6 +30,12 @@ class Condition(BaseModel):
             raise ValueError(f"Unsupported operator: {v}")
         return v
 
+    @field_validator("value")
+    def validate_value(cls, v):
+        if not isinstance(v, (int, float)):
+            raise ValueError("Value must be numeric")
+        return v
+
 
 class DSLQuery(BaseModel):
     conditions: List[Condition] = Field(..., min_length=1, max_length=5)
@@ -29,6 +44,7 @@ class DSLQuery(BaseModel):
 
     @field_validator("logic")
     def validate_logic(cls, v):
+        v = v.upper()
         if v not in {"AND", "OR"}:
             raise ValueError("Logic must be AND or OR only")
         return v

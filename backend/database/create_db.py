@@ -1,11 +1,14 @@
 import sqlite3
 
+# connect to database (creates file if it does not exist)
 conn = sqlite3.connect("stock_screener.db")
 cursor = conn.cursor()
 
-# SYMBOLS
+# -----------------------------
+# SYMBOLS TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE symbols (
+CREATE TABLE IF NOT EXISTS symbols (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     symbol TEXT NOT NULL,
     company_name TEXT NOT NULL,
@@ -16,9 +19,11 @@ CREATE TABLE symbols (
 );
 """)
 
-# FUNDAMENTALS
+# -----------------------------
+# FUNDAMENTALS TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE fundamentals (
+CREATE TABLE IF NOT EXISTS fundamentals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER NOT NULL,
     pe_ratio REAL,
@@ -33,9 +38,11 @@ CREATE TABLE fundamentals (
 );
 """)
 
-# HISTORICAL METRICS
+# -----------------------------
+# HISTORICAL METRICS TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE historical_metrics (
+CREATE TABLE IF NOT EXISTS historical_metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER NOT NULL,
     quarter DATE NOT NULL,
@@ -47,9 +54,11 @@ CREATE TABLE historical_metrics (
 );
 """)
 
-# USERS
+# -----------------------------
+# USERS TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
     email TEXT UNIQUE,
@@ -58,9 +67,11 @@ CREATE TABLE users (
 );
 """)
 
-# PORTFOLIO
+# -----------------------------
+# PORTFOLIO TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE portfolio (
+CREATE TABLE IF NOT EXISTS portfolio (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     company_id INTEGER NOT NULL,
@@ -71,9 +82,11 @@ CREATE TABLE portfolio (
 );
 """)
 
-# ALERTS
+# -----------------------------
+# ALERTS TABLE
+# -----------------------------
 cursor.execute("""
-CREATE TABLE alerts (
+CREATE TABLE IF NOT EXISTS alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     condition_json TEXT,
@@ -83,56 +96,22 @@ CREATE TABLE alerts (
 );
 """)
 
-# INSERT SYMBOLS
-cursor.executemany("""
-INSERT INTO symbols (symbol, company_name, sector, industry, exchange)
-VALUES (?, ?, ?, ?, ?)
-""", [
-    ("INFY", "Infosys Ltd", "IT", "Software", "NSE"),
-    ("TCS", "Tata Consultancy Services", "IT", "Software", "NSE"),
-    ("HDFCBANK", "HDFC Bank", "Banking", "Financial Services", "NSE")
-])
+# -----------------------------
+# INDEXES (performance improvement)
+# -----------------------------
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_symbols_symbol ON symbols(symbol)")
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_fundamentals_company ON fundamentals(company_id)")
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_historical_company ON historical_metrics(company_id)")
 
-# INSERT FUNDAMENTALS (2 quarters for INFY)
-cursor.executemany("""
-INSERT INTO fundamentals (company_id, pe_ratio, peg_ratio, debt_fcf, ebitda, revenue, promoter_holding, report_date)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-""", [
-    (1, 22.5, 1.2, 0.5, 15000, 45000, 13.1, "2024-03-31"),
-    (1, 21.8, 1.1, 0.4, 15500, 47000, 13.1, "2024-06-30")
-])
-
-# INSERT HISTORICAL METRICS
-cursor.executemany("""
-INSERT INTO historical_metrics (company_id, quarter, revenue, ebitda, net_profit)
-VALUES (?, ?, ?, ?, ?)
-""", [
-    (1, "2024-03-31", 45000, 15000, 6000),
-    (1, "2024-06-30", 47000, 15500, 6200)
-])
-
-# INSERT USER
+# -----------------------------
+# Insert demo user
+# -----------------------------
 cursor.execute("""
-INSERT INTO users (name, email, hashed_password)
+INSERT OR IGNORE INTO users (name, email, hashed_password)
 VALUES (?, ?, ?)
 """, ("Keertana", "keertana@email.com", "hashed_password"))
-
-# INSERT PORTFOLIO (2 entries)
-cursor.executemany("""
-INSERT INTO portfolio (user_id, company_id, quantity)
-VALUES (?, ?, ?)
-""", [
-    (1, 1, 10),
-    (1, 2, 5)
-])
-
-# INSERT ALERT
-cursor.execute("""
-INSERT INTO alerts (user_id, condition_json, is_active)
-VALUES (?, ?, ?)
-""", (1, '{"pe_ratio": "<20", "peg_ratio": "<1"}', 1))
 
 conn.commit()
 conn.close()
 
-print("Database created and sample data inserted successfully.")
+print("Database schema created successfully.")
