@@ -61,7 +61,15 @@ async def process_query(request: QueryRequest):
     # Execute the query securely
     cursor.execute(sql_query, params)
     rows = cursor.fetchall()
-    
+
+    # 🔥 Ikkada pettu bava mana debugging prints:
+    print("🔥 SQL QUERY:", sql_query)
+    print("🔥 PARAMS:", params)
+    print("🔥 TOTAL ROWS FETCHED:", len(rows))
+
+    # Convert row objects to standard Python dictionaries
+    results = [dict(row) for row in rows]
+
     # Convert row objects to standard Python dictionaries
     results = [dict(row) for row in rows]
     conn.close()
