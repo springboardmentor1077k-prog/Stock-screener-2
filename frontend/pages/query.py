@@ -2,12 +2,16 @@ import streamlit as st
 import requests
 import logging as log
 import time
+import os
+import sys
+from ui_components.result import render_results_table
 
-st.markdown("""
-    <style>
-        [data-testid="stSidebar"] {display: none;}
-    </style>
-""", unsafe_allow_html=True)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# st.markdown("""
+#     <style>
+#         [data-testid="stSidebar"] {display: none;}
+#     </style>
+# """, unsafe_allow_html=True)
 
 log.basicConfig(
     level=log.INFO,
@@ -71,10 +75,11 @@ if submit_btn:
                     else:
                         st.success(f"Found {count} matching companies.")
 
-                        st.write("### Matching Companies")
+                        # st.write("### Matching Companies")
 
-                        for company in results:
-                            st.write(f"{company['company_name']} matches your criteria.")
+                        # for company in results:
+                        #     st.write(f"{company['company_name']} matches your criteria.")
+                        render_results_table(data)
 
             
                 elif response.status_code == 422:
