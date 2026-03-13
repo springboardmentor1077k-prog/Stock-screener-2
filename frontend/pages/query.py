@@ -6,12 +6,14 @@ import os
 import sys
 from ui_components.result import render_results_table
 
+if "results" not in st.session_state:
+    st.session_state.results = None
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# st.markdown("""
-#     <style>
-#         [data-testid="stSidebar"] {display: none;}
-#     </style>
-# """, unsafe_allow_html=True)
+
+
+
+
 
 log.basicConfig(
     level=log.INFO,
@@ -65,6 +67,7 @@ if submit_btn:
                 
                 if response.status_code == 200:
                     data = response.json()
+                    st.session_state.results = data
                     log.info("Query processed successfully")
                     # st.success(data.get("message", "Query validated successfully."))
                     results = data.get("data", [])
@@ -111,6 +114,10 @@ if submit_btn:
                 st.error("Backend connection failed.")
 
         st.session_state.loading = False
+        
+if st.session_state.results:
+    render_results_table(st.session_state.results)
+    
 
 if time_since_last < count_down:
     remaining = int(count_down - time_since_last)
