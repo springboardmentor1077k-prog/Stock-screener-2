@@ -1,143 +1,32 @@
 {
     "ticker": "AMZN",
-    "snapshot_date": "2026-02-20T10:09:55.688121",
+    "snapshot_date": "2026-03-13T18:35:51.481698",
     "company_profile": {
         "name": "Amazon.com, Inc.",
         "sector": "Consumer Cyclical",
         "industry": "Internet Retail",
         "website": "https://www.amazon.com",
-        "market_cap": 2199155900416
+        "market_cap": 2249287794688,
+        "description": "Amazon.com, Inc. engages in the retail sale of consumer products, advertising, and subscriptions service through online and physical stores in North America and internationally. The company operates through three segments: North America, International, and Amazon Web Services (AWS). It also manufactures and sells electronic devices, including Kindle, fire tablets, fire TVs, echo, ring, blink, and eero; and develops and produces media content. In addition, the company offers programs that enable sellers to sell their products in its stores; and programs that allow authors, independent publishers, musicians, filmmakers, Twitch streamers, skill and app developers, and others to publish and sell content. Further, it provides compute, storage, Artificial intelligence, database, analytics, machine learning, and other services, as well as advertising services through programs, such as sponsored ads, display, and video advertising. Additionally, the company offers Amazon Prime, a membership program. The company's products offered through its stores include merchandise and content purchased for resale and products offered by third-party sellers. It serves consumers, sellers, developers, enterprises, content creators, advertisers, and employees. The company was incorporated in 1994 and is headquartered in Seattle, Washington.",
+        "logo_url": null,
+        "Category": null,
+        "Book Value": 38.306,
+        "Show Profile": false,
+        "Change From Previous Close": -1.4672,
+        "Profit after Tax": 0,
+        "change percent": 0,
+        "Last Traded Price": 209.53
     },
     "fundamentals": {
-        "pe_ratio": 28.571827,
+        "pe_ratio": 29.223152,
         "eps": 7.17,
         "revenue": 716923994112,
         "debt": 178546999296,
-        "market_cap": 2199155900416,
+        "market_cap": 2249287794688,
         "revenue_growth": 13.600000000000001,
-        "price_change_1y": -8.085069937940654
+        "price_change_1y": 8.066429129342417
     },
     "historical_prices": [
-        {
-            "date": "2025-02-20",
-            "open": 224.77999877929688,
-            "high": 225.1300048828125,
-            "low": 221.80999755859375,
-            "close": 222.8800048828125,
-            "volume": 30001700
-        },
-        {
-            "date": "2025-02-21",
-            "open": 223.27999877929688,
-            "high": 223.30999755859375,
-            "low": 214.74000549316406,
-            "close": 216.5800018310547,
-            "volume": 55323900
-        },
-        {
-            "date": "2025-02-24",
-            "open": 217.4499969482422,
-            "high": 217.72000122070312,
-            "low": 212.4199981689453,
-            "close": 212.7100067138672,
-            "volume": 42387600
-        },
-        {
-            "date": "2025-02-25",
-            "open": 211.6300048828125,
-            "high": 213.33999633789062,
-            "low": 204.16000366210938,
-            "close": 212.8000030517578,
-            "volume": 58958000
-        },
-        {
-            "date": "2025-02-26",
-            "open": 214.94000244140625,
-            "high": 218.16000366210938,
-            "low": 213.08999633789062,
-            "close": 214.35000610351562,
-            "volume": 39120600
-        },
-        {
-            "date": "2025-02-27",
-            "open": 218.35000610351562,
-            "high": 219.97000122070312,
-            "low": 208.3699951171875,
-            "close": 208.74000549316406,
-            "volume": 40548600
-        },
-        {
-            "date": "2025-02-28",
-            "open": 208.64999389648438,
-            "high": 212.6199951171875,
-            "low": 206.99000549316406,
-            "close": 212.27999877929688,
-            "volume": 51771700
-        },
-        {
-            "date": "2025-03-03",
-            "open": 213.35000610351562,
-            "high": 214.00999450683594,
-            "low": 202.5500030517578,
-            "close": 205.02000427246094,
-            "volume": 42948400
-        },
-        {
-            "date": "2025-03-04",
-            "open": 200.11000061035156,
-            "high": 206.8000030517578,
-            "low": 197.42999267578125,
-            "close": 203.8000030517578,
-            "volume": 60853100
-        },
-        {
-            "date": "2025-03-05",
-            "open": 204.8000030517578,
-            "high": 209.97999572753906,
-            "low": 203.25999450683594,
-            "close": 208.36000061035156,
-            "volume": 38610100
-        },
-        {
-            "date": "2025-03-06",
-            "open": 204.39999389648438,
-            "high": 205.77000427246094,
-            "low": 198.3000030517578,
-            "close": 200.6999969482422,
-            "volume": 49863800
-        },
-        {
-            "date": "2025-03-07",
-            "open": 199.49000549316406,
-            "high": 202.27000427246094,
-            "low": 192.52999877929688,
-            "close": 199.25,
-            "volume": 59802800
-        },
-        {
-            "date": "2025-03-10",
-            "open": 195.60000610351562,
-            "high": 196.72999572753906,
-            "low": 190.85000610351562,
-            "close": 194.5399932861328,
-            "volume": 62350900
-        },
-        {
-            "date": "2025-03-11",
-            "open": 193.89999389648438,
-            "high": 200.17999267578125,
-            "low": 193.39999389648438,
-            "close": 196.58999633789062,
-            "volume": 54002900
-        },
-        {
-            "date": "2025-03-12",
-            "open": 200.72000122070312,
-            "high": 201.52000427246094,
-            "low": 195.2899932861328,
-            "close": 198.88999938964844,
-            "volume": 43679300
-        },
         {
             "date": "2025-03-13",
             "open": 198.1699981689453,
@@ -2024,7 +1913,127 @@
             "high": 205.63999938964844,
             "low": 202.80999755859375,
             "close": 204.86000061035156,
-            "volume": 35518700
+            "volume": 35669600
+        },
+        {
+            "date": "2026-02-20",
+            "open": 204.75999450683594,
+            "high": 211.1699981689453,
+            "low": 203.75,
+            "close": 210.11000061035156,
+            "volume": 65881600
+        },
+        {
+            "date": "2026-02-23",
+            "open": 208.10000610351562,
+            "high": 208.42999267578125,
+            "low": 203.11000061035156,
+            "close": 205.27000427246094,
+            "volume": 53581500
+        },
+        {
+            "date": "2026-02-24",
+            "open": 205.47000122070312,
+            "high": 210.36000061035156,
+            "low": 203.25,
+            "close": 208.55999755859375,
+            "volume": 41137200
+        },
+        {
+            "date": "2026-02-25",
+            "open": 210.4600067138672,
+            "high": 211.58999633789062,
+            "low": 208.92999267578125,
+            "close": 210.63999938964844,
+            "volume": 41346400
+        },
+        {
+            "date": "2026-02-26",
+            "open": 210.72999572753906,
+            "high": 211.0500030517578,
+            "low": 205.35000610351562,
+            "close": 207.9199981689453,
+            "volume": 47756800
+        },
+        {
+            "date": "2026-02-27",
+            "open": 206.8300018310547,
+            "high": 210.3300018310547,
+            "low": 205.1999969482422,
+            "close": 210.0,
+            "volume": 57422800
+        },
+        {
+            "date": "2026-03-02",
+            "open": 204.5500030517578,
+            "high": 209.72999572753906,
+            "low": 203.4600067138672,
+            "close": 208.38999938964844,
+            "volume": 46001000
+        },
+        {
+            "date": "2026-03-03",
+            "open": 203.10000610351562,
+            "high": 209.17999267578125,
+            "low": 202.47999572753906,
+            "close": 208.72999572753906,
+            "volume": 43184900
+        },
+        {
+            "date": "2026-03-04",
+            "open": 210.47000122070312,
+            "high": 217.5399932861328,
+            "low": 210.14999389648438,
+            "close": 216.82000732421875,
+            "volume": 54731100
+        },
+        {
+            "date": "2026-03-05",
+            "open": 215.97999572753906,
+            "high": 220.47000122070312,
+            "low": 215.58999633789062,
+            "close": 218.94000244140625,
+            "volume": 60943400
+        },
+        {
+            "date": "2026-03-06",
+            "open": 214.99000549316406,
+            "high": 217.32000732421875,
+            "low": 212.52999877929688,
+            "close": 213.2100067138672,
+            "volume": 51152700
+        },
+        {
+            "date": "2026-03-09",
+            "open": 210.4499969482422,
+            "high": 213.82000732421875,
+            "low": 207.11000061035156,
+            "close": 213.49000549316406,
+            "volume": 54642900
+        },
+        {
+            "date": "2026-03-10",
+            "open": 214.19000244140625,
+            "high": 215.64999389648438,
+            "low": 212.42999267578125,
+            "close": 214.3300018310547,
+            "volume": 35678800
+        },
+        {
+            "date": "2026-03-11",
+            "open": 215.7100067138672,
+            "high": 217.0,
+            "low": 211.35000610351562,
+            "close": 212.64999389648438,
+            "volume": 34199300
+        },
+        {
+            "date": "2026-03-12",
+            "open": 210.38999938964844,
+            "high": 211.7100067138672,
+            "low": 208.14999389648438,
+            "close": 209.52999877929688,
+            "volume": 44276700
         }
     ]
 }

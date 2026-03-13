@@ -1,3 +1,5 @@
+import math
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Request
@@ -148,6 +150,8 @@ class AlertCreate(BaseModel):
     metric: Literal["pe_ratio", "eps"]
     condition: Literal["<", ">"]
     threshold: float = Field(..., gt=0)
+class WatchlistCreate(BaseModel):
+    stock_symbol: str = Field(..., min_length=1, max_length=5)
     
 # ============================================================
 # DSL CONFIGURATION (STEP 1)
@@ -379,6 +383,72 @@ def get_company(symbol: str):
         "company_name": row[2],
         "sector": row[3]
     })
+    
+# ============================================================
+# COMPANY DETAILS ENDPOINT
+# ============================================================
+
+@app.get("/company/{symbol}/details")
+def company_details(symbol: str):
+
+    with engine.connect() as conn:
+
+        row = conn.execute(text("""
+            SELECT 
+                s.symbol,
+                s.company_name,
+                s.sector,
+                f.pe_ratio,
+                f.eps,
+                f.market_cap,
+                f.revenue_growth,
+                f.price_change_1y
+            FROM symbols s
+            JOIN fundamentals f 
+                ON s.id = f.symbol_id
+            WHERE s.symbol = :symbol
+            ORDER BY f.reported_date DESC
+            LIMIT 1
+        """), {"symbol": symbol.upper()}).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    return success_response(data={
+        "symbol": row[0],
+        "company_name": row[1],
+        "sector": row[2],
+        "pe_ratio": row[3],
+        "eps": row[4],
+        "market_cap": row[5],
+        "revenue_growth": row[6],
+        "price_change_1y": row[7]
+    })
+# ============================================================
+# COMPANY PRICE HISTORY ENDPOINT
+# ============================================================
+
+@app.get("/company/{symbol}/price-history")
+def price_history(symbol: str):
+
+    with engine.connect() as conn:
+
+        rows = conn.execute(text("""
+            SELECT hp.price_date,
+                   hp.close
+            FROM historical_prices hp
+            JOIN symbols s ON hp.symbol_id = s.id
+            WHERE s.symbol = :symbol
+            ORDER BY hp.price_date
+        """), {"symbol": symbol.upper()}).fetchall()
+
+    return success_response(data=[
+        {
+            "date": r[0],
+            "close": r[1]
+        }
+        for r in rows
+    ])
 # ============================================================
 # AUTH ENDPOINTS
 # ============================================================
@@ -766,6 +836,11 @@ def screener(
             "parsed_filters": json.dumps(parsed_json)
         })'''
 
+    for r in results:
+        for k, v in r.items():
+            if isinstance(v, float) and math.isnan(v):
+                r[k] = None
+
     return success_response(data=results)
 
 # ============================================================
@@ -837,6 +912,81 @@ def delete_portfolio(
             raise HTTPException(status_code=404, detail="Portfolio entry not found")
 
     return success_response(message="Deleted successfully")
+
+
+
+# ============================================================
+# WATCHLIST CRUD (ID-Based REST)
+# ============================================================
+
+class WatchlistCreate(BaseModel):
+    stock_symbol: str = Field(..., min_length=1, max_length=5)
+
+
+@app.post("/watchlist")
+def add_to_watchlist(
+    request: WatchlistCreate,
+    current_user: dict = Depends(get_current_user)
+):
+
+    with engine.begin() as conn:
+
+        symbol = conn.execute(text("""
+            SELECT id FROM symbols WHERE symbol = :symbol
+        """), {"symbol": request.stock_symbol}).fetchone()
+
+        if not symbol:
+            raise HTTPException(status_code=404, detail="Symbol not found")
+
+        conn.execute(text("""
+            INSERT INTO watchlist (user_id, symbol_id, added_at)
+            VALUES (:user_id, :symbol_id, NOW())
+        """), {
+            "user_id": current_user["id"],
+            "symbol_id": symbol[0]
+        })
+
+    return success_response(message="Added to watchlist")
+
+
+@app.get("/watchlist")
+def get_watchlist(current_user: dict = Depends(get_current_user)):
+
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT w.id,
+                   s.symbol
+            FROM watchlist w
+            JOIN symbols s ON w.symbol_id = s.id
+            WHERE w.user_id = :user_id
+        """), {"user_id": current_user["id"]}).fetchall()
+
+    return success_response(data=[
+        {"id": r[0], "symbol": r[1]}
+        for r in rows
+    ])
+
+
+@app.delete("/watchlist/{watch_id}")
+def delete_watchlist(
+    watch_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+
+    with engine.begin() as conn:
+
+        result = conn.execute(text("""
+            DELETE FROM watchlist
+            WHERE id = :id AND user_id = :user_id
+        """), {
+            "id": watch_id,
+            "user_id": current_user["id"]
+        })
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Watchlist entry not found")
+
+    return success_response(message="Removed from watchlist")
 
 # ============================================================
 # ALERTS CRUD (ID-Based REST)

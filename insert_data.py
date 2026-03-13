@@ -1,10 +1,17 @@
+import math
+
 import yfinance as yf
 import json
 import os
 import time
 from datetime import datetime
 from sqlalchemy import create_engine, text
-
+def safe_number(v):
+    if v is None:
+        return 0
+    if isinstance(v, float) and math.isnan(v):
+        return 0
+    return float(v)
 # ======================================================
 # DATABASE CONNECTION
 # ======================================================
@@ -12,12 +19,25 @@ from sqlalchemy import create_engine, text
 engine = create_engine(
     "postgresql://postgres:newpassword123@localhost:5432/stock_screener"
 )
+def normalize_symbol(symbol):
 
+    indian_stocks = [
+        "INFY","TCS","WIPRO","HCLTECH","RELIANCE","HDFCBANK",
+        "ICICIBANK","KOTAKBANK","SBIN","AXISBANK","LT","ITC",
+        "MARUTI","TATAMOTORS","HINDUNILVR","NESTLEIND",
+        "ASIANPAINT","ULTRACEMCO","BAJAJ-AUTO","DIVISLAB",
+        "ADANIGREEN","ADANIPORTS","ADANIENT","ADANIGAS","ADANITRANS"
+    ]
+
+    if symbol in indian_stocks:
+        return symbol + ".NS"
+
+    return symbol
 # ======================================================
 # STOCK LIST
 # ======================================================
 
-symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "INFY"]
+symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "INFY", "TCS", "WIPRO", "HCLTECH","RELIANCE","HDFCBANK", "ICICIBANK", "KOTAKBANK", "SBIN", "AXISBANK", "LT", "ITC", "MARUTI", "TATAMOTORS","HINDUNILVR","NESTLEIND","ASIANPAINT","ULTRACEMCO","BAJAJ-AUTO","DIVISLAB","ADANIGREEN","ADANIPORTS","ADANIENT","ADANIGAS","ADANITRANS","ADANIGREEN","ADANIPORTS","ADANIENT","ADANIGAS","ADANITRANS","ADANIGREEN","ADANIPORTS","ADANIENT","ADANIGAS"]
 
 DATA_FOLDER = "yf_data"
 
@@ -33,12 +53,14 @@ for ticker_symbol in symbols:
     print(f"\nFetching {ticker_symbol}...")
 
     try:
-        ticker = yf.Ticker(ticker_symbol)
+        yf_symbol = normalize_symbol(ticker_symbol)
+
+        ticker = yf.Ticker(yf_symbol)
         info = ticker.info
         history = ticker.history(period="1y")
 
         if not info or history.empty:
-            print(f"❌ Skipping {ticker_symbol} (No valid data)")
+            print(f" Skipping {ticker_symbol} (No valid data)")
             continue
 
         # ======================================================
@@ -50,7 +72,16 @@ for ticker_symbol in symbols:
             "sector": info.get("sector"),
             "industry": info.get("industry"),
             "website": info.get("website"),
-            "market_cap": info.get("marketCap") or 0
+            "market_cap": info.get("marketCap") or 0,
+            "description": info.get("longBusinessSummary"),
+            "logo_url": info.get("logo_url"),
+            "Category": info.get("category"),
+            "Book Value": info.get("bookValue") or 0,
+            "Show Profile": info.get("showProfile") or False,
+            "Change From Previous Close": info.get("regularMarketChangePercent") or 0,
+            "Profit after Tax": info.get("profitMargin") or 0,
+            "change percent": info.get("changePercent") or 0,
+            "Last Traded Price": info.get("regularMarketPrice") or 0
         }
 
         # ======================================================
@@ -70,6 +101,9 @@ for ticker_symbol in symbols:
         last_close = history.iloc[-1]["Close"]
         price_change_1y = ((last_close - first_close) / first_close) * 100
 
+        if math.isnan(price_change_1y):
+            price_change_1y = 0
+
         # ======================================================
         # HISTORICAL PRICES
         # ======================================================
@@ -79,11 +113,11 @@ for ticker_symbol in symbols:
         for date, row in history.iterrows():
             historical_prices.append({
                 "date": str(date.date()),
-                "open": float(row["Open"]),
-                "high": float(row["High"]),
-                "low": float(row["Low"]),
-                "close": float(row["Close"]),
-                "volume": int(row["Volume"])
+                "open": safe_number(row["Open"]),
+                "high": safe_number(row["High"]),
+                "low": safe_number(row["Low"]),
+                "close": safe_number(row["Close"]),
+                "volume": int(row["Volume"] or 0)
             })
 
         # ======================================================
@@ -160,13 +194,13 @@ for ticker_symbol in symbols:
                     price_change_1y = EXCLUDED.price_change_1y
             """), {
                 "symbol_id": symbol_id,
-                "pe_ratio": float(pe_ratio),
-                "eps": float(eps),
-                "revenue": float(revenue),
-                "debt": float(debt),
-                "market_cap": float(market_cap),
-                "revenue_growth": float(revenue_growth),
-                "price_change_1y": float(price_change_1y),
+                "pe_ratio": safe_number(pe_ratio),
+                "eps": safe_number(eps),
+                "revenue": safe_number(revenue),
+                "debt": safe_number(debt),
+                "market_cap": safe_number(market_cap),
+                "revenue_growth": safe_number(revenue_growth),
+                "price_change_1y": safe_number(price_change_1y),
                 "reported_date": datetime.now().date()
             })
 
@@ -196,4 +230,4 @@ for ticker_symbol in symbols:
     except Exception as e:
         print(f"⚠ Error processing {ticker_symbol}: {e}")
 
-print("\n🎯 Snapshot + database ingestion completed successfully.")
+print("\n Snapshot + database ingestion completed successfully.")
