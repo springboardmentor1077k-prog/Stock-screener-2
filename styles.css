@@ -1,0 +1,35 @@
+.hero{
+text-align:center;
+margin-top:40px;
+}
+
+.hero h1{
+font-size:48px;
+font-weight:700;
+}
+
+.hero span{
+color:#2563eb;
+}
+
+.hero p{
+color:#6b7280;
+font-size:18px;
+}
+
+.card{
+background:white;
+border:1px solid #e5e7eb;
+border-radius:12px;
+padding:20px;
+margin-top:20px;
+box-shadow:0 2px 6px rgba(0,0,0,0.04);
+}
+
+.market{
+background:white;
+border:1px solid #e5e7eb;
+border-radius:12px;
+padding:20px;
+margin-top:10px;
+}
