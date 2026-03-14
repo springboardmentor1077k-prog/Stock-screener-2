@@ -2,13 +2,21 @@ import pandas as pd
 import streamlit as st
 
 
+'''
+Sort the order in which the user wants
+like assending (default)
+desc rev the array'''
+
+
 def render_results_table(data):
 
     if "data" in data and data["data"]:
 
         results = data["data"]
 
-        st.subheader("Matching Companies")
+        st.subheader("Matching Companies for your Query")
+        
+        # st.write("")
 
         table_data = []
 
@@ -18,7 +26,7 @@ def render_results_table(data):
                 "Company Name": company.get("company_name"),
             }
 
-            # Add dynamic metrics returned by backend
+            
             for key, value in company.items():
                 if key not in ["company_symbol", "company_name"]:
                     row[key.upper()] = value
@@ -29,7 +37,7 @@ def render_results_table(data):
 
         st.dataframe(df, use_container_width=True)
 
-        st.write("### View Details")
+        st.write("View Details")
 
         for company in results:
 

@@ -44,6 +44,15 @@ for ticker in tickers:
     sector = info.get("sector", "Unknown")
     pe = info.get("trailingPE")
     peg = info.get("pegRatio")
+    growth = info.get("earningsGrowth")
+    
+    if growth:
+        growth_p = growth * 100
+        peg = pe / growth_p if growth_p != 0 else None
+else:
+    peg = None
+    
+    
     debt_free_cash = info.get("freeCashflow")
     if debt_free_cash is None:
         debt_free_cash = 0

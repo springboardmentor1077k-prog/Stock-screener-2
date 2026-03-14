@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code
+.vscode/
+
+# Environment
+.env
+
+# Database structure
+tables/
+
+# Logs
+*.log
+logs_outputs/
+
+# MacOS
+.DS_Store

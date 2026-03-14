@@ -8,10 +8,15 @@ from ui_components.result import render_results_table
 
 if "results" not in st.session_state:
     st.session_state.results = None
+    
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
+
+#Api call count function 
+def api_cal():
+    pass
 
 
 
@@ -28,7 +33,7 @@ if "loading" not in st.session_state:
 if "last_request_time" not in st.session_state:
     st.session_state.last_request_time = 0
     
-count_down = 5
+count_down = 5 #wait for 5 seconds
 current_time = time.time()
 time_since_last = current_time - st.session_state.last_request_time
 
@@ -77,15 +82,14 @@ if submit_btn:
                         st.warning("No companies matched your query.")
                     else:
                         st.success(f"Found {count} matching companies.")
-
-                        # st.write("### Matching Companies")
-
-                        # for company in results:
-                        #     st.write(f"{company['company_name']} matches your criteria.")
-                        render_results_table(data)
+     
+                        #Function to fetch the data in a table
+                        # render_results_table(data)
+                        st.session_state.results = data
 
             
                 elif response.status_code == 422:
+                    st.session_state.results = None
                     error_detail = response.json().get("detail", {})
 
                     st.warning(
@@ -115,10 +119,10 @@ if submit_btn:
 
         st.session_state.loading = False
         
-if st.session_state.results:
+if st.session_state.results is not None:
     render_results_table(st.session_state.results)
     
 
 if time_since_last < count_down:
     remaining = int(count_down - time_since_last)
-    st.info(f"Please wait {remaining} seconds before sending another query.")
+    st.info(f"Please wait {remaining} seconds before submitting.")

@@ -103,7 +103,7 @@ def build_safe_query(dsl):
 
         fundamental_metrics = ", ".join(metrics)
 
-        query = f"SELECT DISTINCT s.company_symbol, s.company_name, {fundamental_metrics} FROM symbol s "
+        query = f"SELECT DISTINCT ON (s.company_symbol) s.company_symbol, s.company_name, {fundamental_metrics} FROM symbol s "
 
         # Join tables depending on metrics used
         for table_name, alias in tables:
@@ -135,8 +135,20 @@ def build_safe_query(dsl):
     elif dsl["entity"] == "symbol":
 
         where_sql, values, tables = compile_conditions(dsl)
+        fields = set()
+        
+        for cond in dsl["conditions"]:
+            if "field" in cond:
+                fields.add(cond["field"])
+                
+        metrics = []
+        for field in fields:
+            table_name, alias = FIELD_TABLE_MAP[field]
+            metrics.append(f"{alias}.{field}")
 
-        query = "SELECT s.company_name FROM symbol s "
+        selected_metrics = ", ".join(metrics)
+
+        query = f"SELECT DISTINCT ON (s.company_symbol) s.company_symbol, s.company_name, {selected_metrics} FROM symbol s "
 
     # join required tables
         for table_name, alias in tables:

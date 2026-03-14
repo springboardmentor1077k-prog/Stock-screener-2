@@ -22,7 +22,10 @@ ALLOWED_ENTITIES = [
 FUNDAMENTAL_FIELDS = [
     "pe",
     "peg",
-    "promoter_holding"
+    "promoter_holding",
+    "ebitda",
+    "debt_free_cash"
+      
 ]
 
 HISTORICAL_FIELDS = [

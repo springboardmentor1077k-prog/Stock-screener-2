@@ -32,28 +32,56 @@ def generate_dsl(nl_query: str):
   pe, peg, promoter_holding, ebitda, debt_free_cash, revenue, net_profit
 
   Entity rules:
-  - fundamentals → pe, peg, promoter_holding
-  - historical_metrics → revenue, ebitda, net_profit, debt_free_cash
-  - symbol → when fields belong to both tables
 
-  DSL structure:
+  1. fundamentals
+  Use when the query asks for current snapshot financial metrics.
+  Fields:
+  pe, peg, promoter_holding, ebitda, debt_free_cash
 
-  {{
-  "entity": "...",
-  "logic": "AND",
-  "conditions": [
-    {{
-      "field": "...",
-      "operator": "...",
-      "value": number
-    }}
-  ],
-  "time_filter": {{
-    "type": "last_n_quarters",
-    "value": number
-  }},
-  "limit": 20
-  }}
+  Example:
+  show companies with ebitda > 1000
+  → entity = fundamentals
+
+  2. historical_metrics
+  Use ONLY when the query explicitly refers to time.
+
+  Examples of time phrases:
+  last quarter
+  last N quarters
+  last year
+  past months
+  historical trend
+
+  Fields:
+  revenue, ebitda, net_profit, debt_free_cash
+
+  Example:
+  show companies with ebitda greater than 100000 in the last 3 quarters
+  → entity = historical_metrics
+
+  3. symbol
+  Use when the query mixes metrics that come from different tables.
+
+  Example:
+show companies with pe < 20 and revenue last 3 quarters
+→ entity = symbol
+
+Important rule:
+If NO time condition exists, always prefer fundamentals.
+
+Time rule:
+
+If the query contains a time condition such as:
+last N quarters, last year, past months
+
+then include:
+
+"time_filter": {{
+  "type": "last_n_quarters",
+  "value": N
+}}
+
+If no time condition exists, do NOT include time_filter.
 
   Examples:
 
@@ -73,15 +101,15 @@ def generate_dsl(nl_query: str):
   User Query:
   show companies with ebitda greater than 1000000
 
-  DSL:
-  {{
- "entity":"historical_metrics",
+DSL:
+{{
+ "entity":"fundamentals",
  "logic":"AND",
  "conditions":[
    {{"field":"ebitda","operator":">","value":1000000}}
  ],
  "limit":20
-  }}
+}}
 
 User Query:
 show companies with pe < 50 and ebitda for the past 3 quarters
