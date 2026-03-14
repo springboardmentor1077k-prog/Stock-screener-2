@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from app.db import get_connection
 import traceback
+from app.execution_engine import execute_query
 
 app = FastAPI()
 
@@ -132,13 +133,7 @@ def run_query(request: QueryRequest):
         sql, values = build_sql_from_dsl(dsl)
 
         # 4️⃣ Execute Query
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(sql, values)
-        results = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
+        results = execute_query(sql, values)
 
         return {
             "status": "success",
