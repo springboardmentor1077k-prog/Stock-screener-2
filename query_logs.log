@@ -1,0 +1,32 @@
+INFO:backend.api.main:User query received: pe ratio less than 50
+INFO:backend.api.main:Parsed DSL: {'conditions': [{'field': 'pe_ratio', 'operator': '<', 'value': 50}], 'logic': 'AND', 'time_filter': None}
+INFO:query_logger:UserQuery: pe ratio less than 50 | SQL: 
+    SELECT
+        s.symbol,
+        s.company_name,
+        f.pe_ratio,
+        f.peg_ratio,
+        f.market_cap,
+        f.revenue,
+        f.ebitda,
+        f.profit_margin
+    FROM fundamentals f
+    JOIN symbols s
+    ON f.company_id = s.id
+     WHERE pe_ratio < ? LIMIT ? OFFSET ?
+INFO:backend.api.main:User query received: pe ratio less than 50
+INFO:backend.api.main:Parsed DSL: {'conditions': [{'field': 'pe_ratio', 'operator': '<', 'value': 50}], 'logic': 'AND', 'time_filter': None}
+INFO:query_logger:UserQuery: pe ratio less than 50 | SQL: 
+    SELECT
+        s.symbol,
+        s.company_name,
+        f.pe_ratio,
+        f.peg_ratio,
+        f.market_cap,
+        f.revenue,
+        f.ebitda,
+        f.profit_margin
+    FROM fundamentals f
+    JOIN symbols s
+    ON f.company_id = s.id
+     WHERE pe_ratio < ? LIMIT ? OFFSET ?

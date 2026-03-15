@@ -4,7 +4,6 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -12,15 +11,10 @@ API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
     raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
-# Configure Gemini
 genai.configure(api_key=API_KEY)
 
 
 def extract_json(text: str) -> dict:
-    """
-    Extract JSON object from LLM response safely.
-    Handles cases where the model adds explanations or markdown.
-    """
 
     match = re.search(r"\{.*\}", text, re.DOTALL)
 
@@ -38,27 +32,69 @@ def extract_json(text: str) -> dict:
 def parse_natural_language_to_dsl(user_query: str) -> dict:
 
     prompt = f"""
-Convert the following natural language stock screener query into DSL JSON.
+You are an AI that converts stock screener queries into DSL JSON.
 
-Rules:
-- Return ONLY JSON
-- No explanations
+STRICT RULES:
+- Output ONLY JSON
+- No explanation
 - No markdown
+- No comments
 
-Allowed fields:
-pe_ratio, peg_ratio, debt_fcf, revenue, ebitda, promoter_holding
+Allowed fields (these match database columns exactly):
+
+pe_ratio
+peg_ratio
+market_cap
+revenue
+revenue_growth
+ebitda
+profit_margin
+roe
+roa
+debt_to_equity
+eps
+book_value
+dividend_yield
+sector
+price_growth
+
+Do NOT invent new fields.
+Use only the fields listed above.
+
+Growth interpretation examples:
+
+"high growth companies" → revenue_growth > 0.1
+"companies doing better every year" → revenue_growth > 0
+"companies with increasing revenue" → revenue_growth > 0
+"improving profits" → roe > 0.15
+
+Price trend interpretation:
+
+"stocks trending upward" → price_growth > 0
+"stocks gaining momentum" → price_growth > 0
+"stocks with rising price" → price_growth > 0
+
+Sector examples:
+
+"IT companies" → sector = "Technology"
+"banking companies" → sector = "Financial Services"
+"pharma companies" → sector = "Healthcare"
 
 Allowed operators:
-<, >, <=, >=, =
+< > <= >= =
 
-Logic:
-AND or OR
+Logic values:
+AND OR
 
-Example:
+JSON format:
 
 {{
  "conditions":[
-   {{"field":"pe_ratio","operator":"<","value":20}}
+   {{
+     "field":"pe_ratio",
+     "operator":"<",
+     "value":20
+   }}
  ],
  "logic":"AND"
 }}
@@ -69,7 +105,10 @@ User Query:
 
     try:
 
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash",
+            generation_config={"temperature": 0}
+        )
 
         response = model.generate_content(prompt)
 

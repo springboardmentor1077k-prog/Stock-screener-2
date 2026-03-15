@@ -1,7 +1,11 @@
 import sqlite3
+import os
+
+BASE_DIR = os.path.dirname(__file__)
+DB_PATH = os.path.join(BASE_DIR, "stock_screener.db")
 
 # connect to database (creates file if it does not exist)
-conn = sqlite3.connect("stock_screener.db")
+conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
 # -----------------------------
@@ -10,11 +14,13 @@ cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS symbols (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    symbol TEXT NOT NULL,
+    symbol TEXT UNIQUE NOT NULL,
     company_name TEXT NOT NULL,
     sector TEXT,
     industry TEXT,
     exchange TEXT,
+    country TEXT,
+    website TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """)
@@ -26,30 +32,52 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS fundamentals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER NOT NULL,
+
     pe_ratio REAL,
     peg_ratio REAL,
-    debt_fcf REAL,
-    ebitda REAL,
+    market_cap REAL,
+
     revenue REAL,
-    promoter_holding REAL,
+    revenue_growth REAL,
+    ebitda REAL,
+    profit_margin REAL,
+
+    total_debt REAL,
+    debt_to_equity REAL,
+
+    roe REAL,
+    roa REAL,
+
+    eps REAL,
+    book_value REAL,
+    dividend_yield REAL,
+
+    price_growth REAL,
+
     report_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (company_id) REFERENCES symbols(id)
 );
 """)
 
 # -----------------------------
-# HISTORICAL METRICS TABLE
+# HISTORICAL PRICE DATA
 # -----------------------------
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS historical_metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER NOT NULL,
-    quarter DATE NOT NULL,
-    revenue REAL,
-    ebitda REAL,
-    net_profit REAL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    date DATE NOT NULL,
+    open REAL,
+    high REAL,
+    low REAL,
+    close REAL,
+    volume INTEGER,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (company_id) REFERENCES symbols(id)
 );
 """)
@@ -60,10 +88,12 @@ CREATE TABLE IF NOT EXISTS historical_metrics (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    email TEXT UNIQUE,
+    username TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     hashed_password TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    is_active BOOLEAN DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP
 );
 """)
 
@@ -77,6 +107,22 @@ CREATE TABLE IF NOT EXISTS portfolio (
     company_id INTEGER NOT NULL,
     quantity INTEGER,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (company_id) REFERENCES symbols(id)
+);
+""")
+
+# -----------------------------
+# WATCHLIST TABLE
+# -----------------------------
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    company_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (company_id) REFERENCES symbols(id)
 );
@@ -92,7 +138,38 @@ CREATE TABLE IF NOT EXISTS alerts (
     condition_json TEXT,
     is_active BOOLEAN DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+""")
+
+# -----------------------------
+# SEARCH HISTORY TABLE
+# -----------------------------
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS search_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    query_text TEXT NOT NULL,
+    parsed_dsl TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+""")
+
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON search_history(user_id)")
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_time ON search_history(created_at)")
+
+# -----------------------------
+# COMMUNITY POSTS
+# -----------------------------
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """)
 
@@ -102,14 +179,7 @@ CREATE TABLE IF NOT EXISTS alerts (
 cursor.execute("CREATE INDEX IF NOT EXISTS idx_symbols_symbol ON symbols(symbol)")
 cursor.execute("CREATE INDEX IF NOT EXISTS idx_fundamentals_company ON fundamentals(company_id)")
 cursor.execute("CREATE INDEX IF NOT EXISTS idx_historical_company ON historical_metrics(company_id)")
-
-# -----------------------------
-# Insert demo user
-# -----------------------------
-cursor.execute("""
-INSERT OR IGNORE INTO users (name, email, hashed_password)
-VALUES (?, ?, ?)
-""", ("Keertana", "keertana@email.com", "hashed_password"))
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_historical_date ON historical_metrics(date)")
 
 conn.commit()
 conn.close()
