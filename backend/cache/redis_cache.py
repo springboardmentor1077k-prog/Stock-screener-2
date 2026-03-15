@@ -1,18 +1,19 @@
 import redis
 import json
+import os
 
-redis_client = redis.Redis(
-    host="localhost",
-    port=6379,
-    decode_responses=True
-)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-def normalize_key(query: str):
-    return query.lower().strip()
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
-def get_cached_query(query):
 
-    key = normalize_key(query)
+def build_cache_key(query: str, page: int, page_size: int):
+    return f"query:{query}:page:{page}:size:{page_size}"
+
+
+def get_cached_query(query: str, page: int, page_size: int):
+
+    key = build_cache_key(query, page, page_size)
 
     cached = redis_client.get(key)
 
@@ -22,12 +23,15 @@ def get_cached_query(query):
     return None
 
 
-def cache_query(query, data):
+def cache_query(query: str, page: int, page_size: int, data):
 
-    key = normalize_key(query)
+    key = build_cache_key(query, page, page_size)
 
     redis_client.setex(
         key,
-        300,
+        300,  # cache for 5 minutes
         json.dumps(data)
     )
+
+def clear_cache():
+    redis_client.flushall()

@@ -5,27 +5,44 @@ API_URL = "http://127.0.0.1:8000"
 
 st.set_page_config(page_title="StockSense AI", layout="wide")
 
-# ---------- PREMIUM CSS ----------
+# ---------- GLOBAL CSS ----------
 st.markdown("""
 <style>
+
+/* REMOVE STREAMLIT HEADER + MENU */
+header[data-testid="stHeader"] {display:none;}
+#MainMenu {visibility:hidden;}
+[data-testid="stToolbar"] {display:none;}
+[data-testid="stDecoration"] {display:none;}
+[data-testid="stStatusWidget"] {display:none;}
+
+/* REMOVE TOP SPACING */
+.block-container {
+padding-top:0rem;
+padding-bottom:0rem;
+}
+
+/* HIDE SIDEBAR */
+[data-testid="stSidebar"] {display:none;}
+[data-testid="collapsedControl"] {display:none;}
 
 /* GOOGLE FONT */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+font-family: 'Inter', sans-serif;
 }
 
 /* BACKGROUND */
 .stApp {
-    background:
-        radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
-        radial-gradient(circle at 80% 30%, rgba(37,99,235,0.15), transparent 40%),
-        radial-gradient(circle at 50% 80%, rgba(30,58,95,0.2), transparent 40%),
-        linear-gradient(180deg,#020712,#081424);
+background:
+radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
+radial-gradient(circle at 80% 30%, rgba(37,99,235,0.15), transparent 40%),
+radial-gradient(circle at 50% 80%, rgba(30,58,95,0.2), transparent 40%),
+linear-gradient(180deg,#020712,#081424);
 }
 
-/* FINTECH GRID */
+/* GRID */
 .stApp::before{
 content:"";
 position:fixed;
@@ -36,87 +53,54 @@ linear-gradient(rgba(59,130,246,0.07) 1px, transparent 1px),
 linear-gradient(90deg, rgba(59,130,246,0.07) 1px, transparent 1px);
 background-size:80px 80px;
 pointer-events:none;
-z-index:0;
 }
 
 /* TITLE */
 .title {
-    text-align:center;
-    font-size:42px;
-    font-weight:700;
-    font-family:'Orbitron', sans-serif;
-    color:#e6f1ff;
+text-align:center;
+font-size:46px;
+font-weight:700;
+font-family:'Orbitron', sans-serif;
+letter-spacing:1px;
+color:#e6f1ff;
 
-    text-shadow:
-        0 0 6px #3b82f6,
-        0 0 14px #2563eb,
-        0 0 28px rgba(59,130,246,0.6);
+text-shadow:
+0 0 6px #3b82f6,
+0 0 14px #2563eb,
+0 0 28px rgba(59,130,246,0.6);
 }
 
 /* SUBTITLE */
 .subtitle {
-    text-align:center;
-    color:#9fb0c4;
-    margin-top:6px;
-    margin-bottom:15px;
-    font-size:15px;
+text-align:center;
+color:#9fb0c4;
+margin-top:6px;
+margin-bottom:20px;
+font-size:15px;
 }
 
-/* INPUTS */
+/* INPUT */
 .stTextInput input {
-    background:#081424;
-    border:1px solid #1e3a5f;
-    border-radius:10px;
-    color:white;
-    transition: all 0.2s ease;
-}
-
-/* INPUT FOCUS */
-.stTextInput input:focus {
-    border:1px solid #3b82f6;
-    box-shadow:0 0 10px rgba(59,130,246,0.7);
+background:#081424;
+border:1px solid #1e3a5f;
+border-radius:10px;
+color:white;
 }
 
 /* BUTTON */
 .stButton button {
-    background: linear-gradient(90deg,#3b82f6,#2563eb);
-    width:100%;
-    height:46px;
-    border-radius:10px;
-    border:none;
-    font-weight:600;
-    color:white;
-    transition: all 0.2s ease;
-}
-
-/* BUTTON HOVER */
-.stButton button:hover {
-    box-shadow:0 0 18px rgba(59,130,246,0.8);
-    transform: translateY(-1px);
-}
-
-/* LINKS */
-.signup,
-.backlogin {
-    text-align:center;
-    margin-top:18px;
-    color:#9fb0c4;
-}
-
-.signup a,
-.backlogin a {
-    color:#4da3ff;
-    font-weight:600;
-    text-decoration:none;
-}
-
-.signup a:hover,
-.backlogin a:hover {
-    text-decoration:underline;
+background: linear-gradient(90deg,#3b82f6,#2563eb);
+width:100%;
+height:46px;
+border-radius:10px;
+border:none;
+font-weight:600;
+color:white;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
 
 # ---------- SESSION ----------
 if "token" not in st.session_state:
@@ -129,7 +113,7 @@ if "page" not in st.session_state:
 # ---------- LOGIN ----------
 def login():
 
-    # vertical spacing
+    st.write("")
     st.write("")
     st.write("")
     st.write("")
@@ -142,7 +126,7 @@ def login():
 
         icon1, icon2, icon3 = st.columns([2,1,2])
         with icon2:
-            st.image("frontend/assets/stock_icon.png", width=105)
+            st.image("frontend/assets/stock_icon.png", width=95)
 
         st.markdown(
             '<div class="subtitle">AI-Powered Stock Screener and Advisory Platform</div>',
@@ -168,13 +152,13 @@ def login():
                 st.session_state.token = data["access_token"]
                 st.session_state.user_id = data["user_id"]
 
-                st.rerun()
+                st.switch_page("pages/query_screen.py")
 
             else:
                 st.error("Invalid email or password")
 
         st.markdown(
-            '<div class="signup">Don\'t have an account? <a href="?page=signup">Sign up</a></div>',
+            '<div style="text-align:center;margin-top:12px;">Don\'t have an account? <a href="?page=signup">Sign up</a></div>',
             unsafe_allow_html=True
         )
 
@@ -182,7 +166,7 @@ def login():
 # ---------- SIGNUP ----------
 def signup():
 
-    # vertical spacing
+    st.write("")
     st.write("")
     st.write("")
     st.write("")
@@ -217,48 +201,9 @@ def signup():
                 st.error("Signup failed")
 
         st.markdown(
-            '<div class="backlogin">Already have an account? <a href="?page=login">Back to Login</a></div>',
+            '<div style="text-align:center;margin-top:12px;">Already have an account? <a href="?page=login">Back to Login</a></div>',
             unsafe_allow_html=True
         )
-
-
-# ---------- DASHBOARD ----------
-def dashboard():
-
-    st.sidebar.title("StockSense AI")
-
-    if st.sidebar.button("Logout"):
-        st.session_state.token = None
-        st.session_state.page = "login"
-        st.rerun()
-
-    st.title("AI Stock Screener")
-
-    query = st.text_input(
-        "Ask your stock query",
-        placeholder="Example: Find IT companies with PE < 20 and strong revenue growth"
-    )
-
-    if st.button("Search"):
-
-        with st.spinner("Analyzing market data..."):
-
-            response = requests.post(
-                f"{API_URL}/query",
-                headers={
-                    "Authorization": f"Bearer {st.session_state.token}"
-                },
-                json={"query": query}
-            )
-
-            if response.status_code == 200:
-
-                data = response.json()
-
-                st.dataframe(data["data"], use_container_width=True)
-
-            else:
-                st.error("Query failed")
 
 
 # ---------- ROUTING ----------
@@ -273,6 +218,3 @@ if st.session_state.token is None:
         signup()
     else:
         login()
-
-else:
-    dashboard()

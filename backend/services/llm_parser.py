@@ -29,6 +29,94 @@ def extract_json(text: str) -> dict:
         raise ValueError("Invalid JSON returned by LLM")
 
 
+# -----------------------------
+# FALLBACK RULE-BASED PARSER
+# -----------------------------
+def fallback_parser(query: str) -> dict:
+
+    query = query.lower()
+
+    # split into words to avoid substring bugs like "with" -> "it"
+    words = re.findall(r"\b\w+\b", query)
+
+    conditions = []
+
+    # -----------------------------
+    # PE ratio
+    # -----------------------------
+    pe_match = re.search(r"pe\s*ratio\s*(less than|<)\s*(\d+)", query)
+    if pe_match:
+        conditions.append({
+            "field": "pe_ratio",
+            "operator": "<",
+            "value": int(pe_match.group(2))
+        })
+
+    # -----------------------------
+    # Revenue
+    # -----------------------------
+    rev_match = re.search(r"revenue\s*(greater than|>)\s*(\d+)", query)
+    if rev_match:
+        conditions.append({
+            "field": "revenue",
+            "operator": ">",
+            "value": int(rev_match.group(2))
+        })
+
+    # -----------------------------
+    # EBITDA
+    # -----------------------------
+    ebitda_match = re.search(r"ebitda\s*(greater than|>)\s*(\d+)", query)
+    if ebitda_match:
+        conditions.append({
+            "field": "ebitda",
+            "operator": ">",
+            "value": int(ebitda_match.group(2))
+        })
+
+    # -----------------------------
+    # Sector detection (FIXED)
+    # -----------------------------
+    if "it" in words or "technology" in words:
+        conditions.append({
+            "field": "sector",
+            "operator": "=",
+            "value": "Technology"
+        })
+
+    if "bank" in words or "banking" in words:
+        conditions.append({
+            "field": "sector",
+            "operator": "=",
+            "value": "Financial Services"
+        })
+
+    if "pharma" in words or "healthcare" in words:
+        conditions.append({
+            "field": "sector",
+            "operator": "=",
+            "value": "Healthcare"
+        })
+
+    # -----------------------------
+    # Default condition
+    # -----------------------------
+    if not conditions:
+        conditions.append({
+            "field": "pe_ratio",
+            "operator": "<",
+            "value": 30
+        })
+
+    return {
+        "conditions": conditions,
+        "logic": "AND"
+    }
+
+
+# -----------------------------
+# MAIN LLM PARSER
+# -----------------------------
 def parse_natural_language_to_dsl(user_query: str) -> dict:
 
     prompt = f"""
@@ -40,7 +128,7 @@ STRICT RULES:
 - No markdown
 - No comments
 
-Allowed fields (these match database columns exactly):
+Allowed fields:
 
 pe_ratio
 peg_ratio
@@ -57,28 +145,6 @@ book_value
 dividend_yield
 sector
 price_growth
-
-Do NOT invent new fields.
-Use only the fields listed above.
-
-Growth interpretation examples:
-
-"high growth companies" → revenue_growth > 0.1
-"companies doing better every year" → revenue_growth > 0
-"companies with increasing revenue" → revenue_growth > 0
-"improving profits" → roe > 0.15
-
-Price trend interpretation:
-
-"stocks trending upward" → price_growth > 0
-"stocks gaining momentum" → price_growth > 0
-"stocks with rising price" → price_growth > 0
-
-Sector examples:
-
-"IT companies" → sector = "Technology"
-"banking companies" → sector = "Financial Services"
-"pharma companies" → sector = "Healthcare"
 
 Allowed operators:
 < > <= >= =
@@ -120,4 +186,8 @@ User Query:
         return dsl_json
 
     except Exception as e:
-        raise RuntimeError(f"LLM parsing failed: {str(e)}")
+
+        # Gemini failed (quota, network, etc.)
+        print("Gemini failed, using fallback parser:", str(e))
+
+        return fallback_parser(user_query)

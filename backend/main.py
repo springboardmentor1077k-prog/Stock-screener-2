@@ -18,6 +18,7 @@ from backend.utils.query_logger import log_query
 from backend.api.auth.auth_routes import router as auth_router
 from backend.api.watchlist.watchlist_routes import router as watchlist_router
 from backend.api.alerts.alerts_routes import router as alerts_router
+from backend.api.community.community_routes import router as community_router
 
 from backend.services.sentiment_service import get_market_news
 
@@ -26,22 +27,11 @@ from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
 
-# -----------------------------
-# LOGGING CONFIGURATION
-# -----------------------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# -----------------------------
-# RATE LIMITER
-# -----------------------------
 limiter = Limiter(key_func=get_remote_address)
 
-
-# -----------------------------
-# FASTAPI APP
-# -----------------------------
 app = FastAPI(
     title="AI Stock Screener API",
     description="Natural language stock screener powered by LLM + SQL compiler",
@@ -52,57 +42,39 @@ app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
 
-# -----------------------------
-# REGISTER ROUTERS
-# -----------------------------
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(watchlist_router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(alerts_router, prefix="/alerts", tags=["Alerts"])
+app.include_router(community_router, prefix="/community", tags=["Community"])
 
 
-# -----------------------------
-# REQUEST MODEL
-# -----------------------------
 class QueryRequest(BaseModel):
     query: str
     page: int = 1
     page_size: int = 5
+    sort_by: str | None = None
+    order: str = "descending"
 
 
-# -----------------------------
-# DATABASE PATH
-# -----------------------------
 BASE_DIR = os.path.dirname(__file__)
 DB_PATH = os.path.join(BASE_DIR, "database", "stock_screener.db")
 
 
-# -----------------------------
-# ROOT
-# -----------------------------
 @app.get("/")
 def root():
     return {"message": "AI Stock Screener API is running"}
 
 
-# -----------------------------
-# HEALTH
-# -----------------------------
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 
-# -----------------------------
-# MARKET NEWS
-# -----------------------------
 @app.get("/news/{company}")
 def get_news(company: str):
     return get_market_news(company)
 
 
-# -----------------------------
-# ERROR HANDLING
-# -----------------------------
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
 
@@ -133,13 +105,11 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# -----------------------------
-# MAIN QUERY ENDPOINT
-# -----------------------------
 @app.post("/query")
 @limiter.limit("10/minute")
 async def process_query(
-    request: QueryRequest,
+    request: Request,
+    body: QueryRequest,
     authorization: str = Header(...)
 ):
 
@@ -147,64 +117,74 @@ async def process_query(
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = authorization.split(" ")[1]
-
     user_id = verify_token(token)
 
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    logger.info(f"User {user_id} query: {request.query}")
+    logger.info(f"User {user_id} query: {body.query}")
 
     if not os.path.exists(DB_PATH):
         raise FileNotFoundError("Database file not found")
 
-    # -----------------------------
-    # CACHE
-    # -----------------------------
-    cached = get_cached_query(request.query)
+    page = max(body.page, 1)
+    page_size = max(min(body.page_size, 50), 1)
+
+    cached = get_cached_query(body.query, page, page_size)
 
     if cached:
         logger.info("Cache hit for query")
         return cached
 
-    # -----------------------------
-    # QUERY INTERPRETER
-    # -----------------------------
-    interpreted_query = interpret_query(request.query)
+    interpreted_query = interpret_query(body.query)
 
-    logger.info(f"Interpreted Query: {interpreted_query}")
-
-    # -----------------------------
-    # NL → DSL
-    # -----------------------------
     raw_dsl_dict = parse_natural_language_to_dsl(interpreted_query)
-
     validated_dsl = DSLQuery(**raw_dsl_dict)
 
-    logger.info(f"Parsed DSL: {validated_dsl.model_dump()}")
+    base_sql, base_params = compile_dsl_to_sql(validated_dsl.model_dump())
 
-    # -----------------------------
-    # SQL COMPILER
-    # -----------------------------
-    sql_query, params = compile_dsl_to_sql(validated_dsl.model_dump())
 
-    page = max(request.page, 1)
-    page_size = max(min(request.page_size, 50), 1)
+    # -------- GLOBAL SORTING --------
+    allowed_sort_fields = [
+        "pe_ratio",
+        "market_cap",
+        "revenue",
+        "profit_margin",
+        "ebitda"
+    ]
 
+    sort_by = body.sort_by if body.sort_by in allowed_sort_fields else None
+
+    order = body.order.lower()
+    if order in ["asc", "ascending"]:
+        sql_order = "ASC"
+    else:
+        sql_order = "DESC"
+
+    sorted_sql = base_sql
+
+    if sort_by:
+        sorted_sql += f" ORDER BY {sort_by} {sql_order}"
+
+
+    # -------- PAGINATION --------
     offset = (page - 1) * page_size
 
-    sql_query += " LIMIT ? OFFSET ?"
-    params.extend([page_size, offset])
+    paginated_sql = sorted_sql + " LIMIT ? OFFSET ?"
+    paginated_params = base_params + [page_size, offset]
 
-    # -----------------------------
-    # EXECUTE SQL
-    # -----------------------------
+    count_sql = f"SELECT COUNT(*) FROM ({sorted_sql}) as subquery"
+
+
     with sqlite3.connect(DB_PATH) as conn:
 
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(sql_query, params)
+        cursor.execute(count_sql, base_params)
+        total_results = cursor.fetchone()[0]
+
+        cursor.execute(paginated_sql, paginated_params)
         rows = cursor.fetchall()
 
         cursor.execute("""
@@ -212,13 +192,14 @@ async def process_query(
         VALUES (?, ?, ?)
         """, (
             user_id,
-            request.query,
+            body.query,
             json.dumps(validated_dsl.model_dump())
         ))
 
         conn.commit()
 
-    log_query(request.query, sql_query)
+
+    log_query(body.query, paginated_sql)
 
     results = [dict(row) for row in rows]
 
@@ -228,18 +209,16 @@ async def process_query(
         "parsed_dsl": validated_dsl.model_dump(),
         "page": page,
         "page_size": page_size,
+        "total_results": total_results,
         "count": len(results),
         "data": results
     }
 
-    cache_query(request.query, response_data)
+    cache_query(body.query, page, page_size, response_data)
 
     return response_data
 
 
-# -----------------------------
-# USER SEARCH HISTORY
-# -----------------------------
 @app.get("/history")
 def get_search_history(authorization: str = Header(...)):
 
@@ -247,7 +226,6 @@ def get_search_history(authorization: str = Header(...)):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = authorization.split(" ")[1]
-
     user_id = verify_token(token)
 
     if not user_id:
