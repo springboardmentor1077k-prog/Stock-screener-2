@@ -1,4 +1,4 @@
-# SQL Compiler
+# Updated SQL Compiler
 # Converts DSL JSON into safe SQL query + parameters
 
 FIELD_MAPPING = {
@@ -6,7 +6,7 @@ FIELD_MAPPING = {
     "company_name": ("symbols", "s.company_name"),
     "sector": ("symbols", "s.sector"),
     "pe_ratio": ("fundamentals", "f.pe_ratio"),
-    "revenue": ("fundamentals", "f.revenue")
+    "revenue": ("historical_metrics", "h.revenue")
 }
 
 
@@ -16,6 +16,7 @@ def compile_dsl_to_sql(dsl: dict):
     SELECT s.symbol, s.company_name
     FROM symbols s
     JOIN fundamentals f ON s.id = f.company_id
+    LEFT JOIN historical_metrics h ON s.id = h.company_id
     """
 
     filters = dsl.get("filters", [])
@@ -41,6 +42,32 @@ def compile_dsl_to_sql(dsl: dict):
 
         where_clauses.append(f"{column} {operator} %s")
         params.append(value)
+
+    # -------------------------
+    # TIME FILTER SUPPORT
+    # -------------------------
+
+    if "time_filter" in dsl:
+
+        tf = dsl["time_filter"]
+
+        if tf["type"] == "quarter":
+
+            year, quarter = tf["value"].split("-Q")
+
+            month_map = {
+                "1": "03",
+                "2": "06",
+                "3": "09",
+                "4": "12"
+            }
+
+            quarter_end = f"{year}-{month_map[quarter]}-30"
+
+            where_clauses.append("h.quarter = %s")
+            params.append(quarter_end)
+
+    # -------------------------
 
     if where_clauses:
         where_sql = " WHERE " + f" {logic} ".join(where_clauses)
