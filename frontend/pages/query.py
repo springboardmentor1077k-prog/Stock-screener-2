@@ -45,7 +45,14 @@ button_disabled = (
 st.title("AI Powered Stock Screener")
 
 nl_query = st.text_input("Enter your prompt here")
-#st.write("Sending:", {"nl_query": nl_query})
+
+st.markdown("""
+### Some Frequently Asked Queries
+
+- Show companies with PE less than 15  
+- Show companies with PE less than 20 and promoter holding greater than 10
+""")
+# st.write("Sending:", {"nl_query": nl_query})
 submit_btn = st.button(
     "Submit",
     disabled=st.session_state.loading
