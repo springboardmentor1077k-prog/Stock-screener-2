@@ -39,9 +39,10 @@ def render_results_table(data):
 
         st.write("View Details")
 
-        for company in results:
+        for i,company in enumerate(results):
+            
 
-            col1, col2 = st.columns([4,1])
+            col1, col2, col3 = st.columns([5,2,2])
 
             with col1:
                 st.write(
@@ -51,5 +52,22 @@ def render_results_table(data):
             with col2:
                 if st.button("View More",key=f"view_{company['company_symbol']}"):
                     st.session_state.selected_company = company["company_symbol"]
-                    st.switch_page("pages/company_details.py")
+                    st.switch_page("pages/Company_details.py")
+                    
+            with col3:
+                if st.button("Add to Portfolio",key=f"portfolio_{company['company_symbol']}_{i}"
+        ):
+                    st.session_state.selected_company = company["company_symbol"]
+                    # st.success(f"{company['company_symbol']} added to portfolio")
+                    # st.session_state.portfolio_message = f"{company['company_symbol']} added to portfolio"
+                    st.switch_page("pages/Portfolio.py")
+                    
+'''                
+requests.post(
+    "http://localhost:9000/add_portfolio",
+    json={"symbol": company["company_symbol"]}
+'''
+                    
+        
+                    
                     

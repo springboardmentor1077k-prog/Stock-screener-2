@@ -49,7 +49,7 @@ nl_query = st.text_input("Enter your prompt here")
 st.markdown("""
 ### Some Frequently Asked Queries
 
-- Show companies with PE less than 15  
+- Show companies with PE more than 15  
 - Show companies with PE less than 20 and promoter holding greater than 10
 """)
 # st.write("Sending:", {"nl_query": nl_query})

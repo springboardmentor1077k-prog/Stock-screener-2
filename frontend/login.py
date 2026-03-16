@@ -45,7 +45,7 @@ if st.session_state.mode == "Login":
         if response.status_code == 200:
             st.session_state.token = response.json()["access_token"]
             st.success("Login Successful ")
-            st.switch_page("pages/query.py")
+            st.switch_page("pages/Query.py")
         else:
             st.error("Invalid mail or password")
 
