@@ -530,7 +530,7 @@ else:
     elif page == "Portfolio":
 
         if st.session_state.selected_folder is None:
-            st.title("📂 Portfolio")
+            st.title(" Portfolio")
 
         # ---------- SESSION STATE ----------
         
@@ -549,7 +549,7 @@ else:
         col1, col2 = st.columns([8,2])
 
         with col2:
-            if st.button("➕ Create Folder"):
+            if st.button(" Create Folder"):
                 st.session_state.show_create_folder = True
 
 
@@ -589,7 +589,7 @@ else:
                                     font-weight:500;
                                     cursor:pointer;
                                 ">
-                                📁 {folder}
+                                 {folder}
                                 </div>
                             </a>
                             """,
@@ -777,7 +777,7 @@ else:
 
     elif page == "Watchlist":
 
-        st.title("📊 Watchlist")
+        st.title(" Watchlist")
 
         # ---------------- ADD STOCK ----------------
 
