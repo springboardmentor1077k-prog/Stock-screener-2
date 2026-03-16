@@ -4,6 +4,16 @@ import pandas as pd
 # restore token from query params
 params = st.query_params
 
+if "symbol" in params:
+    st.session_state.selected_company = params["symbol"]
+    st.session_state.page = "Company Explorer"
+    del st.query_params["symbol"]
+    
+if "folder" in params:
+    st.session_state.selected_folder = params["folder"]
+    st.session_state.page = "Portfolio"
+    del st.query_params["folder"]
+    
 if "token" in params and "token" not in st.session_state:
     st.session_state.token = params["token"]
 if "username" in params and "username" not in st.session_state:
@@ -16,31 +26,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.markdown("""
-<style>
 
-/* Force column menu (3 dots) to stay visible */
-.ag-header-cell-menu-button {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline-block !important;
-}
-
-/* Make the 3 dots black */
-.ag-header-cell-menu-button svg {
-    color: black !important;
-    fill: black !important;
-}
-
-/* Increase icon visibility */
-.ag-header-cell-menu-button svg {
-    width: 16px !important;
-    height: 16px !important;
-}
-
-
-</style>
-""", unsafe_allow_html=True)
 
 
 # SAFE REQUEST HANDLER
@@ -111,6 +97,17 @@ if "search_results" not in st.session_state:
     st.session_state.search_results = None
 if "history" not in st.session_state:
     st.session_state.history = []
+if "show_create_folder" not in st.session_state:
+    st.session_state.show_create_folder = False
+
+if "show_stock_modal" not in st.session_state:
+    st.session_state.show_stock_modal = False
+
+if "portfolio_folders" not in st.session_state:
+    st.session_state.portfolio_folders = {}
+
+if "selected_folder" not in st.session_state:
+    st.session_state.selected_folder = None
 
 
 # AUTH FUNCTIONS
@@ -138,7 +135,18 @@ def register(username, email, password):
         }
     )
 
+def get_current_price(symbol):
 
+    status, data = safe_request(
+        "GET",
+        f"{API_URL}/company/{symbol}/price",
+        headers=headers
+    )
+
+    if status == 200:
+        return data["data"]["price"]
+
+    return 0
 
 # LOGIN / REGISTER PAGE
 
@@ -215,50 +223,54 @@ else:
     )
 
     st.session_state.page = page
-    st.sidebar.markdown("<div style='height:250px'></div>", unsafe_allow_html=True)
-    st.sidebar.markdown("---")
+   
+    header_left, header_right = st.columns([10,1])
 
-    initials = get_initials(st.session_state.get("username"))
+    with header_left:
+        st.title("AI Stock Intelligence")
 
-    col1, col2, col3 = st.sidebar.columns([1,4,1])
+    with header_right:
 
-    # avatar circle
-    if col1.button(initials):
-        st.session_state.show_user_menu = not st.session_state.show_user_menu
+        initials = get_initials(st.session_state.get("username"))
 
-    # username
-    username = st.session_state.get("username")
+        avatar_clicked = st.button(
+            initials,
+            key="avatar_btn",
+            help="Account"
+        )
 
-    if username:
-        col2.markdown(f"**{username.upper()}**")
-    else:
-        col2.markdown("**USER**")
+        if avatar_clicked:
+            st.session_state.show_user_menu = not st.session_state.show_user_menu
 
-    # three dots
-    if col3.button("⋮"):
-        st.session_state.show_user_menu = not st.session_state.show_user_menu
+        
+
     if st.session_state.show_user_menu:
 
-        st.sidebar.markdown("---")
+        col_space, col_menu = st.columns([9,1])
 
-        st.sidebar.markdown(f" **{st.session_state.username}@gmail.com**")
+        with col_menu:
 
-        if st.sidebar.button(" Change Password"):
-            st.sidebar.info("Password change feature coming soon")
+            st.markdown(
+                f"""
+                <div style="
+                    background:white;
+                    padding:15px;
+                    border-radius:10px;
+                    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+                    text-align:center;
+                ">
+                <b>{st.session_state.username}@gmail.com</b>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-        if st.sidebar.button(" Logout"):
-            st.session_state.token = None
-            st.session_state.username = None
-            st.session_state.search_results = None
-            st.query_params.clear()
-            st.rerun()
-
-
-
-
-
-    st.title(" AI Stock Intelligence")
-    
+            if st.button("Logout"):
+                st.session_state.token = None
+                st.session_state.username = None
+                st.session_state.search_results = None
+                st.query_params.clear()
+                st.rerun()
     st.caption(f"Welcome, {st.session_state.username}")
 
     for q in st.session_state.history[-5:]:
@@ -266,6 +278,7 @@ else:
             st.session_state.last_query = q
 
     
+
 
 
     
@@ -431,29 +444,62 @@ else:
 
                 if col1.button(" Add to Watchlist"):
 
+                    # load current watchlist
                     status, data = safe_request(
-                        "POST",
+                        "GET",
                         f"{API_URL}/watchlist",
-                        json={"stock_symbol": save_symbol},
                         headers=headers
                     )
 
                     if status == 200:
-                        st.success("Added to Watchlist!")
+
+                        df_watch = pd.DataFrame(data.get("data", []))
+
+                        # check if already exists
+                        if not df_watch.empty and save_symbol in df_watch["symbol"].values:
+                            st.warning("Stock already in watchlist")
+
+                        else:
+
+                            status, data = safe_request(
+                                "POST",
+                                f"{API_URL}/watchlist",
+                                json={"stock_symbol": save_symbol},
+                                headers=headers
+                            )
+
+                            if status == 200:
+                                st.success("Added to Watchlist!")
+                            else:
+                                show_error(data)
+
                     else:
                         show_error(data)
 
-                if col2.button(" Add to Portfolio"):
+                quantity = st.number_input("Quantity", min_value=1, value=1)
+
+                buy_price = st.number_input("Buy Price", min_value=0.0, value=0.0)
+
+                folder_name = st.text_input("Folder Name", value="Tech")
+
+                if st.button("Add to Portfolio"):
 
                     status, data = safe_request(
                         "POST",
                         f"{API_URL}/portfolio",
                         json={
                             "stock_symbol": save_symbol,
-                            "quantity": 1
+                            "quantity": quantity,
+                            "buy_price": buy_price,
+                            "folder_name": folder_name
                         },
                         headers=headers
                     )
+
+                    if status == 200:
+                        st.success("Added to Portfolio!")
+                    else:
+                        show_error(data)
 
                     if status == 200:
                         st.success("Added to Portfolio!")
@@ -481,35 +527,35 @@ else:
         
   
     #  PORTFOLIO
-
-
     elif page == "Portfolio":
 
-        st.subheader("Add to Portfolio")
+        if st.session_state.selected_folder is None:
+            st.title("📂 Portfolio")
 
-        stock_symbol = st.text_input("Stock Symbol (e.g., AAPL)")
-        quantity = st.number_input("Quantity", min_value=1, value=1)
+        # ---------- SESSION STATE ----------
+        
 
-        if st.button("Add Stock", key="add_stock_btn"):
+        if "selected_folder" not in st.session_state:
+            st.session_state.selected_folder = None
 
-            status, data = safe_request(
-                "POST",
-                f"{API_URL}/portfolio",
-                json={
-                    "stock_symbol": stock_symbol.upper(),
-                    "quantity": quantity
-                },
-                headers=headers
-            )
+        if "show_create_folder" not in st.session_state:
+            st.session_state.show_create_folder = False
 
-            if status == 200:
-                st.success("Added to portfolio!")
-            else:
-                show_error(data, "Failed operation")
+        if "show_add_stock" not in st.session_state:
+            st.session_state.show_add_stock = False
 
-        st.subheader("Your Portfolio")
 
-        if st.button("Load Portfolio", key="load_portfolio_btn"):
+        # ---------- CREATE FOLDER BUTTON ----------
+        col1, col2 = st.columns([8,2])
+
+        with col2:
+            if st.button("➕ Create Folder"):
+                st.session_state.show_create_folder = True
+
+
+        # ---------- SHOW FOLDERS ----------
+
+        if st.session_state.selected_folder is None:
 
             status, data = safe_request(
                 "GET",
@@ -518,26 +564,212 @@ else:
             )
 
             if status == 200:
-                df = pd.DataFrame(data.get("data", []))
-                st.dataframe(df, use_container_width=True)
-            else:
-                st.error("Failed to load portfolio")
 
-        delete_id = st.number_input("Portfolio ID to delete", min_value=1)
+                df = pd.DataFrame(data["data"])
 
-        if st.button("Delete Portfolio Entry", key="delete_portfolio_btn"):
+                if df.empty:
+                    st.info("No folders yet")
 
+                else:
+
+                    folders = df["folder_name"].unique()
+
+                    for folder in folders:
+
+                        token = st.session_state.token
+                        username = st.session_state.username
+
+                        st.markdown(
+                            f"""
+                            <a href='?folder={folder}&token={token}&username={username}' 
+                            style='text-decoration:none;color:black;'>
+                                <div style="
+                                    padding:14px;
+                                    border-bottom:1px solid #ddd;
+                                    font-weight:500;
+                                    cursor:pointer;
+                                ">
+                                📁 {folder}
+                                </div>
+                            </a>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+
+        # ---------- OPEN FOLDER ----------
+        if st.session_state.selected_folder is not None:
+
+            folder = st.session_state.selected_folder
+
+            col1, col2 = st.columns([1,10])
+
+            with col1:
+                if st.button("⬅"):
+                    st.session_state.selected_folder = None
+                    st.rerun()
+
+            with col2:
+                st.markdown(f"### {folder}")
+
+
+            # ---------- LOAD STOCKS ----------
             status, data = safe_request(
-                "DELETE",
-                f"{API_URL}/portfolio/{delete_id}",
+                "GET",
+                f"{API_URL}/portfolio",
                 headers=headers
             )
 
             if status == 200:
-                st.success("Deleted successfully")
-            else:
-                st.error(data.get("detail", "Delete failed"))
-                
+
+                df = pd.DataFrame(data["data"])
+
+                # get live price
+                df["current_price"] = df["symbol"].apply(get_current_price)
+
+                # calculations
+                df["invested"] = df["buy_price"] * df["quantity"]
+                df["current_value"] = df["current_price"] * df["quantity"]
+                df["profit"] = df["current_value"] - df["invested"]
+                df["profit_percent"] = (df["profit"] / df["invested"]) * 100
+
+
+                def format_change(p):
+                    if p >= 0:
+                        return f"▲ {round(p,2)}%"
+                    else:
+                        return f"▼ {round(p,2)}%"
+
+                df["Change"] = df["profit_percent"].apply(format_change)
+
+                folder_df = df[df["folder_name"] == folder]
+
+                if folder_df.empty:
+                    st.info("No stocks in this folder")
+
+                else:
+
+                    st.markdown("### Your Stocks")
+
+                    # table header
+                    h1, h2, h3, h4, h5, h6, h7, h8 = st.columns(8)
+
+                    h1.markdown("**Symbol**")
+                    h2.markdown("**Company**")
+                    h3.markdown("**Quantity**")
+                    h4.markdown("**Buy Price**")
+                    h5.markdown("**Current Price**")
+                    h6.markdown("**Value**")
+                    h7.markdown("**Change**")
+                    h8.markdown("**Delete**")
+
+                    st.divider()
+
+                    for _, row in folder_df.iterrows():
+
+                        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
+
+                        c1.write(row["symbol"])
+                        c2.write(row["company_name"])
+                        c3.write(row["quantity"])
+                        c4.write(round(row["buy_price"],2))
+                        c5.write(round(row["current_price"],2))
+                        c6.write(round(row["current_value"],2))
+
+                        symbol = row["symbol"]
+                        percent = round(row["profit_percent"], 2)
+
+                        if percent >= 0:
+                            change_text = f"▲ {percent}%"
+                            color = "green"
+                        else:
+                            change_text = f"▼ {percent}%"
+                            color = "red"
+
+                        token = st.session_state.token
+                        username = st.session_state.username
+
+                        c7.markdown(
+                            f"<a href='?symbol={symbol}&token={token}&username={username}' style='color:{color}; text-decoration:none; font-weight:600;'>{change_text}</a>",
+                            unsafe_allow_html=True
+                        )
+                        if c8.button("delete", key=f"delete_{row['symbol']}"):
+
+                            status, data = safe_request(
+                                "DELETE",
+                                f"{API_URL}/portfolio/{row['id']}",
+                                headers=headers
+                            )
+
+                            if status == 200:
+                                st.success("Stock deleted")
+                                st.rerun()
+                            else:
+                                show_error(data)
+
+
+        # ---------- CREATE FOLDER MODAL ----------
+        if st.session_state.show_create_folder:
+
+            st.subheader("Create Folder")
+
+            folder_name = st.text_input("Folder Name")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("Create"):
+                    
+
+                    st.session_state.show_create_folder = False
+                    st.rerun()
+
+            with col2:
+                if st.button("Cancel"):
+                    st.session_state.show_create_folder = False
+                    st.rerun()
+            
+
+
+        # ---------- ADD STOCK MODAL ----------
+        if st.session_state.show_add_stock:
+
+            st.subheader("Add Stock")
+
+            symbol = st.text_input("Symbol").upper()
+            quantity = st.number_input("Quantity", min_value=1, value=1)
+            buy_price = st.number_input("Buy Price", min_value=0.0, value=0.0)
+
+            if symbol:
+                price = get_current_price(symbol)
+                st.write("Current Price:", price)
+                st.write("Total Value:", round(price * quantity,2))
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("Add"):
+                    status, data = safe_request(
+                        "POST",
+                        f"{API_URL}/portfolio",
+                        json={
+                            "stock_symbol": symbol,
+                            "quantity": quantity,
+                            "buy_price": buy_price,
+                            "folder_name": st.session_state.selected_folder
+                        },
+                        headers=headers
+                    )
+
+                    if status == 200:
+                        st.session_state.show_add_stock = False
+                        st.rerun()
+
+            with col2:
+                if st.button("Cancel"):
+                    st.session_state.show_add_stock = False
+                    st.rerun()
+                 
                 
 
 #  WATCHLIST
@@ -545,30 +777,15 @@ else:
 
     elif page == "Watchlist":
 
-        st.subheader("Add to Watchlist")
+        st.title("📊 Watchlist")
 
-        stock_symbol = st.text_input("Stock Symbol (e.g., AAPL)")
+        # ---------------- ADD STOCK ----------------
+
+        st.subheader("Add Stock")
+
+        stock_symbol = st.text_input("Stock Symbol (example: AAPL)").upper()
 
         if st.button("Add to Watchlist"):
-
-            status, data = safe_request(
-                "POST",
-                f"{API_URL}/watchlist",
-                json={
-                    "stock_symbol": stock_symbol.upper()
-                },
-                headers=headers
-            )
-
-            if status == 200:
-                st.success("Added to watchlist!")
-            else:
-                show_error(data)
-
-
-        st.subheader("Your Watchlist")
-
-        if st.button("Load Watchlist"):
 
             status, data = safe_request(
                 "GET",
@@ -577,27 +794,135 @@ else:
             )
 
             if status == 200:
-                df = pd.DataFrame(data.get("data", []))
-                st.dataframe(df, use_container_width=True)
-                
+
+                df_watch = pd.DataFrame(data.get("data", []))
+
+                if not df_watch.empty and stock_symbol in df_watch["symbol"].values:
+
+                    st.warning("Stock already in watchlist")
+
+                else:
+
+                    status, data = safe_request(
+                        "POST",
+                        f"{API_URL}/watchlist",
+                        json={"stock_symbol": stock_symbol},
+                        headers=headers
+                    )
+
+                    if status == 200:
+                        st.success("Stock added to watchlist")
+                        st.rerun()
+                    else:
+                        show_error(data)
+
             else:
                 show_error(data)
 
+        st.divider()
 
-        delete_id = st.number_input("Watchlist ID to delete", min_value=1)
+        # ---------------- LOAD WATCHLIST ----------------
 
-        if st.button("Delete Watchlist Entry"):
+        st.subheader("Your Watchlist")
 
-            status, data = safe_request(
-                "DELETE",
-                f"{API_URL}/watchlist/{delete_id}",
-                headers=headers
-            )
+        status, data = safe_request(
+            "GET",
+            f"{API_URL}/watchlist",
+            headers=headers
+        )
 
-            if status == 200:
-                st.success("Removed from watchlist")
+        if status == 200:
+
+            df = pd.DataFrame(data.get("data", []))
+            
+
+            if df.empty:
+                st.info("No stocks in watchlist")
+
             else:
-                show_error(data)
+
+                # -------- GET LIVE PRICE --------
+
+                df["current_price"] = df["symbol"].apply(get_current_price)
+
+                # -------- TEMP PREVIOUS CLOSE --------
+
+                df["previous_close"] = df["current_price"] * 0.98
+
+                # -------- CALCULATIONS --------
+
+                df["change"] = df["current_price"] - df["previous_close"]
+
+                df["change_percent"] = (df["change"] / df["previous_close"]) * 100
+
+                # -------- TABLE HEADER --------
+
+                h1, h2, h3, h4, h5 = st.columns(5)
+
+                h1.markdown("**Symbol**")
+                h2.markdown("**Price**")
+                h3.markdown("**Change**")
+                h4.markdown("**Change %**")
+                h5.markdown("**Delete**")
+
+                st.divider()
+
+                # -------- ROWS --------
+
+                for _, row in df.iterrows():
+
+                    c1, c2, c3, c4, c5 = st.columns(5)
+
+                    symbol = row["symbol"]
+
+                    price = round(row["current_price"], 2)
+
+                    change = round(row["change"], 2)
+
+                    percent = round(row["change_percent"], 2)
+
+                    if percent >= 0:
+                        change_text = f"▲ {percent}%"
+                        color = "green"
+                    else:
+                        change_text = f"▼ {percent}%"
+                        color = "red"
+
+                    # clickable symbol → company explorer
+                    token = st.session_state.token
+                    username = st.session_state.username
+
+                    c1.markdown(
+                        f"<a href='?symbol={symbol}&token={token}&username={username}'>{symbol}</a>",
+                        unsafe_allow_html=True
+                    )
+
+                    c2.write(price)
+
+                    c3.write(change)
+
+                    c4.markdown(
+                        f"<span style='color:{color};font-weight:600'>{change_text}</span>",
+                        unsafe_allow_html=True
+                    )
+
+                    # delete button
+                    if c5.button("Delete", key=f"watch_delete_{row['id']}"):
+
+                        status, data = safe_request(
+                            "DELETE",
+                            f"{API_URL}/watchlist/{row['id']}",
+                            headers=headers
+                        )
+
+                        if status == 200:
+                            st.success("Stock removed")
+                            st.rerun()
+                        else:
+                            show_error(data)
+
+        else:
+            show_error(data)
   
     #  ALERTS
 

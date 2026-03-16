@@ -144,6 +144,8 @@ class NLRequest(BaseModel):
 class PortfolioCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
     quantity: int = Field(..., gt=0)
+    buy_price: float = Field(..., gt=0)
+    folder_name: str = "Default"
 
 class AlertCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
@@ -383,7 +385,24 @@ def get_company(symbol: str):
         "company_name": row[2],
         "sector": row[3]
     })
-    
+@app.get("/company/{symbol}/price")
+def get_price(symbol: str):
+
+    with engine.connect() as conn:
+
+        row = conn.execute(text("""
+            SELECT hp.close
+            FROM historical_prices hp
+            JOIN symbols s ON hp.symbol_id = s.id
+            WHERE s.symbol = :symbol
+            ORDER BY hp.price_date DESC
+            LIMIT 1
+        """), {"symbol": symbol.upper()}).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Price not found")
+
+    return success_response(data={"price": row[0]})
 # ============================================================
 # COMPANY DETAILS ENDPOINT
 # ============================================================
@@ -863,32 +882,47 @@ def add_to_portfolio(
             raise HTTPException(status_code=404, detail="Symbol not found")
 
         conn.execute(text("""
-            INSERT INTO portfolio (user_id, symbol_id, quantity, added_at)
-            VALUES (:user_id, :symbol_id, :quantity, NOW())
+            INSERT INTO portfolio
+            (user_id, symbol_id, quantity, buy_price, folder_name, added_at)
+            VALUES (:user_id, :symbol_id, :quantity, :buy_price, :folder, NOW())
         """), {
             "user_id": current_user["id"],
             "symbol_id": symbol[0],
-            "quantity": request.quantity
+            "quantity": request.quantity,
+            "buy_price": request.buy_price,
+            "folder": request.folder_name
         })
 
-    return success_response(message="Added to portfolio")
+    return success_response(message="Stock added to portfolio")
 
 
 @app.get("/portfolio")
 def get_portfolio(current_user: dict = Depends(get_current_user)):
 
     with engine.connect() as conn:
+
         rows = conn.execute(text("""
-            SELECT p.id,
-                   s.symbol,
-                   p.quantity
+            SELECT
+                p.id,
+                s.symbol,
+                s.company_name,
+                p.quantity,
+                p.buy_price,
+                p.folder_name
             FROM portfolio p
             JOIN symbols s ON p.symbol_id = s.id
             WHERE p.user_id = :user_id
         """), {"user_id": current_user["id"]}).fetchall()
 
     return success_response(data=[
-        {"id": r[0], "symbol": r[1], "quantity": r[2]}
+        {
+            "id": r[0],
+            "symbol": r[1],
+            "company_name": r[2],
+            "quantity": r[3],
+            "buy_price": r[4],
+            "folder_name": r[5]
+        }
         for r in rows
     ])
 

@@ -81,7 +81,7 @@ for ticker_symbol in symbols:
             "Change From Previous Close": info.get("regularMarketChangePercent") or 0,
             "Profit after Tax": info.get("profitMargin") or 0,
             "change percent": info.get("changePercent") or 0,
-            "Last Traded Price": info.get("regularMarketPrice") or 0
+            "Last Traded Price": info.get("regularMarketPrice") or 0,
         }
 
         # ======================================================
