@@ -11,21 +11,22 @@ import json
 from datetime import datetime
 from decimal import Decimal
 
+#Debug Log
+'''
+def log_query(prompt, dsl, sql, values, results):
 
+    log_entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "prompt": prompt,
+        "dsl": dsl,
+        "sql": sql,
+        "values": values,
+        "results": results
+    }
 
-# def log_query(prompt, dsl, sql, values, results):
-
-#     log_entry = {
-#         "timestamp": datetime.utcnow().isoformat(),
-#         "prompt": prompt,
-#         "dsl": dsl,
-#         "sql": sql,
-#         "values": values,
-#         "results": results
-#     }
-
-#     with open("logs_outputs/query_logs.jsonl", "a") as f:
-#         f.write(json.dumps(log_entry) + "\n")
+    with open("logs_outputs/query_logs.jsonl", "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
+'''
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
