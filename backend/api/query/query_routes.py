@@ -42,6 +42,12 @@ async def run_query(payload: dict, authorization: str = Header(...)):
     results = await execute_query(sql_query, params)
 
     # ---------- CACHE ----------
-    cache_query(query_text, results)
+    page = payload.get("page", 1)
+    page_size = payload.get("page_size", 5)
 
-    return {"data": results}
+    cached = get_cached_query(query_text, page, page_size)
+
+    if cached:
+        return {"data": cached, "cached": True}
+    
+    cache_query(query_text, page, page_size, results)

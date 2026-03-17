@@ -22,6 +22,13 @@ ALLOWED_FIELDS = {
 
 ALLOWED_OPERATORS = {"<", ">", "<=", ">=", "="}
 
+# NEW: allowed time filters
+ALLOWED_TIME_FILTERS = {
+    "last_year",
+    "last_4_quarters",
+    "recent_quarters"
+}
+
 
 class Condition(BaseModel):
 
@@ -60,6 +67,7 @@ class DSLQuery(BaseModel):
 
     logic: str
 
+    # NEW: time filtering support
     time_filter: Optional[str] = None
 
     @field_validator("logic")
@@ -69,5 +77,13 @@ class DSLQuery(BaseModel):
 
         if v not in {"AND", "OR"}:
             raise ValueError("Logic must be AND or OR only")
+
+        return v
+
+    @field_validator("time_filter")
+    def validate_time_filter(cls, v):
+
+        if v and v not in ALLOWED_TIME_FILTERS:
+            raise ValueError("Unsupported time filter")
 
         return v

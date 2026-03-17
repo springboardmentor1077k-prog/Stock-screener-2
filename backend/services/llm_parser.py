@@ -36,10 +36,10 @@ def fallback_parser(query: str) -> dict:
 
     query = query.lower()
 
-    # split into words to avoid substring bugs like "with" -> "it"
     words = re.findall(r"\b\w+\b", query)
 
     conditions = []
+    time_filter = None
 
     # -----------------------------
     # PE ratio
@@ -75,7 +75,7 @@ def fallback_parser(query: str) -> dict:
         })
 
     # -----------------------------
-    # Sector detection (FIXED)
+    # Sector detection
     # -----------------------------
     if "it" in words or "technology" in words:
         conditions.append({
@@ -99,6 +99,18 @@ def fallback_parser(query: str) -> dict:
         })
 
     # -----------------------------
+    # TIME FILTER DETECTION
+    # -----------------------------
+    if "last year" in query:
+        time_filter = "last_year"
+
+    if "last 4 quarters" in query:
+        time_filter = "last_4_quarters"
+
+    if "recent quarters" in query:
+        time_filter = "recent_quarters"
+
+    # -----------------------------
     # Default condition
     # -----------------------------
     if not conditions:
@@ -110,7 +122,8 @@ def fallback_parser(query: str) -> dict:
 
     return {
         "conditions": conditions,
-        "logic": "AND"
+        "logic": "AND",
+        "time_filter": time_filter
     }
 
 
@@ -152,7 +165,14 @@ Allowed operators:
 Logic values:
 AND OR
 
-JSON format:
+You may optionally include a time filter.
+
+Allowed time filters:
+last_year
+last_4_quarters
+recent_quarters
+
+Example:
 
 {{
  "conditions":[
@@ -162,7 +182,8 @@ JSON format:
      "value":20
    }}
  ],
- "logic":"AND"
+ "logic":"AND",
+ "time_filter":"last_year"
 }}
 
 User Query:
@@ -187,7 +208,6 @@ User Query:
 
     except Exception as e:
 
-        # Gemini failed (quota, network, etc.)
         print("Gemini failed, using fallback parser:", str(e))
 
         return fallback_parser(user_query)
