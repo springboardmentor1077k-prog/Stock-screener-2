@@ -530,7 +530,7 @@ else:
     elif page == "Portfolio":
 
         if st.session_state.selected_folder is None:
-            st.title(" Portfolio")
+            st.title("📂 Portfolio")
 
         # ---------- SESSION STATE ----------
         
@@ -546,11 +546,12 @@ else:
 
 
         # ---------- CREATE FOLDER BUTTON ----------
-        col1, col2 = st.columns([8,2])
+        if st.session_state.selected_folder is None:
+            col1, col2 = st.columns([8,2])
 
-        with col2:
-            if st.button(" Create Folder"):
-                st.session_state.show_create_folder = True
+            with col2:
+                if st.button("➕ Create Folder"):
+                    st.session_state.show_create_folder = True
 
 
         # ---------- SHOW FOLDERS ----------
@@ -589,7 +590,7 @@ else:
                                     font-weight:500;
                                     cursor:pointer;
                                 ">
-                                 {folder}
+                                📁 {folder}
                                 </div>
                             </a>
                             """,
@@ -602,7 +603,7 @@ else:
 
             folder = st.session_state.selected_folder
 
-            col1, col2 = st.columns([1,10])
+            col1, col2,col3 = st.columns([1,8,2])
 
             with col1:
                 if st.button("⬅"):
@@ -611,6 +612,9 @@ else:
 
             with col2:
                 st.markdown(f"### {folder}")
+            with col3:
+                if st.button("➕ Add Stock"):
+                    st.session_state.show_add_stock = True
 
 
             # ---------- LOAD STOCKS ----------
@@ -777,7 +781,7 @@ else:
 
     elif page == "Watchlist":
 
-        st.title(" Watchlist")
+        st.title("📊 Watchlist")
 
         # ---------------- ADD STOCK ----------------
 
@@ -928,36 +932,166 @@ else:
 
 
     elif page == "Alerts":
+        if "show_alert_modal" not in st.session_state:
+            st.session_state.show_alert_modal = False
 
-        st.subheader("Create Alert")
+        if st.button("➕ Create Alert"):
+            st.session_state.show_alert_modal = True
+            
+        if st.session_state.show_alert_modal:
 
-        stock_symbol = st.text_input("Stock Symbol")
-        metric = st.selectbox("Metric", ["pe_ratio", "eps"])
-        condition = st.selectbox("Condition", [">", "<"])
-        threshold = st.number_input("Threshold", value=0.0)
+            st.markdown("### Create Alert")
 
-        if st.button("Create Alert", key="create_alert_btn"):
+            symbol = st.text_input("Symbol").upper()
 
-            status, data = safe_request(
-                "POST",
-                f"{API_URL}/alerts",
-                json={
-                    "stock_symbol": stock_symbol.upper(),
-                    "metric": metric,
-                    "condition": condition,
-                    "threshold": threshold
-                },
-                headers=headers
+            condition = st.selectbox(
+                "Condition",
+                ["<", "<=", ">", ">=", "="]
             )
 
-            if status == 200:
-                st.success("Alert created!")
+            threshold = st.number_input("Value", value=0.0)
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("Create Alert Confirm"):
+
+                    if symbol.strip() == "":
+                        st.warning("Enter symbol")
+                        st.stop()
+
+                    status, data = safe_request(
+                        "POST",
+                        f"{API_URL}/alerts",
+                        json={
+                            "stock_symbol": symbol,
+                            "metric": "price",
+                            "condition": condition,
+                            "threshold": threshold
+                        },
+                        headers=headers
+                    )
+
+                    if status == 200:
+                        st.success("Alert created!")
+                        st.session_state.show_alert_modal = False
+                        st.rerun()
+                    else:
+                        show_error(data)
+
+            with col2:
+                if st.button("Cancel"):
+                    st.session_state.show_alert_modal = False
+                    st.rerun()
+
+        
+        
+        st.subheader("Triggered Alerts")
+
+        status, data = safe_request(
+            "GET",
+            f"{API_URL}/alerts",
+            headers=headers
+        )
+
+        if status == 200:
+
+            df = pd.DataFrame(data.get("data", []))
+
+            if df.empty:
+                st.info("No alerts created yet")
+
             else:
-                show_error(data, "Alert operation failed")
 
-        st.subheader("Your Alerts")
+                triggered_map = {}
 
-        if st.button("Load Alerts", key="load_alerts_btn"):
+                for _, row in df.iterrows():
+
+                    symbol = row["stock_symbol"]
+                    threshold = row["threshold"]
+                    condition = row["condition"]
+
+                    current_price = get_current_price(symbol)
+
+                    triggered = False
+
+                    if condition == ">" and current_price > threshold:
+                        triggered = True
+                    elif condition == "<" and current_price < threshold:
+                        triggered = True
+                    elif condition == ">=" and current_price >= threshold:
+                        triggered = True
+                    elif condition == "<=" and current_price <= threshold:
+                        triggered = True
+                    elif condition == "=" and current_price == threshold:
+                        triggered = True
+
+                    if triggered:
+
+                        change = current_price - threshold
+                        change_percent = (change / threshold) * 100 if threshold != 0 else 0
+                        key = f"{symbol}_{condition}_{threshold}"
+
+                        triggered_map[key] = {
+                            "symbol": symbol,
+                            "threshold": threshold,
+                            "current_price": current_price,
+                            "change": round(change, 2),
+                            "change_percent": round(change_percent, 2)
+                        }
+                triggered_rows = list(triggered_map.values())
+
+                if not triggered_rows:
+                    st.info("No alerts triggered yet")
+
+                else:
+
+                    st.success(f"{len(triggered_rows)} Alerts Triggered 🚀")
+
+                    for row in triggered_rows:
+
+                        col1, col2, col3, col4, col5 = st.columns([2,2,2,2,2])
+
+                        symbol = row["symbol"]
+
+                        token = st.session_state.token
+                        username = st.session_state.username
+
+                        col1.markdown(
+                            f"<a href='?symbol={symbol}&token={token}&username={username}'>{symbol}</a>",
+                            unsafe_allow_html=True
+                        )
+
+                        col2.write(f"Old: {row['threshold']}")
+                        col3.write(f"Current: {row['current_price']}")
+
+                        if row["change_percent"] >= 0:
+                            color = "green"
+                            arrow = "▲"
+                        else:
+                            color = "red"
+                            arrow = "▼"
+
+                        col4.markdown(
+                            f"<span style='color:{color}'>{arrow} {row['change']}</span>",
+                            unsafe_allow_html=True
+                        )
+
+                        col5.markdown(
+                            f"<span style='color:{color}'>{arrow} {row['change_percent']}%</span>",
+                            unsafe_allow_html=True
+                        )
+
+        else:
+            show_error(data)
+
+        
+
+        st.subheader("Delete Alert")
+
+        delete_symbol = st.text_input("Enter Symbol").upper()
+
+        if st.button("Delete Alert by Symbol"):
 
             status, data = safe_request(
                 "GET",
@@ -966,25 +1100,16 @@ else:
             )
 
             if status == 200:
-                df = pd.DataFrame(data.get("data", []))
-                st.dataframe(df, use_container_width=True)
-            else:
-                st.error("Failed to load alerts")
+                for alert in data.get("data", []):
+                    if alert["stock_symbol"] == delete_symbol:
+                        safe_request(
+                            "DELETE",
+                            f"{API_URL}/alerts/{alert['id']}",
+                            headers=headers
+                        )
 
-        delete_alert_id = st.number_input("Alert ID to delete", min_value=1)
-
-        if st.button("Delete Alert", key="delete_alert_btn"):
-
-            status, data = safe_request(
-                "DELETE",
-                f"{API_URL}/alerts/{delete_alert_id}",
-                headers=headers
-            )
-
-            if status == 200:
-                st.success("Alert deleted")
-            else:
-                st.error(data.get("detail", "Delete failed"))
+                st.success("Deleted!")
+                st.rerun()
 
 #  COMPANY EXPLORER
 

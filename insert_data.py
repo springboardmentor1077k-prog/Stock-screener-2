@@ -163,15 +163,14 @@ for ticker_symbol in symbols:
                 "sector": company_profile["sector"]
             })
 
-        # 2️Get symbol_id
+        # 2️ Get symbol_id
         with engine.connect() as conn:
             result = conn.execute(text("""
                 SELECT id FROM symbols WHERE symbol = :symbol
             """), {"symbol": ticker_symbol})
             symbol_id = result.fetchone()[0]
 
-        # 3️ Insert fundamentals (ONLY ONCE)
-        
+        # 3️ Insert fundamentals (SAFE + UPDATE IF EXISTS)
 
         with engine.begin() as conn:
             conn.execute(text("""
@@ -223,7 +222,7 @@ for ticker_symbol in symbols:
                     "volume": price["volume"]
                 })
 
-        print(f"Database updated for {ticker_symbol}")
+        print(f" Database updated for {ticker_symbol}")
 
         time.sleep(2)
 

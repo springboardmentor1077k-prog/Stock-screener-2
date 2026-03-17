@@ -699,13 +699,36 @@ def screener(
         parsed_json = parse_query_with_llm(payload.query)
 
     except Exception as e:
-        print("⚠ Gemini failed:", str(e))
+        print(" Gemini failed:", str(e))
 
         # If quota exceeded or AI fails
         raise HTTPException(
             status_code=503,
             detail="AI service temporarily unavailable. Please try again later."
         )
+    # --------------------------------------------------------
+    # TIME FILTER FIX (RULE-BASED OVERRIDE)
+    # --------------------------------------------------------
+
+    query_text = payload.query.lower()
+
+    # detect: last 4 quarters / past 4 quarters / recent 4 quarters
+    match = re.search(r"(last|past|recent)\s+(\d+)\s+quarters", query_text)
+
+    if match:
+        parsed_json["time_filter"] = {
+            "type": "last_n_quarters",
+            "value": int(match.group(2))
+        }
+
+    # also support: last quarter (singular)
+    match_single = re.search(r"(last|past|recent)\s+quarter", query_text)
+
+    if match_single:
+        parsed_json["time_filter"] = {
+            "type": "last_n_quarters",
+            "value": 1
+        }
 
     print("\n LLM OUTPUT:")
     print("RAW DSL FROM LLM:", parsed_json)
@@ -798,18 +821,33 @@ def screener(
             status_code=500
         )
 
-    results = [
-        {
-            "symbol": r[0],
-            "sector": r[1],
-            "pe_ratio": r[2],
-            "eps": r[3],
-            "market_cap": r[4],
-            "revenue_growth": r[5],
-            "price_change_1y": r[6]
-        }
-        for r in rows
-    ]
+    results = []
+
+    for r in rows:
+
+        if len(r) == 2:
+            # GROUP BY MODE (only symbol + sector)
+            results.append({
+                "symbol": r[0],
+                "sector": r[1],
+                "pe_ratio": None,
+                "eps": None,
+                "market_cap": None,
+                "revenue_growth": None,
+                "price_change_1y": None
+            })
+
+        else:
+            # NORMAL MODE
+            results.append({
+                "symbol": r[0],
+                "sector": r[1],
+                "pe_ratio": r[2],
+                "eps": r[3],
+                "market_cap": r[4],
+                "revenue_growth": r[5],
+                "price_change_1y": r[6]
+            })
 
     print("\n DB Results Count:", len(results))
     if len(results) == 0:

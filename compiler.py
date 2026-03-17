@@ -84,8 +84,8 @@ def apply_time_filter(where_clause, params, time_filter):
         quarters = int(time_filter.value)
         months = quarters * 3
 
-        where_clause += " AND f.reported_date >= (CURRENT_DATE - (:months || ' month')::interval)"
-        params["months"] = months
+        where_clause += f" AND f.reported_date >= CURRENT_DATE - INTERVAL '{months} months'"
+        
 
     elif time_filter.type == "year":
         where_clause += " AND EXTRACT(YEAR FROM f.reported_date) = :year"
@@ -112,6 +112,10 @@ def build_sql_from_dsl(dsl):
         params,
         dsl.time_filter
     )
+    use_grouping = False
+
+    if dsl.time_filter and dsl.time_filter.type == "last_n_quarters":
+        use_grouping = True
     
     
     tables_used = detect_tables(dsl.root)
@@ -119,30 +123,57 @@ def build_sql_from_dsl(dsl):
     join_clause = ""
 
     if "fundamentals" in tables_used:
-        join_clause += """
-            JOIN fundamentals f
-                ON s.id = f.symbol_id
-                AND f.reported_date = (
-                    SELECT MAX(f2.reported_date)
-                    FROM fundamentals f2
-                    WHERE f2.symbol_id = s.id
-                )
-        """
-    query = f"""
-          SELECT s.symbol,
+
+        if dsl.time_filter:
+            #  TIME SERIES MODE (multiple quarters)
+            join_clause += """
+                JOIN fundamentals f
+                    ON s.id = f.symbol_id
+            """
+        else:
+            #  LATEST SNAPSHOT MODE (old behavior)
+            join_clause += """
+                JOIN fundamentals f
+                    ON s.id = f.symbol_id
+                    AND f.reported_date = (
+                        SELECT MAX(f2.reported_date)
+                        FROM fundamentals f2
+                        WHERE f2.symbol_id = s.id
+                    )
+            """
+    if use_grouping:
+        quarters = int(dsl.time_filter.value)
+
+        query = f"""
+            SELECT DISTINCT ON (s.symbol)
+                s.symbol,
                 s.sector,
                 f.pe_ratio,
                 f.eps,
                 f.market_cap,
                 f.revenue_growth,
                 f.price_change_1y
-          FROM symbols s
-          {join_clause}
-          WHERE {where_clause}
-      """
+            FROM symbols s
+            JOIN fundamentals f ON s.id = f.symbol_id
+            WHERE s.symbol IN (
+                SELECT s2.symbol
+                FROM symbols s2
+                JOIN fundamentals f2 ON s2.id = f2.symbol_id
+                WHERE {where_clause}
+                GROUP BY s2.symbol
+                HAVING COUNT(*) >= {quarters}
+            )
+        """
+    
     
     # Sorting
-    if dsl.sort_field and dsl.sort_field in FIELD_MAP:
+    if use_grouping:
+        query += " ORDER BY s.symbol, f.reported_date DESC"
+
+    elif dsl.time_filter:
+        query += " ORDER BY s.symbol, f.reported_date DESC"
+
+    elif dsl.sort_field and dsl.sort_field in FIELD_MAP:
         field_info = FIELD_MAP[dsl.sort_field]
         alias = field_info["alias"]
         column = field_info["column"]
