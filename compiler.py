@@ -141,6 +141,20 @@ def build_sql_from_dsl(dsl):
                         WHERE f2.symbol_id = s.id
                     )
             """
+    # DEFAULT QUERY 
+    query = f"""
+        SELECT
+            s.symbol,
+            s.sector,
+            f.pe_ratio,
+            f.eps,
+            f.market_cap,
+            f.revenue_growth,
+            f.price_change_1y
+        FROM symbols s
+        {join_clause}
+        WHERE {where_clause}
+    """
     if use_grouping:
         quarters = int(dsl.time_filter.value)
 
