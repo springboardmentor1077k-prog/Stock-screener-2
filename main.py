@@ -61,8 +61,6 @@ async def process_query(request: QueryRequest):
     # Execute the query securely
     cursor.execute(sql_query, params)
     rows = cursor.fetchall()
-
-    # 🔥 Ikkada pettu bava mana debugging prints:
     print("🔥 SQL QUERY:", sql_query)
     print("🔥 PARAMS:", params)
     print("🔥 TOTAL ROWS FETCHED:", len(rows))
@@ -80,6 +78,6 @@ async def process_query(request: QueryRequest):
         "count": len(results),
         "data": results,
         "debug_info": {
-            "compiled_sql": sql_query
+        "compiled_sql": sql_query
         }
     }
