@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("stock_analysis.db")
+conn = sqlite3.connect("./stock_database.db")
 cursor = conn.cursor()
 
 cursor.execute("SELECT * FROM symbols")
