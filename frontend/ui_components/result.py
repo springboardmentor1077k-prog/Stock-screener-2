@@ -35,6 +35,8 @@ def render_results_table(data):
 
         df = pd.DataFrame(table_data)
 
+        df.index = df.index + 1
+        
         st.dataframe(df, use_container_width=True)
 
         st.write("View Details")

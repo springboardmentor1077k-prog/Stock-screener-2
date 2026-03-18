@@ -1,43 +1,43 @@
-import streamlit as st
+# import streamlit as st
 
 
-import psycopg2
+# import psycopg2
 
-def get_connection():
-    return psycopg2.connect(
-        host="localhost",
-        port="5433",
-        database="stock_db",
-        user="postgres",
-        password="admin"
-    )
+# def get_connection():
+#     return psycopg2.connect(
+#         host="localhost",
+#         port="5433",
+#         database="stock_db",
+#         user="postgres",
+#         password="admin"
+#     )
 
-def fetch_username(user_id):
-    conn = get_connection()
-    cursor = conn.cursor()
+# def fetch_username(user_id):
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT username FROM users WHERE user_id = %s",
-        (user_id,)
-    )
+#     cursor.execute(
+#         "SELECT username FROM users WHERE user_id = %s",
+#         (user_id,)
+#     )
 
-    result = cursor.fetchone()
+#     result = cursor.fetchone()
 
-    conn.close()
+#     conn.close()
 
-    if result:
-        return result[0]
+#     if result:
+#         return result[0]
     
-    return None
+#     return None
 
 
-user_id = st.session_state.get("user_id")
+# user_id = st.session_state.get("user_id")
 
-if not user_id:
-    st.warning("Please login first")
-    st.switch_page("login.py")
+# if not user_id:
+#     st.warning("Please login first")
+#     st.switch_page("login.py")
 
-username = fetch_username(user_id)
+# username = fetch_username(user_id)
 
-st.markdown(f"##  Welcome **{username}**")
-st.write("Here is your portfolio.")
+# st.markdown(f"##  Welcome **{username}**")
+# st.write("Here is your portfolio.")

@@ -92,20 +92,7 @@ show companies with revenue growth greater than 10%
   "limit":20
   }}
   
-  
-  User Query:
-  show companies with increasing revenue trend over last 4 quarters
 
-  DSL:
-  {{
- "entity":"historical_metrics",
- "analysis":"trend",
- "metric":"revenue",
- "direction":"increase",
- "period":4,
- "limit":20
-  }}
-  
   
   
   User Query:
@@ -168,20 +155,41 @@ Important rule:
 - If query has time → historical_metrics
 - If query has growth → ALWAYS historical_metrics (or symbol if mixed)
 
-Time rule:
+Time Rule:
 
-If the query contains a time condition such as:
-last N quarters, last year, past months
+1. If the query contains a time condition such as:
+- last N quarter
+- last N quarters
+- past N quarter
+- past N quarters
+- last quarter
+- past quarter
+- last year
+- past months
 
-then include:
+Then:
+- Extract N
+- Include:
 
 "time_filter": {{
   "type": "last_n_quarters",
   "value": N
 }}
 
-If no time condition exists, do NOT include time_filter.
+Notes:
+- If "quarter" is singular → treat as N quarters
+- If no number is given (e.g., "last quarter") → value = 1
 
+
+2. If NO time condition exists:
+
+- For growth queries → default to:
+  "time_filter": {{
+    "type": "last_n_quarters",
+    "value": 4
+  }}
+
+- For non-growth queries → DO NOT include time_filter
 
   Examples:
 
