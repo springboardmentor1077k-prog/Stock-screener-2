@@ -9,7 +9,16 @@ FIELD_RANGES = {
 }
 
 
-ALL_FIELDS = list(FIELD_RANGES.keys())
+GROWTH_FIELDS = {
+    
+    "revenue_growth",
+    "ebitda_growth",
+    "net_profit_growth",
+    "debt_free_cash_growth"
+}
+    
+
+ALL_FIELDS = list(FIELD_RANGES.keys()) + list(GROWTH_FIELDS)
 
 ALLOWED_ENTITIES = [
     "symbol",
@@ -36,6 +45,14 @@ HISTORICAL_FIELDS = [
     "pe"
 ]
 
+HISTORICAL_FIELDS += list(GROWTH_FIELDS)
+
+for field in GROWTH_FIELDS:
+    FIELD_RANGES[field] = (-1000, 1000)
+    
+    
+    
+
 ALLOWED_OPERATORS = ["=", "!=", ">", "<", ">=", "<="]
 ALLOWED_LOGIC = ["AND", "OR"]
 ALLOWED_DIRECTIONS = ["increase", "decrease"]
@@ -43,7 +60,7 @@ ALLOWED_DIRECTIONS = ["increase", "decrease"]
 MAX_LIMIT = 200
 
 #Recursive condition
-def validate_conditions(node, allowed_fields):
+def validate_conditions(node, allowed_fields, root_dsl):
 
     logic = str(node.get("logic", "AND")).upper()
     if logic not in ALLOWED_LOGIC:
@@ -57,12 +74,22 @@ def validate_conditions(node, allowed_fields):
 
         # Nested block
         if "conditions" in cond:
-            nested_error = validate_conditions(cond, allowed_fields)
+            nested_error = validate_conditions(cond, allowed_fields, root_dsl)
             if nested_error:
                 return nested_error
             continue
 
         field = str(cond.get("field", "")).lower()
+        
+        # Allow growth fields
+        if field.endswith("_growth"):
+            if "time_filter" not in root_dsl:
+                return error(
+                "MISSING_TIME_FILTER",
+                f"{field} requires time_filter (e.g. last 4 quarters)"
+            )
+                
+        
         operator = cond.get("operator")
         value = cond.get("value")
 
@@ -102,46 +129,88 @@ def validate_dsl(dsl: dict):
     # FUNDAMENTALS MODE
 
     if entity == "fundamentals":
-        return validate_conditions(dsl, FUNDAMENTAL_FIELDS)
+        return validate_conditions(dsl, FUNDAMENTAL_FIELDS, dsl)
 
 
     # SYMBOL MODE (MIXED TABLES)
 
     elif entity == "symbol":
-        return validate_conditions(dsl, ALL_FIELDS)
+        return validate_conditions(dsl, ALL_FIELDS, dsl)
 
 
     # HISTORICAL GROWTH MODE
 
     elif entity == "historical_metrics":
-
-        analysis = dsl.get("analysis")
-        if analysis != "growth":
+        
+        
+        if "time_filter" not in dsl:
             return error(
-                "INVALID_ANALYSIS",
-                "Enter only financial metrics"
+            "MISSING_TIME_FILTER",
+            "historical_metrics requires time_filter"
             )
 
-        metric = dsl.get("metric")
-        if metric not in HISTORICAL_FIELDS:
-            return error(
-                "INVALID_METRIC",
-                f"{metric} not allowed"
-            )
+        if "conditions" in dsl:
 
-        period = dsl.get("period")
-        if not isinstance(period, int) or period <= 0:
-            return error(
-                "INVALID_PERIOD",
-                "Period must be a positive integer"
-            )
+        # validate normally
+            validation_error = validate_conditions(dsl, ALL_FIELDS, dsl)
+            if validation_error:
+                return validation_error
 
-        direction = dsl.get("direction")
-        if direction not in ALLOWED_DIRECTIONS:
-            return error(
-                "INVALID_DIRECTION",
-                "Direction must be increase or decrease"
-            )
+        # ensure time_filter exists for growth
+            # def has_growth_field(node):
+            #     for cond in node.get("conditions", []):
+            #         if "conditions" in cond:
+            #             if has_growth_field(cond):
+            #                 return True
+            #         else:
+            #             if cond.get("field", "").endswith("_growth"):
+            #                 return True
+            #     return False
+                
+                
+            # has_growth = has_growth_field(dsl)
+
+            # if has_growth and "time_filter" not in dsl:
+            #     return error(
+            #         "MISSING_TIME_FILTER",
+            #         "Growth queries require time_filter (e.g. last 4 quarters)"
+            #     )h
+                
+        else:
+                analysis = dsl.get("analysis")
+                if analysis != "growth":
+                    return error(
+                    "INVALID_ANALYSIS",
+                    "Enter only financial metrics"
+                )
+
+                metric = dsl.get("metric")
+                if metric not in HISTORICAL_FIELDS:
+                    return error(
+                    "INVALID_METRIC",
+                    f"{metric} not allowed"
+                    )
+
+                period = dsl.get("period")
+                if not isinstance(period, int) or period <= 0:
+                    return error(
+                    "INVALID_PERIOD",
+                    "Period must be a positive integer"
+                )
+
+                direction = dsl.get("direction")
+                if direction not in ALLOWED_DIRECTIONS:
+                    return error(
+                    "INVALID_DIRECTION",
+                    "Direction must be increase or decrease"
+                    )
+
+            
+            
+            
+            
+            
+            
             
     # LIMIT VALIDATION
 

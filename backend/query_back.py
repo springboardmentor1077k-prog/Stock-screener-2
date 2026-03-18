@@ -6,7 +6,7 @@ from sql_builder import build_safe_query
 from execution import execute_query
 import logging
 import json
-import redis
+# import redis
 import json
 from datetime import datetime
 from decimal import Decimal
@@ -64,7 +64,15 @@ def query_endpoint(request: QueryRequest):
         raise HTTPException(status_code=422, detail=validation_error)
 
     # Step 3: Convert DSL → SQL 
-    sql, values = build_safe_query(dsl)
+    result = build_safe_query(dsl)
+
+    if not result:
+        raise HTTPException(
+        status_code=500,
+        detail={"message": "Failed to build query"}
+    )
+
+    sql, values = result
     results = execute_query(sql, values)
     
     nl_query = request.nl_query

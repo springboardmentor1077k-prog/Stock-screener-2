@@ -30,6 +30,102 @@ def generate_dsl(nl_query: str):
 
   Allowed fields:
   pe, peg, promoter_holding, ebitda, debt_free_cash, revenue, net_profit
+  
+  
+  Additional derived fields:
+  revenue_growth, ebitda_growth, net_profit_growth, debt_free_cash_growth
+  
+  Growth rules:
+
+1. If the query mentions "growth", "increase", "decrease", "change", "trend":
+   → use *_growth fields
+
+Examples:
+- "revenue growth > 10%" → field = revenue_growth
+- "ebitda increased by 5%" → field = ebitda_growth
+- "profit growth" → field = net_profit_growth
+
+2. Growth ALWAYS requires time context.
+If time is missing, assume last 4 quarters.
+
+3. Growth queries MUST use:
+→ entity = historical_metrics (or symbol if mixed with fundamentals)
+
+4. Growth value is always in percentage.
+
+
+Examples:
+
+
+User Query:
+show companies with revenue growth greater than 10%
+
+  DSL:
+  {{
+ "entity":"historical_metrics",
+ "logic":"AND",
+ "conditions":[
+   {{"field":"revenue_growth","operator":">","value":10}}
+ ],
+ "time_filter":{{
+   "type":"last_n_quarters",
+   "value":4
+ }},
+ "limit":20
+  }}
+  
+
+  User Query:
+  show companies with revenue growth above 15% in last 4 quarters
+
+  DSL:
+  {{
+  "entity":"historical_metrics",
+  "logic":"AND",
+  "conditions":[
+   {{"field":"revenue_growth","operator":">","value":15}}
+  ],
+  "time_filter":{{
+   "type":"last_n_quarters",
+   "value":4
+  }},
+  "limit":20
+  }}
+  
+  
+  User Query:
+  show companies with increasing revenue trend over last 4 quarters
+
+  DSL:
+  {{
+ "entity":"historical_metrics",
+ "analysis":"trend",
+ "metric":"revenue",
+ "direction":"increase",
+ "period":4,
+ "limit":20
+  }}
+  
+  
+  
+  User Query:
+  show companies with pe < 20 and revenue growth above 10% in last 4 quarters
+
+  DSL:
+  {{
+ "entity":"symbol",
+ "logic":"AND",
+ "conditions":[
+   {{"field":"pe","operator":"<","value":20}},
+   {{"field":"revenue_growth","operator":">","value":10}}
+ ],
+ "time_filter":{{
+   "type":"last_n_quarters",
+   "value":4
+ }},
+ "limit":20
+}}
+
 
   Entity rules:
 
@@ -67,7 +163,10 @@ show companies with pe < 20 and revenue last 3 quarters
 → entity = symbol
 
 Important rule:
-If NO time condition exists, always prefer fundamentals.
+
+- If query has NO time → fundamentals
+- If query has time → historical_metrics
+- If query has growth → ALWAYS historical_metrics (or symbol if mixed)
 
 Time rule:
 
@@ -82,6 +181,7 @@ then include:
 }}
 
 If no time condition exists, do NOT include time_filter.
+
 
   Examples:
 
