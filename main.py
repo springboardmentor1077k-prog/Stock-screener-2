@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from schemas import DSLQuery, PortfolioItem
 import sqlite3
 import os
 
@@ -81,3 +82,82 @@ async def process_query(request: QueryRequest):
         "compiled_sql": sql_query
         }
     }
+# ==========================================
+# 📈 PORTFOLIO API ENDPOINTS
+# ==========================================
+
+@app.post("/portfolio/add")
+async def add_to_portfolio(item: PortfolioItem):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    cursor = conn.cursor()
+    
+    # Check if stock already exists for this user
+    cursor.execute("SELECT id, quantity, buy_price FROM portfolio WHERE user_id=? AND symbol=?", (item.user_id, item.symbol))
+    existing = cursor.fetchone()
+    
+    if existing:
+        old_qty, old_price = existing[1], existing[2]
+        new_qty = old_qty + item.quantity
+        new_avg_price = ((old_qty * old_price) + (item.quantity * item.buy_price)) / new_qty
+        
+        cursor.execute("UPDATE portfolio SET quantity=?, buy_price=? WHERE id=?", (new_qty, new_avg_price, existing[0]))
+        msg = f"Updated {item.symbol} quantity. New Average Price: {round(new_avg_price, 2)}"
+    else:
+        # Insert fresh stock
+        cursor.execute("INSERT INTO portfolio (user_id, symbol, quantity, buy_price) VALUES (?, ?, ?, ?)", 
+                       (item.user_id, item.symbol, item.quantity, item.buy_price))
+        msg = f"Added {item.symbol} to portfolio"
+        
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": msg}
+
+@app.get("/portfolio/{user_id}")
+async def get_portfolio(user_id: str):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT id, symbol, quantity, buy_price FROM portfolio WHERE user_id=?", (user_id,))
+    rows = cursor.fetchall()
+    
+    portfolio_data = []
+    for row in rows:
+        item = dict(row)
+        qty = item['quantity']
+        buy_price = item['buy_price']
+        
+        # NOTE: For now, mocking current price (using snapshot idea). Real API can be added later.
+        # Assuming current market price is slightly higher/lower than buy price for testing.
+        current_price = buy_price * 1.08 # Dummy 8% growth snapshot
+        
+        #🔥Dynamic Derived Calculations 
+        inv_value = qty * buy_price
+        curr_value = qty * current_price
+        profit_loss = curr_value - inv_value
+        profit_pct = (profit_loss / inv_value) * 100 if inv_value > 0 else 0
+        
+        item['current_price'] = round(current_price, 2)
+        item['investment_value'] = round(inv_value, 2)
+        item['current_value'] = round(curr_value, 2)
+        item['profit_loss'] = round(profit_loss, 2)
+        item['profit_percentage'] = round(profit_pct, 2)
+        
+        portfolio_data.append(item)
+        
+    conn.close()
+    return {"status": "success", "data": portfolio_data}
+
+@app.delete("/portfolio/{item_id}")
+async def delete_portfolio_item(item_id: int):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    cursor = conn.cursor()
+    
+    cursor.execute("DELETE FROM portfolio WHERE id=?", (item_id,))
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "message": "Stock securely removed from portfolio"}

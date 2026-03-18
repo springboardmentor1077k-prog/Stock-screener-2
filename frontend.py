@@ -5,22 +5,17 @@ import pandas as pd
 # 1. PAGE CONFIGURATION
 st.set_page_config(page_title="Aura AI - Pro Screener", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# 2. PRO-LEVEL CSS (Glassmorphism, Background, Top Nav)
+# 2.CSS
 st.markdown("""
     <style>
-    /* Hide the default Streamlit Sidebar and Top Bar to look like a real web app */
     [data-testid="collapsedControl"] { display: none; }
     header { visibility: hidden; }
-
-    /* Custom Background Image with Dark Overlay */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1642543492481-44e81e3914a7?q=80&w=2070&auto=format&fit=crop");
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
     }
-    
-    /* Deep dark overlay so text is highly readable */
     .stApp::before {
         content: "";
         position: absolute;
@@ -28,13 +23,7 @@ st.markdown("""
         background: rgba(10, 15, 30, 0.85); 
         z-index: 0;
     }
-
-    /* Elevate the main content */
-    .main {
-        z-index: 1;
-    }
-    
-    /* Glassmorphism Effect for the Main Container */
+    .main { z-index: 1; }
     .block-container {
         background: rgba(25, 30, 45, 0.6);
         backdrop-filter: blur(16px);
@@ -46,8 +35,6 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
         margin-top: 2rem;
     }
-
-    /* Top Navigation Buttons (FB/Insta Style) */
     div.stButton > button {
         border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.05);
@@ -63,59 +50,50 @@ st.markdown("""
         color: white;
         transform: translateY(-2px);
     }
-    
-    /* Primary search button glowing effect */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
         border: none;
         color: white;
         box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);
     }
-
-    /* Search Input Box */
-    .stTextInput>div>div>input {
+    .stTextInput>div>div>input, .stNumberInput>div>div>input {
         border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.15);
         background-color: rgba(0, 0, 0, 0.5);
         color: white;
         font-size: 16px;
-        padding: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # 3. STATE MANAGEMENT
-if "query_text" not in st.session_state:
-    st.session_state.query_text = ""
-if "results_df" not in st.session_state:
-    st.session_state.results_df = pd.DataFrame()
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "Screener"
+if "query_text" not in st.session_state: st.session_state.query_text = ""
+if "results_df" not in st.session_state: st.session_state.results_df = pd.DataFrame()
+if "current_page" not in st.session_state: st.session_state.current_page = "Screener"
 
-def set_query(text):
-    st.session_state.query_text = text
+def set_query(text): st.session_state.query_text = text
 
 # ---------------------------------------------------------
-# TOP NAVIGATION BAR (Like Facebook / Insta Tabs)
+# TOP NAVIGATION BAR
 # ---------------------------------------------------------
 st.markdown("<h1 style='text-align: center; color: white; font-weight: 800; letter-spacing: 2px;'>AURA<span style='color: #00C6FF;'>.AI</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #A0AEC0; margin-top: -15px; margin-bottom: 25px;'>Next-Gen Financial Intelligence</p>", unsafe_allow_html=True)
 
 nav1, nav2, nav3, nav4 = st.columns(4)
 with nav1:
-    if st.button("🔍 Smart Screener", use_container_width=True): st.session_state.current_page = "Screener"
+    if st.button("🔍 Smart Screener", use_container_width=True): st.session_state.current_page = "Screener"; st.rerun()
 with nav2:
-    if st.button("📊 Portfolio", use_container_width=True): st.session_state.current_page = "Portfolio"
+    if st.button("📊 Portfolio", use_container_width=True): st.session_state.current_page = "Portfolio"; st.rerun()
 with nav3:
-    if st.button("⭐ Watchlist", use_container_width=True): st.session_state.current_page = "Watchlist"
+    if st.button("⭐ Watchlist", use_container_width=True): st.session_state.current_page = "Watchlist"; st.rerun()
 with nav4:
-    if st.button("🔔 Alerts", use_container_width=True): st.session_state.current_page = "Alerts"
+    if st.button("🔔 Alerts", use_container_width=True): st.session_state.current_page = "Alerts"; st.rerun()
 
 st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# PAGE LOGIC
-# ---------------------------------------------------------
+# =========================================================
+# PAGE 1: SMART SCREENER
+# =========================================================
 if st.session_state.current_page == "Screener":
     
     col_input, col_btn = st.columns([4, 1])
@@ -125,7 +103,6 @@ if st.session_state.current_page == "Screener":
     with col_btn:
         search_clicked = st.button("🚀 Search", type="primary", use_container_width=True)
 
-    # Dynamic Tags
     tag1, tag2, tag3, tag4 = st.columns([1, 1, 1, 1])
     with tag1:
         if st.button("🔥 PE < 15", use_container_width=True): set_query("Show companies with pe_ratio < 15"); st.rerun()
@@ -136,63 +113,87 @@ if st.session_state.current_page == "Screener":
     with tag4:
         if st.button("👑 Top Promoters", use_container_width=True): set_query("Show companies with promoter_holding > 50"); st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # API Call & Logic
     if search_clicked:
         if query:
             with st.spinner("🧠 AI is analyzing your query..."):
                 try:
                     response = requests.post("http://localhost:8000/query", json={"query": query})
-                    
                     if response.status_code == 200:
                         data = response.json()
                         results = data.get("data", data.get("results", []))
-                        
-                        if results:
-                            st.session_state.results_df = pd.DataFrame(results)
-                        else:
-                            st.session_state.results_df = pd.DataFrame()
-                            st.warning("⚠️ No stocks matched your exact criteria. Try adjusting the filters.")
-                    
-                    # 🔥 KOTHA ERROR HANDLING LOGIC 🔥
+                        st.session_state.results_df = pd.DataFrame(results) if results else pd.DataFrame()
+                        if not results: st.warning("⚠️ No stocks matched your exact criteria.")
                     else:
-                        error_response = response.json()
-                        # Backend nunchi vache exact error ento laguthunnam
-                        raw_error = str(error_response.get('detail', error_response.get('message', 'Unknown Error')))
-                        
-                        # Validation errors leda garbage input errors vasthe
-                        if "validation" in raw_error.lower() or "least 1 item" in raw_error.lower() or response.status_code == 422:
-                            st.warning("⚠️ I couldn't understand that query. Please try asking about stocks or financials (e.g., 'Show me IT companies').")
-                            st.session_state.results_df = pd.DataFrame() # Clear the old table
-                        else:
-                            st.error("❌ Something went wrong while processing your query. Please try again.")
-                            
+                        st.error("❌ Something went wrong while processing your query. Please try again.")
                 except Exception as e:
                     st.error("🚨 Connection Refused: Please check if your FastAPI server is running.")
-        else:
-            st.info("💡 Please type a query to start screening.")
 
-    # Display Results
     df = st.session_state.results_df
     if not df.empty:
-        st.markdown("<h3 style='color: white;'>📊 Market Insights</h3>", unsafe_allow_html=True)
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Stocks Found", f"{len(df)} Matches")
-        if 'pe_ratio' in df.columns:
-            m2.metric("Average PE", f"{df['pe_ratio'].mean():.1f}")
-        if 'market_cap' in df.columns:
-            m3.metric("Highest Market Cap", f"₹{df['market_cap'].max() / 1000:.1f}K")
+        st.markdown("<br><h3 style='color: white;'>📊 Market Insights</h3>", unsafe_allow_html=True)
+        st.dataframe(df, use_container_width=True, hide_index=True)
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        tab1, tab2 = st.tabs(["📋 Data Table", "📈 Statistical Summary"])
+        # 🔥 NEW: ADD TO PORTFOLIO SECTION
+        st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #00C6FF;'>💼 Add to Portfolio</h4>", unsafe_allow_html=True)
         
-        with tab1:
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        with tab2:
-            st.dataframe(df.describe(), use_container_width=True)
+        p_col1, p_col2, p_col3, p_col4 = st.columns([2, 1, 1, 1])
+        with p_col1:
+            selected_symbol = st.selectbox("Select Stock", options=df['symbol'].tolist(), label_visibility="collapsed")
+        with p_col2:
+            quantity = st.number_input("Quantity", min_value=1, value=10, step=1, label_visibility="collapsed")
+        with p_col3:
+            # Getting dummy current price from the table if available
+            default_price = float(df[df['symbol'] == selected_symbol]['pe_ratio'].values[0] * 100) if 'pe_ratio' in df.columns else 1000.0
+            buy_price = st.number_input("Buy Price (₹)", min_value=1.0, value=default_price, step=10.0, label_visibility="collapsed")
+        with p_col4:
+            if st.button("➕ Add Stock", type="primary", use_container_width=True):
+                payload = {"user_id": "user1", "symbol": selected_symbol, "quantity": quantity, "buy_price": buy_price}
+                res = requests.post("http://localhost:8000/portfolio/add", json=payload)
+                if res.status_code == 200:
+                    st.success(res.json().get("message", "Added successfully!"))
+                else:
+                    st.error("Failed to add to portfolio.")
+
+# =========================================================
+# PAGE 2: PORTFOLIO
+# =========================================================
+elif st.session_state.current_page == "Portfolio":
+    st.markdown("<h2 style='color: white;'>📈 Your Investment Portfolio</h2>", unsafe_allow_html=True)
+    
+    with st.spinner("Fetching your portfolio..."):
+        try:
+            response = requests.get("http://localhost:8000/portfolio/user1")
+            if response.status_code == 200:
+                port_data = response.json().get("data", [])
+                
+                if port_data:
+                    port_df = pd.DataFrame(port_data)
+                    
+                    # Highlight Profit/Loss with colors
+                    def color_profit(val):
+                        color = '#00FF00' if val > 0 else '#FF4B4B' if val < 0 else 'white'
+                        return f'color: {color}'
+                    
+                    styled_df = port_df.style.map(color_profit, subset=['profit_loss', 'profit_percentage'])
+                    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                    
+                    # Delete Stock Section
+                    st.markdown("<br><h5>🗑️ Remove Stock</h5>", unsafe_allow_html=True)
+                    del_col1, del_col2 = st.columns([2, 1])
+                    with del_col1:
+                        del_id = st.selectbox("Select Portfolio ID to remove", options=port_df['id'].tolist())
+                    with del_col2:
+                        if st.button("Remove from Portfolio", type="primary"):
+                            del_res = requests.delete(f"http://localhost:8000/portfolio/{del_id}")
+                            if del_res.status_code == 200:
+                                st.success("Deleted successfully!")
+                                st.rerun()
+                else:
+                    st.info("💼 Your portfolio is empty. Go to Smart Screener to add some stocks!")
+        except Exception as e:
+            st.error("🚨 Failed to connect to the backend API.")
 
 else:
-    # Logic for other pages (Portfolio, Watchlist, etc.)
     st.markdown(f"<h2 style='text-align: center; color: white; margin-top: 50px;'>🚧 {st.session_state.current_page}</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #00C6FF;'>Syncing your data... Advanced features coming in the next update!</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #00C6FF;'>Syncing your data... Advanced features coming soon!</p>", unsafe_allow_html=True)

@@ -34,3 +34,22 @@ class DSLQuery(BaseModel):
         if v not in {"AND", "OR"}:
             raise ValueError("Logic must be AND or OR only")
         return v
+    
+# 🔥 Portfolio Input Validation
+class PortfolioItem(BaseModel):
+    user_id: str = "user1" # Ippatiki default user1 ani peduthunnam
+    symbol: str
+    quantity: int
+    buy_price: float
+
+    @field_validator("quantity")
+    def validate_qty(cls, v):
+        if v <= 0:
+            raise ValueError("Quantity must be greater than 0")
+        return v
+
+    @field_validator("buy_price")
+    def validate_price(cls, v):
+        if v <= 0:
+            raise ValueError("Buy price must be a valid amount")
+        return v
