@@ -50,7 +50,7 @@ def create_chart(df):
         textprops={'fontsize': 8}
     )
 
-    ax.set_title("Portfolio")
+    ax.set_title("Portfolio Analysis")
 
     return fig
 
