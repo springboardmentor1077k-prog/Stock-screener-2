@@ -16,7 +16,6 @@ def render_results_table(data):
 
         st.subheader("Matching Companies for your Query")
         
-        # st.write("")
 
         table_data = []
 
@@ -34,6 +33,20 @@ def render_results_table(data):
             table_data.append(row)
 
         df = pd.DataFrame(table_data)
+        
+        sort_column = st.selectbox("Sort by", options=df.columns[2:])
+        
+        sort_order = st.radio(
+            "Order",
+            ["Ascending", "Descending"],
+            horizontal=True
+            )
+        
+        ascending = True if sort_order == "Ascending" else False
+
+        df = df.sort_values(by=sort_column, ascending=ascending)
+
+
 
         df.index = df.index + 1
         
