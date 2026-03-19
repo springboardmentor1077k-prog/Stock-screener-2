@@ -114,7 +114,6 @@ box-shadow:0 0 12px rgba(59,130,246,0.25);
 transform:translateY(-2px);
 }
 
-/* ---------- FIX RED OUTLINE ---------- */
 div[data-baseweb="select"]{
 background:#0b1629 !important;
 border-radius:10px !important;
@@ -158,9 +157,6 @@ if "sort_by" not in st.session_state:
 if "sort_order" not in st.session_state:
     st.session_state.sort_order = "descending"
 
-sort_by = st.session_state.sort_by
-sort_order = st.session_state.sort_order
-
 # ---------- NAVBAR ----------
 nav1, nav2, nav3, nav4, nav5, nav6, nav7 = st.columns([4,1,1,1,1,0.6,1])
 
@@ -202,6 +198,33 @@ Results for: {st.session_state.last_query}
 </div>
 """, unsafe_allow_html=True)
 
+# ---------- SORT UI ----------
+left, right = st.columns([6,4])
+
+with right:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        new_sort_by = st.selectbox(
+            "Sort By",
+            ["pe_ratio","market_cap","revenue","profit_margin","ebitda"],
+            index=["pe_ratio","market_cap","revenue","profit_margin","ebitda"].index(st.session_state.sort_by)
+        )
+
+    with col2:
+        new_sort_order = st.selectbox(
+            "Order",
+            ["ascending","descending"],
+            index=0 if st.session_state.sort_order == "ascending" else 1
+        )
+
+# ✅ ONLY FIX: trigger rerun when sorting changes
+if new_sort_by != st.session_state.sort_by or new_sort_order != st.session_state.sort_order:
+    st.session_state.sort_by = new_sort_by
+    st.session_state.sort_order = new_sort_order
+    st.session_state.results_page = 1
+    st.rerun()
+
 # ---------- FETCH ----------
 def fetch_page(page):
     response = requests.post(
@@ -211,8 +234,8 @@ def fetch_page(page):
             "query": st.session_state.last_query,
             "page": page,
             "page_size": page_size,
-            "sort_by": sort_by,
-            "order": sort_order
+            "sort_by": st.session_state.sort_by,
+            "order": st.session_state.sort_order
         }
     )
     if response.status_code == 200:
@@ -230,25 +253,11 @@ total_results = result.get("total_results", 0)
 
 df = pd.DataFrame(data)
 
-if not df.empty and sort_by in df.columns:
-    df = df.sort_values(by=sort_by, ascending=(sort_order == "ascending"))
+if df.empty:
+    st.warning("No results found for this query")
+    st.stop()
 
 total_pages = max(math.ceil(total_results / page_size), 1)
-
-# ---------- SORT UI ----------
-left, right = st.columns([6,4])
-
-with right:
-    col1, col2 = st.columns(2)
-
-    with col1:
-        sort_by = st.selectbox("Sort By", ["pe_ratio","market_cap","revenue","profit_margin","ebitda"])
-
-    with col2:
-        sort_order = st.selectbox("Order", ["ascending","descending"])
-
-st.session_state.sort_by = sort_by
-st.session_state.sort_order = sort_order
 
 # ---------- COMPANY CARD ----------
 def company_card(row):
@@ -262,26 +271,38 @@ def company_card(row):
             st.markdown(f"<div class='company-name'>{row.get('company_name')}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='company-sub'>{symbol} • {sector}</div>", unsafe_allow_html=True)
 
+        # ✅ FIXED METRICS (HEADERS RESTORED)
+
         with col2:
-            st.markdown("<div class='metric-title'>P/E</div>", unsafe_allow_html=True)
-            st.write(round(row.get("pe_ratio",0),2))
+            st.markdown(f"""
+                <div class='metric-title'>P/E</div>
+                <div class='metric-value'>{round(row.get("pe_ratio",0),2)}</div>
+            """, unsafe_allow_html=True)
 
         with col3:
-            st.markdown("<div class='metric-title'>Market Cap</div>", unsafe_allow_html=True)
-            st.write(row.get("market_cap"))
+            st.markdown(f"""
+                <div class='metric-title'>Market Cap</div>
+                <div class='metric-value'>{row.get("market_cap")}</div>
+            """, unsafe_allow_html=True)
 
         with col4:
-            st.markdown("<div class='metric-title'>Revenue</div>", unsafe_allow_html=True)
-            st.write(row.get("revenue"))
+            st.markdown(f"""
+                <div class='metric-title'>Revenue</div>
+                <div class='metric-value'>{row.get("revenue")}</div>
+            """, unsafe_allow_html=True)
 
         with col5:
-            st.markdown("<div class='metric-title'>EBITDA</div>", unsafe_allow_html=True)
-            st.write(row.get("ebitda"))
+            st.markdown(f"""
+                <div class='metric-title'>EBITDA</div>
+                <div class='metric-value'>{row.get("ebitda")}</div>
+            """, unsafe_allow_html=True)
 
         with col6:
-            st.markdown("<div class='metric-title'>Profit</div>", unsafe_allow_html=True)
             profit = row.get("profit_margin",0)
-            st.write(f"{round(profit*100,2)}%")
+            st.markdown(f"""
+                <div class='metric-title'>Profit</div>
+                <div class='metric-value'>{round(profit*100,2)}%</div>
+            """, unsafe_allow_html=True)
 
         with col7:
             star = "⭐" if symbol in st.session_state.watchlist else "☆"
@@ -296,7 +317,7 @@ def company_card(row):
 for _, row in df.iterrows():
     company_card(row)
 
-# ---------- OLD PAGINATION (CENTERED) ----------
+# ---------- PAGINATION ----------
 st.write("")
 center = st.columns([2,3,2])
 

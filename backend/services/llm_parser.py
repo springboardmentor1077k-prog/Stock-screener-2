@@ -15,7 +15,6 @@ genai.configure(api_key=API_KEY)
 
 
 def extract_json(text: str) -> dict:
-
     match = re.search(r"\{.*\}", text, re.DOTALL)
 
     if not match:
@@ -35,7 +34,6 @@ def extract_json(text: str) -> dict:
 def fallback_parser(query: str) -> dict:
 
     query = query.lower()
-
     words = re.findall(r"\b\w+\b", query)
 
     conditions = []
@@ -75,6 +73,38 @@ def fallback_parser(query: str) -> dict:
         })
 
     # -----------------------------
+    # GROWTH DETECTION
+    # -----------------------------
+    if "growth" in query or "increase" in query:
+
+        if "price" in query:
+            field = "price_growth"
+        else:
+            field = "price_growth"
+
+        if "greater than" in query or "more than" in query:
+            operator = ">"
+        elif "less than" in query:
+            operator = "<"
+        else:
+            operator = ">"
+
+        match = re.search(r"\d+\.?\d*", query)
+
+        if match:
+            value = float(match.group())
+
+            # convert % to decimal
+            if value > 1:
+                value = value / 100
+
+            conditions.append({
+                "field": field,
+                "operator": operator,
+                "value": value
+            })
+
+    # -----------------------------
     # Sector detection
     # -----------------------------
     if "it" in words or "technology" in words:
@@ -99,15 +129,18 @@ def fallback_parser(query: str) -> dict:
         })
 
     # -----------------------------
-    # TIME FILTER DETECTION
+    # TIME FILTER 
     # -----------------------------
     if "last year" in query:
         time_filter = "last_year"
 
-    if "last 4 quarters" in query:
+    elif "6 month" in query:
+        time_filter = "last_6_months"
+
+    elif "last 4 quarters" in query:
         time_filter = "last_4_quarters"
 
-    if "recent quarters" in query:
+    elif "recent" in query:
         time_filter = "recent_quarters"
 
     # -----------------------------
@@ -142,7 +175,6 @@ STRICT RULES:
 - No comments
 
 Allowed fields:
-
 pe_ratio
 peg_ratio
 market_cap
@@ -165,33 +197,17 @@ Allowed operators:
 Logic values:
 AND OR
 
-You may optionally include a time filter.
-
 Allowed time filters:
 last_year
 last_4_quarters
 recent_quarters
-
-Example:
-
-{{
- "conditions":[
-   {{
-     "field":"pe_ratio",
-     "operator":"<",
-     "value":20
-   }}
- ],
- "logic":"AND",
- "time_filter":"last_year"
-}}
+last_6_months
 
 User Query:
 {user_query}
 """
 
     try:
-
         model = genai.GenerativeModel(
             "gemini-2.5-flash",
             generation_config={"temperature": 0}
@@ -207,7 +223,5 @@ User Query:
         return dsl_json
 
     except Exception as e:
-
         print("Gemini failed, using fallback parser:", str(e))
-
         return fallback_parser(user_query)

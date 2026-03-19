@@ -11,11 +11,23 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "database", "stock_screener.db")
 
 
-@router.post("/create")
-def create_alert(condition: dict, authorization: str = Header(...)):
+def get_user_id(authorization: str):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid auth header")
 
     token = authorization.split(" ")[1]
     user_id = verify_token(token)
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return user_id
+
+
+@router.post("/create")
+def create_alert(condition: dict, authorization: str = Header(...)):
+
+    user_id = get_user_id(authorization)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -34,8 +46,7 @@ def create_alert(condition: dict, authorization: str = Header(...)):
 @router.get("/")
 def get_alerts(authorization: str = Header(...)):
 
-    token = authorization.split(" ")[1]
-    user_id = verify_token(token)
+    user_id = get_user_id(authorization)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -47,7 +58,6 @@ def get_alerts(authorization: str = Header(...)):
     """, (user_id,))
 
     rows = cursor.fetchall()
-
     conn.close()
 
     return [{"id": r[0], "condition": json.loads(r[1])} for r in rows]

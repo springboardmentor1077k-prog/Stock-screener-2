@@ -6,6 +6,7 @@ import sqlite3
 import os
 import logging
 import json
+import re
 
 from backend.services.schemas import DSLQuery
 from backend.services.llm_parser import parse_natural_language_to_dsl
@@ -40,7 +41,6 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
-
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(watchlist_router, prefix="/watchlist", tags=["Watchlist"])
@@ -77,7 +77,6 @@ def get_news(company: str):
 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
-
     error_msg = exc.errors()[0].get("msg")
 
     return JSONResponse(
@@ -92,7 +91,6 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-
     logger.error(f"Internal error: {str(exc)}")
 
     return JSONResponse(
@@ -113,6 +111,7 @@ async def process_query(
     authorization: str = Header(...)
 ):
 
+    # ---------- AUTH ----------
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
@@ -130,21 +129,7 @@ async def process_query(
     page = max(body.page, 1)
     page_size = max(min(body.page_size, 50), 1)
 
-    cached = get_cached_query(body.query, page, page_size)
-
-    if cached:
-        logger.info("Cache hit for query")
-        return cached
-
-    interpreted_query = interpret_query(body.query)
-
-    raw_dsl_dict = parse_natural_language_to_dsl(interpreted_query)
-    validated_dsl = DSLQuery(**raw_dsl_dict)
-
-    base_sql, base_params = compile_dsl_to_sql(validated_dsl.model_dump())
-
-
-    # -------- GLOBAL SORTING --------
+    # ---------- SORT ----------
     allowed_sort_fields = [
         "pe_ratio",
         "market_cap",
@@ -153,31 +138,68 @@ async def process_query(
         "ebitda"
     ]
 
-    sort_by = body.sort_by if body.sort_by in allowed_sort_fields else None
+    sort_by = body.sort_by if body.sort_by in allowed_sort_fields else "pe_ratio"
+    order = body.order if body.order in ["ascending", "descending"] else "descending"
 
-    order = body.order.lower()
-    if order in ["asc", "ascending"]:
-        sql_order = "ASC"
-    else:
-        sql_order = "DESC"
+    # ---------- CACHE ----------
+    cache_key = f"{body.query}:{sort_by}:{order}:{page}:{page_size}"
 
-    sorted_sql = base_sql
+    cached = get_cached_query(cache_key, page, page_size)
+    if cached:
+        logger.info("Cache hit")
+        return cached
 
-    if sort_by:
-        sorted_sql += f" ORDER BY {sort_by} {sql_order}"
+    # ---------- PARSE ----------
+    interpreted_query = interpret_query(body.query)
+    raw_dsl_dict = parse_natural_language_to_dsl(interpreted_query)
 
+    # ---------- SAFE CONDITIONS ----------
+    conditions = raw_dsl_dict.get("conditions", [])
+    if not isinstance(conditions, list):
+        conditions = []
 
-    # -------- PAGINATION --------
+    words = body.query.lower().split()
+
+    # ---------- FORCE PE FILTER ----------
+    pe_match = re.search(r"pe\s*ratio\s*(less than|<)\s*(\d+)", body.query.lower())
+
+    if pe_match:
+        conditions.append({
+            "field": "pe_ratio",
+            "operator": "<",
+            "value": float(pe_match.group(2))
+        })
+
+    # ---------- FORCE SECTOR ----------
+    if "it" in words or "technology" in words:
+        conditions.append({
+            "field": "sector",
+            "operator": "=",
+            "value": "Technology"
+        })
+
+    raw_dsl_dict["conditions"] = conditions
+
+    # ---------- VALIDATION ----------
+    validated_dsl = DSLQuery(**raw_dsl_dict)
+
+    # ---------- SQL ----------
+    base_sql, base_params = compile_dsl_to_sql(
+        validated_dsl.model_dump(),
+        sort_by=sort_by,
+        order=order
+    )
+
+    # ---------- PAGINATION ----------
     offset = (page - 1) * page_size
 
-    paginated_sql = sorted_sql + " LIMIT ? OFFSET ?"
+    paginated_sql = base_sql + " LIMIT ? OFFSET ?"
     paginated_params = base_params + [page_size, offset]
 
-    count_sql = f"SELECT COUNT(*) FROM ({sorted_sql}) as subquery"
+    count_sql = f"SELECT COUNT(*) FROM ({base_sql}) as subquery"
 
-
+    # ---------- DB ----------
     with sqlite3.connect(DB_PATH) as conn:
-
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -198,7 +220,6 @@ async def process_query(
 
         conn.commit()
 
-
     log_query(body.query, paginated_sql)
 
     results = [dict(row) for row in rows]
@@ -214,7 +235,8 @@ async def process_query(
         "data": results
     }
 
-    cache_query(body.query, page, page_size, response_data)
+    # ---------- CACHE STORE ----------
+    cache_query(cache_key, page, page_size, response_data)
 
     return response_data
 
@@ -232,7 +254,6 @@ def get_search_history(authorization: str = Header(...)):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     with sqlite3.connect(DB_PATH) as conn:
-
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 

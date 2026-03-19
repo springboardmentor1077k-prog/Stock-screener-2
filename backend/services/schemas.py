@@ -22,11 +22,11 @@ ALLOWED_FIELDS = {
 
 ALLOWED_OPERATORS = {"<", ">", "<=", ">=", "="}
 
-# NEW: allowed time filters
 ALLOWED_TIME_FILTERS = {
     "last_year",
     "last_4_quarters",
-    "recent_quarters"
+    "recent_quarters",
+    "last_6_months"   # ✅ ADD THIS (you used it elsewhere)
 }
 
 
@@ -38,52 +38,42 @@ class Condition(BaseModel):
 
     @field_validator("field")
     def validate_field(cls, v):
-
         if v not in ALLOWED_FIELDS:
             raise ValueError(f"Unsupported metric: {v}")
-
         return v
 
     @field_validator("operator")
     def validate_operator(cls, v):
-
         if v not in ALLOWED_OPERATORS:
             raise ValueError(f"Unsupported operator: {v}")
-
         return v
 
     @field_validator("value")
     def validate_value(cls, v):
-
         if not isinstance(v, (int, float, str)):
             raise ValueError("Value must be numeric or text")
-
         return v
 
 
 class DSLQuery(BaseModel):
 
-    conditions: List[Condition] = Field(..., min_length=1, max_length=5)
+    # ❌ OLD: min_length=1 (causes crash)
+    # ✅ NEW: allow empty, we handle fallback in routes
+    conditions: List[Condition] = Field(default_factory=list, max_length=5)
 
-    logic: str
+    logic: str = "AND"
 
-    # NEW: time filtering support
     time_filter: Optional[str] = None
 
     @field_validator("logic")
     def validate_logic(cls, v):
-
         v = v.upper()
-
         if v not in {"AND", "OR"}:
             raise ValueError("Logic must be AND or OR only")
-
         return v
 
     @field_validator("time_filter")
     def validate_time_filter(cls, v):
-
         if v and v not in ALLOWED_TIME_FILTERS:
             raise ValueError("Unsupported time filter")
-
         return v

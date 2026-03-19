@@ -10,9 +10,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "database", "stock_screener.db")
 
 
-# ADD STOCK TO WATCHLIST
-@router.post("/add")
-def add_watchlist(company_id: int, authorization: str = Header(...)):
+def get_user_id(authorization: str):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid auth header")
 
     token = authorization.split(" ")[1]
     user_id = verify_token(token)
@@ -20,11 +20,19 @@ def add_watchlist(company_id: int, authorization: str = Header(...)):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    return user_id
+
+
+@router.post("/add")
+def add_watchlist(company_id: int, authorization: str = Header(...)):
+
+    user_id = get_user_id(authorization)
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO watchlist (user_id, company_id)
+        INSERT OR IGNORE INTO watchlist (user_id, company_id)
         VALUES (?, ?)
     """, (user_id, company_id))
 
@@ -34,12 +42,10 @@ def add_watchlist(company_id: int, authorization: str = Header(...)):
     return {"message": "Added to watchlist"}
 
 
-# GET WATCHLIST
 @router.get("/")
 def get_watchlist(authorization: str = Header(...)):
 
-    token = authorization.split(" ")[1]
-    user_id = verify_token(token)
+    user_id = get_user_id(authorization)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -52,18 +58,15 @@ def get_watchlist(authorization: str = Header(...)):
     """, (user_id,))
 
     rows = cursor.fetchall()
-
     conn.close()
 
     return [{"symbol": r[0], "company": r[1]} for r in rows]
 
 
-# REMOVE STOCK
 @router.delete("/remove")
 def remove_watchlist(company_id: int, authorization: str = Header(...)):
 
-    token = authorization.split(" ")[1]
-    user_id = verify_token(token)
+    user_id = get_user_id(authorization)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

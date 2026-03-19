@@ -9,18 +9,13 @@ from backend.services.auth_service import (
     create_access_token
 )
 
-# -----------------------------
-# DATABASE PATH
-# -----------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "database", "stock_screener.db")
 
 router = APIRouter()
 
 
-# -----------------------------
-# REQUEST MODELS
-# -----------------------------
+# ---------- MODELS ----------
 class SignupRequest(BaseModel):
     username: str
     email: str
@@ -32,9 +27,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# -----------------------------
-# SIGNUP API
-# -----------------------------
+# ---------- SIGNUP ----------
 @router.post("/signup")
 def signup(data: SignupRequest):
 
@@ -42,17 +35,11 @@ def signup(data: SignupRequest):
     cursor = conn.cursor()
 
     cursor.execute("SELECT id FROM users WHERE email=?", (data.email,))
-    existing_user = cursor.fetchone()
-
-    if existing_user:
+    if cursor.fetchone():
+        conn.close()
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    print("PASSWORD:", data.password)
-    print("LENGTH:", len(data.password))
 
-    # sanitize password
     password = data.password.strip()[:72]
-
     hashed_pw = hash_password(password)
 
     cursor.execute("""
@@ -61,7 +48,6 @@ def signup(data: SignupRequest):
     """, (data.username, data.email, hashed_pw))
 
     conn.commit()
-
     user_id = cursor.lastrowid
     conn.close()
 
@@ -74,9 +60,7 @@ def signup(data: SignupRequest):
     }
 
 
-# -----------------------------
-# LOGIN API
-# -----------------------------
+# ---------- LOGIN ----------
 @router.post("/login")
 def login(data: LoginRequest):
 
@@ -96,7 +80,6 @@ def login(data: LoginRequest):
 
     user_id, hashed_pw = user
 
-    # sanitize password
     password = data.password.strip()[:72]
 
     if not verify_password(password, hashed_pw):
@@ -111,9 +94,7 @@ def login(data: LoginRequest):
     }
 
 
-# -----------------------------
-# LIST USERS (for testing)
-# -----------------------------
+# ---------- LIST USERS ----------
 @router.get("/users")
 def list_users():
 
@@ -121,16 +102,11 @@ def list_users():
     cursor = conn.cursor()
 
     cursor.execute("SELECT id, username, email FROM users")
-
     users = cursor.fetchall()
 
     conn.close()
 
     return [
-        {
-            "id": u[0],
-            "username": u[1],
-            "email": u[2]
-        }
+        {"id": u[0], "username": u[1], "email": u[2]}
         for u in users
     ]

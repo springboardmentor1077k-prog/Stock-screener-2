@@ -12,26 +12,33 @@ def build_cache_key(query: str, page: int, page_size: int):
 
 
 def get_cached_query(query: str, page: int, page_size: int):
+    try:
+        key = build_cache_key(query, page, page_size)
+        cached = redis_client.get(key)
 
-    key = build_cache_key(query, page, page_size)
+        if cached:
+            return json.loads(cached)
 
-    cached = redis_client.get(key)
-
-    if cached:
-        return json.loads(cached)
-
-    return None
+        return None
+    except Exception:
+        return None
 
 
 def cache_query(query: str, page: int, page_size: int, data):
+    try:
+        key = build_cache_key(query, page, page_size)
 
-    key = build_cache_key(query, page, page_size)
+        redis_client.setex(
+            key,
+            300,
+            json.dumps(data)
+        )
+    except Exception:
+        pass
 
-    redis_client.setex(
-        key,
-        300,  # cache for 5 minutes
-        json.dumps(data)
-    )
 
 def clear_cache():
-    redis_client.flushall()
+    try:
+        redis_client.flushall()
+    except Exception:
+        pass

@@ -1,51 +1,32 @@
 import os
 import json
 import yfinance as yf
+import time
 
-# folder where json files will be saved
 DATA_DIR = os.path.join("backend", "data")
-
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# 25 companies
 SYMBOLS = [
-    "INFY.NS",
-    "TCS.NS",
-    "WIPRO.NS",
-    "HCLTECH.NS",
-    "TECHM.NS",
-    "LTIM.NS",
-    "HDFCBANK.NS",
-    "ICICIBANK.NS",
-    "KOTAKBANK.NS",
-    "AXISBANK.NS",
-    "SBIN.NS",
-    "RELIANCE.NS",
-    "ITC.NS",
-    "HINDUNILVR.NS",
-    "BAJFINANCE.NS",
-    "TITAN.NS",
-    "MARUTI.NS",
-    "ULTRACEMCO.NS",
-    "ASIANPAINT.NS",
-    "BHARTIARTL.NS",
-    "SUNPHARMA.NS",
-    "DRREDDY.NS",
-    "ADANIENT.NS",
-    "ONGC.NS"
+    "INFY.NS","TCS.NS","WIPRO.NS","HCLTECH.NS","TECHM.NS","LTIM.NS",
+    "HDFCBANK.NS","ICICIBANK.NS","KOTAKBANK.NS","AXISBANK.NS","SBIN.NS",
+    "RELIANCE.NS","ITC.NS","HINDUNILVR.NS","BAJFINANCE.NS","TITAN.NS",
+    "MARUTI.NS","ULTRACEMCO.NS","ASIANPAINT.NS","BHARTIARTL.NS",
+    "SUNPHARMA.NS","DRREDDY.NS","ADANIENT.NS","ONGC.NS"
 ]
 
 
 def fetch_company(symbol):
-
     print(f"Fetching {symbol}")
 
     stock = yf.Ticker(symbol)
 
     info = stock.info
+    if not info:
+        print(f"No data for {symbol}")
+        return
+
     history = stock.history(period="6mo")
 
-    # ---------- COMPANY OVERVIEW ----------
     overview_data = {
         "Symbol": symbol,
         "Name": info.get("longName"),
@@ -65,30 +46,19 @@ def fetch_company(symbol):
     with open(os.path.join(DATA_DIR, f"{symbol}_company_overview.json"), "w") as f:
         json.dump(overview_data, f, indent=4)
 
-    # ---------- FUNDAMENTALS ----------
     fundamentals_data = {
         "Symbol": symbol,
-
-        # valuation
         "PERatio": info.get("trailingPE"),
         "PEGRatio": info.get("pegRatio"),
         "MarketCap": info.get("marketCap"),
-
-        # income metrics
         "RevenueTTM": info.get("totalRevenue"),
         "RevenueGrowth": info.get("revenueGrowth"),
         "EBITDA": info.get("ebitda"),
         "ProfitMargins": info.get("profitMargins"),
-
-        # balance sheet
         "TotalDebt": info.get("totalDebt"),
         "DebtToEquity": info.get("debtToEquity"),
-
-        # profitability
         "ReturnOnEquity": info.get("returnOnEquity"),
         "ReturnOnAssets": info.get("returnOnAssets"),
-
-        # shareholder metrics
         "EPS": info.get("trailingEps"),
         "BookValue": info.get("bookValue"),
         "DividendYield": info.get("dividendYield")
@@ -97,11 +67,9 @@ def fetch_company(symbol):
     with open(os.path.join(DATA_DIR, f"{symbol}_fundamentals_income.json"), "w") as f:
         json.dump(fundamentals_data, f, indent=4)
 
-    # ---------- HISTORICAL PRICES ----------
     price_series = []
 
     for date, row in history.iterrows():
-
         price_series.append({
             "date": str(date.date()),
             "open": float(row["Open"]),
@@ -121,9 +89,9 @@ def fetch_company(symbol):
 
 
 for symbol in SYMBOLS:
-
     try:
         fetch_company(symbol)
+        time.sleep(1)  # IMPORTANT
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
 
