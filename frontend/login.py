@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 
+
+
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -43,10 +45,24 @@ if st.session_state.mode == "Login":
         )
 
         if response.status_code == 200:
-            st.session_state.token = response.json()["access_token"]
-            st.success("Login Successful ")
-        
+            # st.session_state.token = response.json()["access_token"]
+            # st.query_params["token"] = st.session_state.token
+            # st.success("Login Successful ")
+            # st.session_state.user_mail = email
+            # # st.query_params["user_mail"] = email
+            # st.switch_page("pages/Query.py")
+            
+            
+            token = response.json()["access_token"]
+
+            st.session_state["token"] = token
+            st.query_params["token"] = token
+
+            st.success("Login Successful")
+
+
             st.switch_page("pages/Query.py")
+
         else:
             st.error("Invalid mail or password")
 

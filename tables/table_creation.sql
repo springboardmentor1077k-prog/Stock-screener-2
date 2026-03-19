@@ -115,6 +115,10 @@ CREATE TABLE portfolio (
 );
 
 
+ALTER TABLE portfolio
+ADD COLUMN buy_price NUMERIC NOT NULL;
+
+
 CREATE TABLE alerts (
     a_id SERIAL PRIMARY KEY,
     
@@ -154,11 +158,16 @@ VALUES
 ('gem@gmail.com', 'Raj', 'jsgjiojew454');
 
 
-INSERT INTO portfolio
-(user_id, company_id, quantity)
+INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
 VALUES
-(1, 1, 10),
-(1, 2, 5);
+-- User 1 Portfolio
+(1, 101, 10, 3200),   -- TCS
+(1, 102, 15, 1400),   -- INFY
+(1, 103, 5, 2500),    -- RELIANCE
+
+-- User 2 Portfolio
+(2, 101, 8, 3100),    -- TCS
+(2, 104, 20, 1600);   -- HDFCBANK
 
 
 
@@ -196,3 +205,23 @@ SELECT * FROM users;
 SELECT * FROM portfolio;
 SELECT * FROM alerts;
 
+TRUNCATE Table portfolio;
+
+
+
+
+INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
+VALUES
+-- User 1
+(3, 1, 5, 2500),    -- RELIANCE
+(3, 2, 10, 3200),   -- TCS
+(3, 8, 15, 1400),   -- INFY
+(3, 3, 8, 1600);
+
+INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
+VALUES
+(5, 2, 6, 3100),    -- TCS
+(5, 13, 20, 450);
+
+
+-- SELECT * from portfolio where user_id = 5;

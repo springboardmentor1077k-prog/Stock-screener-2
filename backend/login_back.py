@@ -9,7 +9,7 @@ import jwt
 
 SECRET_KEY = "supersecretkey"   # Move to env variable in production
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 1
+TOKEN_EXPIRE_MINUTES = 10
 
 app = FastAPI()
 

@@ -2,11 +2,6 @@ import pandas as pd
 import streamlit as st
 
 
-'''
-Sort the order in which the user wants
-like assending (default)
-desc rev the array'''
-
 
 def render_results_table(data):
 
