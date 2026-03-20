@@ -6,7 +6,7 @@ router = APIRouter()
 @router.post("/sell-stock")
 def sell_stock(data: dict, authorization: str = Header()):
     try:
-        # 🔐 Extract token
+
         token = authorization.split(" ")[1]
         payload = decode_jwt(token)
         user_email = payload.get("email")
@@ -14,7 +14,6 @@ def sell_stock(data: dict, authorization: str = Header()):
         conn = get_connection()
         cursor = conn.cursor()
 
-        # 👤 Get user_id
         cursor.execute(
             "SELECT user_id FROM users WHERE email = %s",
             (user_email,)
@@ -26,7 +25,7 @@ def sell_stock(data: dict, authorization: str = Header()):
 
         user_id = user[0]
 
-        # 🏢 Get company_id
+
         cursor.execute(
             "SELECT symbol_id FROM symbol WHERE company_symbol = %s",
             (data["symbol"],)
@@ -40,7 +39,6 @@ def sell_stock(data: dict, authorization: str = Header()):
 
         sell_qty = int(data["quantity"])
 
-        # 📊 Get current quantity
         cursor.execute(
             "SELECT quantity FROM portfolio WHERE user_id = %s AND company_id = %s",
             (user_id, company_id)
@@ -52,11 +50,11 @@ def sell_stock(data: dict, authorization: str = Header()):
 
         current_qty = row[0]
 
-        # ❌ Prevent oversell
+
         if sell_qty > current_qty:
             raise HTTPException(status_code=400, detail="Not enough shares")
 
-        # 🔥 SELL LOGIC
+
         if sell_qty == current_qty:
             # Delete row (Sell All)
             cursor.execute(
