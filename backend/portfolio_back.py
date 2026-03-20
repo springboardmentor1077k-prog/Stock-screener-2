@@ -1,13 +1,13 @@
-from fastapi import FastAPI, HTTPException, Header, Body
+from fastapi import FastAPI, HTTPException, Header,APIRouter
 from pydantic import BaseModel
 from database_back import get_connection
 from jwt_decode import decode_jwt
 app = FastAPI()
 
+router = APIRouter()
 
 
-
-@app.post("/get-portfolio")
+@router.post("/get-portfolio")
 def get_portfolio(authorization: str = Header()):
     try:
         conn = None
@@ -81,5 +81,3 @@ def get_portfolio(authorization: str = Header()):
     finally:
         if conn:
             conn.close()
-            
-            

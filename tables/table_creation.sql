@@ -213,7 +213,7 @@ TRUNCATE Table portfolio;
 INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
 VALUES
 -- User 1
-(3, 1, 5, 2500),    -- RELIANCE
+(3, 1, 5, 2500);    -- RELIANCE
 (3, 2, 10, 3200),   -- TCS
 (3, 8, 15, 1400),   -- INFY
 (3, 3, 8, 1600);

@@ -17,7 +17,7 @@ if not token:
 if not token:
     st.error("Please login")
     st.switch_page("login.py")
-    # st.stop()
+    st.stop()
 
 headers = {
     "Authorization": f"Bearer {token}"
@@ -95,3 +95,62 @@ if data.get("status") == "success":
         fig = create_chart(df)
         if fig:
             st.pyplot(fig)
+            
+        
+            
+    # Sell button config            
+            
+    selected_symbol = st.selectbox(
+    "Select Company",
+    df["symbol"].unique()
+    )      
+
+    max_qty = int(df[df["symbol"] == selected_symbol]["quantity"].values[0])
+
+    sell_qty = st.number_input(
+    "Enter Quantity",
+    min_value=1,
+    max_value=max_qty
+    )
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Sell"):
+            payload = {
+                "symbol": selected_symbol,
+                "quantity": sell_qty
+            }
+
+            headers = {
+                "Authorization": f"Bearer {token}"
+            }
+
+            res = requests.post(
+                "http://127.0.0.1:7000/sell-stock",
+                json=payload,
+                headers=headers
+            )
+
+            st.success("Sell order executed")
+            st.rerun()
+
+    with col2:
+        if st.button("Sell All"):
+            payload = {
+                "symbol": selected_symbol,
+                "quantity": max_qty
+            }
+
+            headers = {
+                "Authorization": f"Bearer {token}"
+            }
+
+            requests.post(
+                "http://127.0.0.1:7000/sell-stock",
+                json=payload,
+                headers=headers
+            )
+
+            st.success("All shares sold")
+            st.rerun()      
+

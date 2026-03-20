@@ -1,5 +1,5 @@
 import jwt
-import secrets
+
 
 SECRET_KEY = "supersecretkey"
 def decode_jwt(token):
