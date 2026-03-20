@@ -220,7 +220,7 @@ VALUES
 
 INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
 VALUES
-(5, 2, 6, 3100),    -- TCS
+-- (5, 2, 6, 3100),    -- TCS
 (5, 13, 20, 450);
 
 

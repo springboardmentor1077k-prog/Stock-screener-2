@@ -45,12 +45,6 @@ if st.session_state.mode == "Login":
         )
 
         if response.status_code == 200:
-            # st.session_state.token = response.json()["access_token"]
-            # st.query_params["token"] = st.session_state.token
-            # st.success("Login Successful ")
-            # st.session_state.user_mail = email
-            # # st.query_params["user_mail"] = email
-            # st.switch_page("pages/Query.py")
             
             
             token = response.json()["access_token"]

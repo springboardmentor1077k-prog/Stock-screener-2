@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ui_components.navbar import logout_button
 
-logout_button()
+
 
 token = st.session_state.get("token")
 
@@ -65,6 +65,7 @@ if data.get("status") == "success":
     df = pd.DataFrame(portfolio)
     df["Invested in Stocks"] = df["quantity"] * df["buy_price"]
     df["current_price"] = df["buy_price"] * 1.1   # temporary
+    df.index = df.index + 1
     st.table(df)
     
     total_invested = df["Invested in Stocks"].sum()
@@ -154,3 +155,4 @@ if data.get("status") == "success":
             st.success("All shares sold")
             st.rerun()      
 
+logout_button()
