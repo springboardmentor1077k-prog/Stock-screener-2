@@ -84,9 +84,10 @@ def insert_fundamentals(cursor, company_id, fundamentals_data):
             eps,
             book_value,
             dividend_yield,
+            current_price,
             report_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
     """, (
         company_id,
         fundamentals_data.get("PERatio"),
@@ -102,7 +103,8 @@ def insert_fundamentals(cursor, company_id, fundamentals_data):
         fundamentals_data.get("ReturnOnAssets"),
         fundamentals_data.get("EPS"),
         fundamentals_data.get("BookValue"),
-        fundamentals_data.get("DividendYield")
+        fundamentals_data.get("DividendYield"),
+        fundamentals_data.get("CurrentPrice")   # IMPORTANT
     ))
 
 
@@ -145,9 +147,11 @@ def insert_historical(cursor, company_id, price_data):
             row.get("close"),
             row.get("volume")
         ))
-        
-# price growth
 
+
+# -----------------------------
+# CALCULATE PRICE GROWTH
+# -----------------------------
 def calculate_price_growth(prices):
 
     if len(prices) < 2:
@@ -160,6 +164,7 @@ def calculate_price_growth(prices):
         return 0
 
     return (last_price - first_price) / first_price
+
 
 # -----------------------------
 # MAIN INGESTION FUNCTION

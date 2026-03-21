@@ -27,6 +27,7 @@ def fetch_company(symbol):
 
     history = stock.history(period="6mo")
 
+    # ---------------- COMPANY OVERVIEW ----------------
     overview_data = {
         "Symbol": symbol,
         "Name": info.get("longName"),
@@ -39,13 +40,15 @@ def fetch_company(symbol):
         "MarketCap": info.get("marketCap"),
         "Currency": info.get("currency"),
         "CurrentPrice": info.get("currentPrice"),
-        "Description": info.get("longBusinessSummary"),
-        "Exchange": "NSE"
+        "PreviousClose": info.get("previousClose"),
+        "Exchange": "NSE",
+        "Description": info.get("longBusinessSummary")
     }
 
     with open(os.path.join(DATA_DIR, f"{symbol}_company_overview.json"), "w") as f:
         json.dump(overview_data, f, indent=4)
 
+    # ---------------- FUNDAMENTALS ----------------
     fundamentals_data = {
         "Symbol": symbol,
         "PERatio": info.get("trailingPE"),
@@ -61,12 +64,17 @@ def fetch_company(symbol):
         "ReturnOnAssets": info.get("returnOnAssets"),
         "EPS": info.get("trailingEps"),
         "BookValue": info.get("bookValue"),
-        "DividendYield": info.get("dividendYield")
+        "DividendYield": info.get("dividendYield"),
+
+        # IMPORTANT ADDITIONS
+        "CurrentPrice": info.get("currentPrice"),
+        "PreviousClose": info.get("previousClose")
     }
 
     with open(os.path.join(DATA_DIR, f"{symbol}_fundamentals_income.json"), "w") as f:
         json.dump(fundamentals_data, f, indent=4)
 
+    # ---------------- HISTORICAL PRICES ----------------
     price_series = []
 
     for date, row in history.iterrows():
@@ -88,10 +96,11 @@ def fetch_company(symbol):
         json.dump(historical_data, f, indent=4)
 
 
+# ---------------- RUN FETCH ----------------
 for symbol in SYMBOLS:
     try:
         fetch_company(symbol)
-        time.sleep(1)  # IMPORTANT
+        time.sleep(1)  # Prevent rate limit
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
 

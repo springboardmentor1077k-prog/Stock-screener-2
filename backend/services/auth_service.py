@@ -1,3 +1,6 @@
+import os
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret")
+
 from jose import jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -5,7 +8,7 @@ from passlib.context import CryptContext
 # -----------------------------
 # SECURITY SETTINGS
 # -----------------------------
-SECRET_KEY = "super_secret_key"
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 12
 

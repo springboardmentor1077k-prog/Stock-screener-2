@@ -20,6 +20,7 @@ from backend.api.auth.auth_routes import router as auth_router
 from backend.api.watchlist.watchlist_routes import router as watchlist_router
 from backend.api.alerts.alerts_routes import router as alerts_router
 from backend.api.community.community_routes import router as community_router
+from backend.api.portfolio.portfolio_routes import router as portfolio_router
 
 from backend.services.sentiment_service import get_market_news
 
@@ -46,6 +47,7 @@ app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(watchlist_router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(alerts_router, prefix="/alerts", tags=["Alerts"])
 app.include_router(community_router, prefix="/community", tags=["Community"])
+app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 
 
 class QueryRequest(BaseModel):

@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS fundamentals (
     book_value REAL,
     dividend_yield REAL,
 
+    current_price REAL,      -- ADDED
     price_growth REAL,
 
     report_date DATE NOT NULL,
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS portfolio (
     user_id INTEGER NOT NULL,
     company_id INTEGER NOT NULL,
     quantity INTEGER,
+    buy_price REAL,          -- ADDED
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id),

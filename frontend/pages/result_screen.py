@@ -271,8 +271,6 @@ def company_card(row):
             st.markdown(f"<div class='company-name'>{row.get('company_name')}</div>", unsafe_allow_html=True)
             st.markdown(f"<div class='company-sub'>{symbol} • {sector}</div>", unsafe_allow_html=True)
 
-        # ✅ FIXED METRICS (HEADERS RESTORED)
-
         with col2:
             st.markdown(f"""
                 <div class='metric-title'>P/E</div>
@@ -312,6 +310,22 @@ def company_card(row):
                 else:
                     st.session_state.watchlist.add(symbol)
                 st.rerun()
+
+        if st.button("➕ Add", key=f"add_{row['symbol']}"):
+
+            response = requests.post(
+                f"{API_URL}/portfolio/add",
+                headers={"Authorization": f"Bearer {st.session_state.token}"},
+                json={
+                    "company_id": row["company_id"],
+                    "quantity": 1
+                }
+            )
+
+            if response.status_code == 200:
+                st.success(f"{row['symbol']} added to portfolio")
+            else:
+                st.error("Failed to add")
 
 # ---------- DISPLAY ----------
 for _, row in df.iterrows():

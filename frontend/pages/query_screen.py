@@ -188,7 +188,7 @@ unsafe_allow_html=True
 
 
 # ---------- SEARCH ----------
-col1, col2, col3 = st.columns([1,2.6,1])
+col1, col2, col3 = st.columns([1,2.5,1])
 
 with col2:
 
