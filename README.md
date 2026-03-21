@@ -1,251 +1,181 @@
-# AI-Powered Stock Screener Backend
+# AI-Powered Stock Screener and Advisory Platform
 
 ## Overview
 
-This project implements the backend of an **AI-powered stock screener** that enables users to query financial data using **natural language**.
+The AI-Powered Stock Screener and Advisory Platform is a full-stack application designed to help retail and professional investors make data-driven investment decisions using natural language queries, financial analytics, and AI-powered insights.
 
-Instead of manually writing complex database filters, users can simply ask queries such as:
+The platform allows users to screen stocks using plain English queries, track their portfolio performance, manage watchlists, create alerts, and analyze market data through interactive dashboards. The system uses Large Language Models (LLMs) to interpret user queries, convert them into structured logic, execute them on financial datasets, and return actionable insights.
 
-> "Show companies with PE ratio less than 25."
-
-The backend processes these queries using a **Large Language Model (LLM)**, converts them into a structured query format, validates them using guardrails, compiles them into SQL, executes them on the database, and returns structured results.
-
-This system demonstrates how **AI-driven query interpretation can be integrated with traditional database systems** to enable natural language access to financial datasets.
-
-The project is part of an **AI-Powered Mobile Stock Screener and Advisory Platform**, which aims to help investors analyze stock data using AI-assisted insights and analytics.
+This project demonstrates how AI can be integrated with financial data systems to build an intelligent stock analysis and advisory platform.
 
 ---
 
-## Sprint 1 — API & Database Foundation
+## Key Features
 
-The first sprint focused on establishing the **data ingestion and storage infrastructure** required for the stock screener.
+### 1. AI Stock Screener
 
-### Key tasks completed
+* Natural language query interface
+* LLM converts user query → DSL → SQL
+* Guardrails and validation for safe query execution
+* Dynamic filtering using financial metrics (PE, ROE, Revenue, EBITDA, etc.)
+* Returns structured stock insights
 
-- Integrated a **market data API** to retrieve company information, fundamentals, and historical stock data.
-- Stored retrieved API responses in **structured JSON datasets**.
-- Designed and implemented the **database schema** for storing financial metrics and company information.
-- Created scripts to **initialize and populate the SQLite database** used for stock screening queries.
+### 2. AI Advisory & Insights
 
-This stage established the **data layer required for the AI screening engine**.
+* Provides data-driven stock insights
+* Financial metric analysis
+* Portfolio performance insights
+* Market trend and performance visualization
+* Decision-support analytics for investors
 
----
+### 3. Portfolio Management
 
-## Sprint 2 — LLM Screener Engine
+* Add stocks to portfolio
+* Remove stocks from portfolio
+* Track investment value, current value, and profit/loss
+* Portfolio allocation breakdown
+* Portfolio growth visualization
+* Return percentage calculation
 
-Sprint 2 implemented the **AI query processing pipeline**, enabling natural language queries to be transformed into secure database queries.
+### 4. Watchlist Management
 
-### Implemented modules
+* Add stocks to watchlist
+* Remove stocks from watchlist
+* Track selected stocks
 
-- FastAPI backend  
-- LLM parser module  
-- DSL schema and validation  
-- SQL compiler  
-- Query execution module  
-- Result formatting logic  
+### 5. Alerts & Notifications
+
+* Create alerts based on financial conditions
+* Trigger alerts when screening conditions are met
+* Store and manage alert rules
+
+### 6. Community Module
+
+* Users can post and share investment ideas
+* Discussion system for stocks and strategies
+
+### 7. Market Data Integration
+
+* Fetch company fundamentals and stock prices
+* Store historical stock data
+* Used for screening, portfolio tracking, and analytics
 
 ---
 
 ## System Architecture
 
+The platform follows a layered AI + Data architecture:
+
 ```
-Natural Language Query
-        ↓
-LLM Parser
-        ↓
-DSL Validation
-        ↓
-SQL Compiler
-        ↓
-Database Execution
-        ↓
-Result Formatting
-        ↓
-API JSON Response
+User (Natural Language Query)
+            ↓
+        LLM Parser
+            ↓
+        DSL Validator
+            ↓
+        SQL Compiler
+            ↓
+        Database Execution
+            ↓
+        Analytics Engine
+            ↓
+        API Response
+            ↓
+        Frontend Dashboard
 ```
 
-This layered architecture ensures queries are **validated, secure, and executable before interacting with the database**.
+This architecture ensures secure query execution, validated AI outputs, and reliable financial analytics.
 
 ---
 
-## Guardrails & Validation Strategy
+## Database Schema (Main Tables)
 
-Because LLM outputs may be unreliable, the system treats them as **untrusted input** and validates them using strict guardrails.
-
-### Field Whitelist
-
-Only predefined financial metrics are allowed.
-
-Examples:
-
-- `pe_ratio`
-- `revenue`
-- `ebitda`
-- `promoter_holding`
-
-### Operator Whitelist
-
-Supported comparison operators:
-
-```
-<  >  <=  >=  =
-```
-
-### Logical Constraints
-
-Conditions can only be combined using:
-
-```
-AND / OR
-```
-
-### Structure Validation
-
-Queries must follow the defined **DSL schema** and include valid conditions.
-
-### Error Handling
-
-Invalid queries return **structured JSON error responses** instead of executing unsafe operations.
-
----
-
-## DSL Structure
-
-The system uses a **Domain Specific Language (DSL)** as an intermediate representation between the LLM output and SQL execution.
-
-### Example DSL
-
-```json
-{
-  "conditions": [
-    {
-      "field": "pe_ratio",
-      "operator": "<",
-      "value": 25
-    }
-  ],
-  "logic": "AND"
-}
-```
-
-This structure enables **strict validation and safe translation into SQL queries**.
-
----
-
-## SQL Compilation Strategy
-
-Validated DSL queries are translated into SQL using a **custom compiler**.
-
-### Example
-
-**DSL Condition**
-
-```
-pe_ratio < 25
-```
-
-**Compiled SQL**
-
-```sql
-SELECT * FROM fundamentals WHERE pe_ratio < ?
-```
-
-The system uses **parameterized queries (`?`)** to prevent SQL injection by separating query logic from user input.
-
----
-
-## Query Execution & Result Formatting
-
-The execution layer performs the following steps:
-
-1. Connects to the SQLite database  
-2. Executes parameterized SQL queries  
-3. Retrieves matching records  
-4. Converts database rows into JSON objects  
-
-### Example API Response
-
-```json
-{
-  "status": "success",
-  "count": 2,
-  "data": [
-    {
-      "pe_ratio": 22.5,
-      "revenue": 45000,
-      "ebitda": 15000
-    }
-  ]
-}
-```
-
----
-
-## Example End-to-End Query
-
-### Endpoint
-
-```
-POST /query
-```
-
-### Example Request
-
-```json
-{
-  "query": "show companies with pe_ratio less than 25"
-}
-```
-
-### Execution Steps
-
-1. Natural language query parsed by the LLM  
-2. Converted into DSL format  
-3. Validated using Pydantic guardrails  
-4. Compiled into SQL  
-5. Executed against the database  
-6. Returned as structured JSON results  
-
----
-
-## Running the Backend
-
-### Install dependencies
-
-```bash
-pip install fastapi uvicorn google-generativeai python-dotenv
-```
-
-### Create a `.env` file in the project root
-
-```
-GOOGLE_API_KEY=your_api_key
-```
-
-### Start the server
-
-```bash
-python -m uvicorn main:app --reload
-```
-
-### Open API documentation
-
-```
-http://127.0.0.1:8000/docs
-```
+| Table              | Description               |
+| ------------------ | ------------------------- |
+| symbols            | Company basic information |
+| fundamentals       | Financial metrics         |
+| historical_metrics | Historical stock prices   |
+| users              | User accounts             |
+| portfolio          | User holdings             |
+| watchlist          | Saved stocks              |
+| alerts             | Alert conditions          |
+| search_history     | Query history             |
+| posts              | Community posts           |
 
 ---
 
 ## Tech Stack
 
 ### Backend
-- FastAPI
-- Python
-- SQLite
+
+* FastAPI
+* Python
+* SQLite
+* Redis (Caching)
+
+### Frontend
+
+* Streamlit
 
 ### AI Integration
-- Gemini / LLM parser
 
-### Data Processing
-- Pydantic validation
-- Custom SQL compiler
+* Gemini / LLM API
+* DSL Query Parser
+* SQL Compiler
+
+### Data Source
+
+* Yahoo Finance API (yfinance)
+
+---
+
+## How to Run the Project
+
+### Install Dependencies
+
+```
+pip install fastapi uvicorn streamlit yfinance pandas plotly python-dotenv
+```
+
+### Setup Environment Variables
+
+Create `.env` file:
+
+```
+GOOGLE_API_KEY=your_api_key
+```
+
+### Create Database
+
+```
+python backend/database/create_db.py
+```
+
+### Fetch Market Data
+
+```
+python backend/ingestion/yfinance_fetch.py
+python backend/ingestion/ingest_api_data.py
+```
+
+### Run Backend
+
+```
+python -m uvicorn backend.main:app --reload
+```
+
+### Run Frontend
+
+```
+streamlit run frontend/app.py
+```
+
+---
+
+## Example Natural Language Queries
+
+* Show companies with PE ratio less than 20
+* Find companies with revenue growth above 10%
+* Show companies with high ROE and low debt
+* Find undervalued IT stocks
+* Show stocks with strong fundamentals and positive earnings
