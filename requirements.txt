@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+streamlit
+requests
+mysql-connector-python
+python-dotenv
+redis
+PyJWT
+passlib[bcrypt]
+openai
