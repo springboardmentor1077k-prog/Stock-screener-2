@@ -39,11 +39,11 @@ def validate_dsl(dsl_data):
     return True, ""
 
 
-def compile_sql_from_dsl(dsl_data):
+def compile_sql_from_dsl(dsl_data, sort_by="pe_ratio", sort_order="asc", limit=10, page=1):
     """
     Takes VALIDATED DSL and returns (safe_sql_string, parameters_list)
     """
-    conditions_list = dsl_data["conditions"]
+    conditions_list = dsl_data.get("conditions", [])
     logic_operator = dsl_data.get("logic", "AND").upper()
     
     if logic_operator not in ["AND", "OR"]:
@@ -69,9 +69,21 @@ def compile_sql_from_dsl(dsl_data):
         where_clauses.append(f"f.{col_name} {operator} %s")
         parameters.append(value)
         
-    final_sql = sql_base + f" {logic_operator} ".join(where_clauses)
+    if not where_clauses:
+        final_sql = sql_base + " 1=1 "
+    else:
+        final_sql = sql_base + f" {logic_operator} ".join(where_clauses)
     
-    # Optional sorting if we want
-    final_sql += " ORDER BY f.pe_ratio ASC LIMIT 100"
+    # Optional sorting and pagination
+    if sort_by not in ALLOWED_FIELDS:
+        sort_by = "pe_ratio"
+    if sort_order.lower() not in ["asc", "desc"]:
+        sort_order = "asc"
+        
+    _, sort_col = TABLE_MAPPING[sort_by]
+    offset = (page - 1) * limit
+    
+    final_sql += f" ORDER BY f.{sort_col} {sort_order.upper()} LIMIT %s OFFSET %s"
+    parameters.extend([limit, offset])
         
     return final_sql, parameters

@@ -13,15 +13,24 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class RegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+
 class QueryRequest(BaseModel):
     query: str
+    page: int = 1
+    limit: int = 10
+    sort_by: str = "pe_ratio"
+    sort_order: str = "asc"
 
 @app.get("/")
 def read_root():
     return {"status": "Advanced Screener API is running!"}
 
 @app.post("/register")
-def register(user: LoginRequest):
+def register(user: RegisterRequest):
     conn = get_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database not connected")
@@ -29,13 +38,13 @@ def register(user: LoginRequest):
     cursor = conn.cursor(dictionary=True)
     try:
         # Check if user exists
-        cursor.execute("SELECT * FROM users WHERE username=%s", (user.username,))
+        cursor.execute("SELECT * FROM users WHERE username=%s OR email=%s", (user.username, user.email))
         if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="User already exists")
+            raise HTTPException(status_code=400, detail="Username or Email already exists")
         
-        # Insert new user
+        # Insert new user with the email column active
         hashed_pw = get_password_hash(user.password)
-        cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (user.username, hashed_pw))
+        cursor.execute("INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)", (user.username, user.email, hashed_pw))
         conn.commit()
         return {"message": "User registered successfully"}
     finally:
@@ -95,7 +104,13 @@ def ask_ai(request: QueryRequest, username: str = Depends(verify_token)):
         raise HTTPException(status_code=400, detail=f"Validation Failed: {err_msg}")
         
     # 4. Compiler: DSL -> Safe Parameterized SQL
-    sql_query, parameters = compile_sql_from_dsl(dsl_data)
+    sql_query, parameters = compile_sql_from_dsl(
+        dsl_data, 
+        sort_by=request.sort_by, 
+        sort_order=request.sort_order, 
+        limit=request.limit, 
+        page=request.page
+    )
     
     # 5. Database Execution
     conn = get_connection()
