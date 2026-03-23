@@ -25,27 +25,7 @@ cursor = conn.cursor()
 
 
 tickers = [
-    "HINDUNILVR.NS",   # FMCG
-    "ICICIBANK.NS",    # Banking
-    "SBIN.NS",         # Banking
-    "LT.NS",           # Infrastructure
-    "AXISBANK.NS",     # Banking
-    "KOTAKBANK.NS",    # Banking
-    "BAJFINANCE.NS",   # NBFC
-    "ASIANPAINT.NS",   # Paints
-    "MARUTI.NS",       # Automobile
-    "TITAN.NS",        # Jewellery
-    "ULTRACEMCO.NS",   # Cement
-    "SUNPHARMA.NS",    # Pharma
-    "WIPRO.NS",        # IT
-    "TECHM.NS",        # IT
-    "NTPC.NS",         # Power
-    "POWERGRID.NS",    # Power
-    "ONGC.NS",         # Oil & Gas
-    "COALINDIA.NS",    # Mining
-    "ADANIENT.NS",     # Conglomerate
-    "ADANIPORTS.NS"    # Ports
-]
+    "HINDUNILVR.NS"]  # FMCG
 
 
 
@@ -137,41 +117,6 @@ for ticker in tickers:
 
 
     financials = stock.quarterly_financials
-
-    # latest_ebitda = None
-    # latest_revenue = None
-    # latest_net_profit = None
-
-    # if not financials.empty:
-
-    #     for i, col in enumerate(financials.columns[:4]):
-
-    #         revenue_q = financials.loc["Total Revenue"][col] if "Total Revenue" in financials.index else None
-    #         ebitda_q = financials.loc["EBITDA"][col] if "EBITDA" in financials.index else None
-    #         net_profit_q = financials.loc["Net Income"][col] if "Net Income" in financials.index else None
-
-    #     # save latest snapshot
-    #         if i == 0:
-    #             latest_ebitda = ebitda_q
-    #             latest_revenue = revenue_q
-    #             latest_net_profit = net_profit_q
-
-    #         cursor.execute(
-    #         """
-    #         INSERT INTO historical_metrics
-    #         (symbol_id, financial_year, quarter, revenue, ebitda, net_profit, reported_date)
-    #         VALUES (%s,%s,%s,%s,%s,%s,%s)
-    #         """,
-    #             (
-    #             company_id,
-    #             col.year,
-    #             (col.month - 1)//3 + 1,
-    #             revenue_q,
-    #             ebitda_q,
-    #             net_profit_q,
-    #             col.date()
-    #             )
-    #         )
     
     latest_ebitda = 0
     latest_revenue = 0

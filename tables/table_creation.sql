@@ -158,43 +158,7 @@ VALUES
 ('gem@gmail.com', 'Raj', 'jsgjiojew454');
 
 
-INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
-VALUES
--- User 1 Portfolio
-(1, 101, 10, 3200),   -- TCS
-(1, 102, 15, 1400),   -- INFY
-(1, 103, 5, 2500),    -- RELIANCE
 
--- User 2 Portfolio
-(2, 101, 8, 3100),    -- TCS
-(2, 104, 20, 1600);   -- HDFCBANK
-
-
-
-INSERT INTO alerts
-(user_id, company_id, alert_condition)
-VALUES
-(1, 1, 'PE > 30'),
-(1, 2, 'PEG < 1');
-
-INSERT INTO historical_metrics
-(symbol_id, financial_year, quarter, revenue, ebitda, net_profit, debt_free_cash, pe, reported_date)
-VALUES
-(1, 2025, 1, 50000000000, 10000000000, 7000000000, 2000000000, 18.5, '2025-03-31'),
-
-(1, 2025, 2, 52000000000, 11000000000, 7500000000, 2200000000, 19.0, '2025-06-30'),
-
-(1, 2025, 3, 54000000000, 12500000000, 8200000000, 2400000000, 20.5, '2025-09-30'),
-
-(1, 2025, 4, 56000000000, 14000000000, 9000000000, 2600000000, 22.0, '2025-12-31');
-
-
-
-INSERT INTO fundamentals
-(symbol_id, pe, peg, promoter_holding, ebitda, debt_free_cash)
-VALUES
-(1, 19.80, 1.25, 45.60, 18000000000.00, 4200000000.00),
-(2, 27.10, 1.40, 72.30, 22000000000.00, 6000000000.00);
 
 
 
@@ -206,25 +170,6 @@ SELECT * FROM portfolio;
 SELECT * FROM alerts;
 
 TRUNCATE Table portfolio;
-
-
-
-
-INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
-VALUES
--- User 1
-(3, 1, 5, 2500);    -- RELIANCE
-(3, 2, 10, 3200),   -- TCS
-(3, 8, 15, 1400),   -- INFY
-(3, 3, 8, 1600);
-
-INSERT INTO portfolio (user_id, company_id, quantity, buy_price)
-VALUES
--- (5, 2, 6, 3100),    -- TCS
-(5, 13, 20, 450);
-
-
--- SELECT * from portfolio where user_id = 5;
 
 
 
@@ -241,11 +186,6 @@ CREATE TABLE company_details (
 );
 
 
-INSERT INTO company_details 
-(symbol_id, description, founded_year, company_type, market_cap)
-VALUES
-(8, 'Infosys is a global leader in IT services, consulting, and business process outsourcing. It helps companies with digital transformation, cloud computing, and enterprise solutions. Founded by N. R. Narayana Murthy and six others, it is one of India''s largest IT companies.',
-1981, 'Service-Based', 5250000000000);
 
 
 TRUNCATE company_details;
@@ -254,53 +194,5 @@ TRUNCATE company_details;
 
 
 
-UPDATE fundamentals f
-SET peg = 0
-FROM symbol s
-WHERE f.symbol_id = s.symbol_id
-AND s.company_name = 'ITC Limited';
 
 
-
-INSERT INTO company_details 
-(symbol_id, description, founded_year, company_type, market_cap)
-VALUES
-
--- RELIANCE
-(1,
-'Reliance Industries Limited is one of India''s largest conglomerates with businesses spanning energy, petrochemicals, retail, and telecommunications. It is known for its strong presence in oil refining and its rapid expansion into digital services through Jio.',
-1973,
-'Hybrid',
-18000000000000
-),
-
--- TCS
-(2,
-'Tata Consultancy Services (TCS) is a global leader in IT services, consulting, and business solutions. It is part of the Tata Group and provides software services, cloud solutions, and digital transformation services to clients worldwide.',
-1968,
-'Service-Based',
-14000000000000
-),
-
--- HDFC BANK
-(3,
-'HDFC Bank Limited is one of India''s leading private sector banks offering a wide range of banking and financial services including retail banking, wholesale banking, and treasury operations. It is known for its strong asset quality and digital banking services.',
-1994,
-'Service-Based',
-9000000000000
-),
-
--- ITC
-(13,
-'ITC Limited is a diversified conglomerate with businesses in FMCG, cigarettes, hotels, paperboards, packaging, and agribusiness. The company has transformed itself from a tobacco-centric business to a major FMCG player in India.',
-1910,
-'Product-Based',
-3600000000000
-);
-
-
-UPDATE fundamentals f
-SET debt_free_cash = 0
-FROM symbol s
-WHERE f.symbol_id = s.symbol_id
-AND s.company_name = 'ITC Limited';
