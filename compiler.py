@@ -5,7 +5,14 @@ FIELD_MAP = {
     "eps": {"table": "fundamentals", "column": "eps", "alias": "f"},
     "revenue": {"table": "fundamentals", "column": "revenue", "alias": "f"},
     "debt": {"table": "fundamentals", "column": "debt", "alias": "f"},
+    "revenue": {"table": "fundamentals", "column": "revenue", "alias": "f"},
     "revenue_growth": {"table": "fundamentals", "column": "revenue_growth", "alias": "f"},
+    "revenue_cagr": {"table": "fundamentals", "column": "revenue", "alias": "f"},
+    "revenue_growth_calc": {"table": "fundamentals", "column": "revenue", "alias": "f"},
+    "avg_revenue_growth": {"table": "fundamentals", "column": "revenue", "alias": "f"},
+    "revenue_trend": {"table": "fundamentals", "column": "revenue", "alias": "f"},
+    "consistent_growth": {"table": "fundamentals", "column": "revenue", "alias": "f"},
+    "revenue_yoy_growth": {"table": "fundamentals", "column": "revenue", "alias": "f"},
     "price_change_1y": {"table": "fundamentals", "column": "price_change_1y", "alias": "f"},
     "market_cap": {"table": "fundamentals", "column": "market_cap", "alias": "f"},
     "sector": {"table": "symbols", "column": "sector", "alias": "s"},
@@ -48,8 +55,30 @@ def compile_node(node, param_index=0):
         # Validate operator
         if condition.operator not in SAFE_OPERATORS:
             raise ValueError(f"Invalid operator: {condition.operator}")
+        
+        #  QoQ growth
+        if condition.field == "revenue_growth_calc":
+            clause = f"revenue_growth_calc {condition.operator} :{param_name}"
+        elif condition.field == "consistent_growth":
+            clause = "revenue_growth_calc > 0"
+        elif condition.field == "revenue_yoy_growth":
+            clause = f"revenue_yoy_growth {condition.operator} :{param_name}"
+        elif condition.field == "avg_revenue_growth":
+            clause = f"avg_revenue_growth {condition.operator} :{param_name}"
 
-        clause = f"{alias}.{column} {condition.operator} :{param_name}"
+        elif condition.field == "revenue_cagr":
+            clause = f"revenue_cagr {condition.operator} :{param_name}"
+
+        elif condition.field == "revenue_trend":
+            clause = "revenue_trend_flag = 1"
+
+        elif condition.field == "revenue_growth":
+            clause = f"revenue_growth_calc {condition.operator} :{param_name}"
+
+        # 🔥 normal fields
+        else:
+            clause = f"{alias}.{column} {condition.operator} :{param_name}"
+
         clauses.append(clause)
 
         params[param_name] = condition.value
@@ -107,15 +136,7 @@ def build_sql_from_dsl(dsl):
     if not where_clause:
         raise ValueError("Empty WHERE clause not allowed")
 
-    where_clause, params = apply_time_filter(
-        where_clause,
-        params,
-        dsl.time_filter
-    )
     use_grouping = False
-
-    if dsl.time_filter and dsl.time_filter.type == "last_n_quarters":
-        use_grouping = True
     
     
     tables_used = detect_tables(dsl.root)
@@ -142,50 +163,102 @@ def build_sql_from_dsl(dsl):
                     )
             """
     # DEFAULT QUERY 
+    time_condition = ""
+
+    if dsl.time_filter and dsl.time_filter.type == "last_n_quarters":
+        months = int(dsl.time_filter.value) * 3
+        time_condition = f" AND reported_date >= CURRENT_DATE - INTERVAL '{months} months'"
     query = f"""
+SELECT *
+FROM (
+    SELECT 
+        base.*,
+        CASE 
+            WHEN rev_q3 < rev_q2 AND rev_q2 < rev_q1 AND rev_q1 < revenue
+            THEN 1 ELSE 0
+        END AS revenue_trend_flag,
+        base.revenue_growth_calc AS revenue_growth,
+        AVG(revenue_growth_calc) OVER (PARTITION BY symbol) AS avg_revenue_growth,
+
+        SUM(
+            CASE 
+                WHEN revenue_growth_calc > 0 THEN 1 
+                ELSE 0 
+            END
+        ) OVER (PARTITION BY symbol) AS positive_growth_quarters,
+
+        (
+            POWER(
+                revenue / NULLIF(FIRST_VALUE(revenue) OVER (
+                    PARTITION BY symbol ORDER BY reported_date
+                ), 0),
+                1.0 / GREATEST(COUNT(*) OVER (PARTITION BY symbol), 1)
+            ) - 1
+        ) * 100 AS revenue_cagr
+
+    FROM (
         SELECT
             s.symbol,
             s.sector,
             f.pe_ratio,
             f.eps,
             f.market_cap,
-            f.revenue_growth,
-            f.price_change_1y
-        FROM symbols s
-        {join_clause}
-        WHERE {where_clause}
-    """
-    if use_grouping:
-        quarters = int(dsl.time_filter.value)
+            f.reported_date,
+            f.revenue,
+            f.price_change_1y,
+            
+            LAG(f.revenue, 1) OVER (PARTITION BY f.symbol_id ORDER BY f.reported_date) AS rev_q1,
+            LAG(f.revenue, 2) OVER (PARTITION BY f.symbol_id ORDER BY f.reported_date) AS rev_q2,
+            LAG(f.revenue, 3) OVER (PARTITION BY f.symbol_id ORDER BY f.reported_date) AS rev_q3,
+            
+            (
+                (f.revenue - LAG(f.revenue) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ))
+                /
+                NULLIF(LAG(f.revenue) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ), 0)
+            ) * 100 AS revenue_growth,
 
-        query = f"""
-            SELECT DISTINCT ON (s.symbol)
-                s.symbol,
-                s.sector,
-                f.pe_ratio,
-                f.eps,
-                f.market_cap,
-                f.revenue_growth,
-                f.price_change_1y
-            FROM symbols s
-            JOIN fundamentals f ON s.id = f.symbol_id
-            WHERE s.symbol IN (
-                SELECT s2.symbol
-                FROM symbols s2
-                JOIN fundamentals f2 ON s2.id = f2.symbol_id
-                WHERE {where_clause}
-                GROUP BY s2.symbol
-                HAVING COUNT(*) >= {quarters}
-            )
-        """
+            (
+                (f.revenue - LAG(f.revenue) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ))
+                /
+                NULLIF(LAG(f.revenue) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ), 0)
+            ) * 100 AS revenue_growth_calc,
+              
+
+            (
+                (f.revenue - LAG(f.revenue, 4) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ))
+                /
+                NULLIF(LAG(f.revenue, 4) OVER (
+                    PARTITION BY f.symbol_id ORDER BY f.reported_date
+                ), 0)
+            ) * 100 AS revenue_yoy_growth
+
+        FROM symbols s
+        JOIN fundamentals f ON s.id = f.symbol_id
+    ) base
+) sub
+
+WHERE 1=1
+{time_condition}
+AND {where_clause.replace("f.", "")}
+"""
     
     
     # Sorting
     if use_grouping:
-        query += " ORDER BY s.symbol, f.reported_date DESC"
+        query += " ORDER BY symbol"
 
     elif dsl.time_filter:
-        query += " ORDER BY s.symbol, f.reported_date DESC"
+        query += " ORDER BY symbol"
 
     elif dsl.sort_field and dsl.sort_field in FIELD_MAP:
         field_info = FIELD_MAP[dsl.sort_field]

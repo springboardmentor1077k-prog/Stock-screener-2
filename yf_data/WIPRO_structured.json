@@ -1,48 +1,32 @@
 {
     "ticker": "WIPRO",
-    "snapshot_date": "2026-03-13T18:34:49.124479",
+    "snapshot_date": "2026-03-18T10:34:47.360543",
     "company_profile": {
         "name": "Wipro Limited",
         "sector": "Technology",
         "industry": "Information Technology Services",
         "website": "https://www.wipro.com",
-        "market_cap": 2070168862720,
+        "market_cap": 2056757444608,
         "description": "Wipro Limited operates as an information technology (IT), consulting, and business process services company worldwide. It operates through IT Services and IT Products segments. The IT Services segment offers AI-powered IT and IT-enabled services, including digital strategy advisory, customer-centric design, technology and IT consulting, custom application design, development, re-engineering and maintenance, systems integration, package implementation, cloud and infrastructure, business process, cloud, mobility and analytics, research and development, and hardware and software design services to enterprises. It serves customers in various industry sectors, such as communications, media and information services, software and gaming, new age technology, consumer goods, healthcare, medical devices and life sciences, and technology products and services, as well as banking and financial services, energy, manufacturing and resources, capital markets and insurance, and hi-tech. The IT Products segment provides a range of third-party IT products, including enterprise platforms, networking solutions, software and data storage products, contact center infrastructure, enterprise security, IT optimization technologies, video solutions, and end-user computing solutions. It serves enterprises in various industries primarily in the Indian market, such as government, defense, IT and IT-enabled services, telecommunications, manufacturing, utilities, education, and financial services sectors. The company has a strategic alliance with the Indian Institute of Science and the Foundation for Science Innovation and Development to collaborate on research and innovation across frontier technologies. The company was incorporated in 1945 and is based in Bengaluru, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 85.612,
         "Show Profile": false,
-        "Change From Previous Close": -2.434444,
+        "Change From Previous Close": 2.6024225,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 197.58
+        "Last Traded Price": 196.3
     },
     "fundamentals": {
-        "pe_ratio": 15.656102,
-        "eps": 12.62,
+        "pe_ratio": 15.542359,
+        "eps": 12.63,
         "revenue": 908918980608,
         "debt": 198046007296,
-        "market_cap": 2070168862720,
+        "market_cap": 2056757444608,
         "revenue_growth": 5.5,
-        "price_change_1y": -21.71679267088559
+        "price_change_1y": -20.981794394589915
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 256.7412104685791,
-            "high": 259.17909845043056,
-            "low": 251.76988425725986,
-            "close": 252.39129638671875,
-            "volume": 8683943
-        },
-        {
-            "date": "2025-03-17",
-            "open": 252.3912756253402,
-            "high": 253.53852036662278,
-            "low": 247.5155292383579,
-            "close": 248.42376708984375,
-            "volume": 12697926
-        },
         {
             "date": "2025-03-18",
             "open": 248.42376708984375,
@@ -2009,7 +1993,31 @@
             "high": 202.07000732421875,
             "low": 196.0399932861328,
             "close": 197.5800018310547,
-            "volume": 12628178
+            "volume": 12629652
+        },
+        {
+            "date": "2026-03-16",
+            "open": 196.24000549316406,
+            "high": 198.2899932861328,
+            "low": 192.77000427246094,
+            "close": 195.11000061035156,
+            "volume": 12631649
+        },
+        {
+            "date": "2026-03-17",
+            "open": 195.0,
+            "high": 195.11000061035156,
+            "low": 188.25,
+            "close": 191.32000732421875,
+            "volume": 21778468
+        },
+        {
+            "date": "2026-03-18",
+            "open": 193.0,
+            "high": 197.13999938964844,
+            "low": 192.69000244140625,
+            "close": 196.3000030517578,
+            "volume": 8406604
         }
     ]
 }

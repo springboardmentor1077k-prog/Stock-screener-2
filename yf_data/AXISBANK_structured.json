@@ -1,48 +1,32 @@
 {
     "ticker": "AXISBANK",
-    "snapshot_date": "2026-03-13T18:36:22.012055",
+    "snapshot_date": "2026-03-18T10:35:04.536671",
     "company_profile": {
         "name": "Axis Bank Limited",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://www.axis.bank.in",
-        "market_cap": 3720286044160,
+        "market_cap": 3871599230976,
         "description": "Axis Bank Limited provides various financial products and services in India and internationally. The company operates through four segments: Treasury, Retail Banking, Corporate/Wholesale Banking, and Other Banking Business. It provides fixed, recurring, and safe deposits; and saving, salary, current, safe custody, pension disbursement, and demat and trading accounts. The company also offers home, personal, business, car, two-wheeler, commercial vehicle construction equipment, education, gold, trade, and supply chain loans, as well as loans against securities, fixed deposits, properties, and credit cards; and overdrafts. In addition, it provides credit and debit cards; mutual and debt funds; governmental investment products, such as public provident fund, floating rate saving bonds, and national pension system; digital gold and sovereign gold bonds; digital rupee; insurance services, such as life, general, and health insurance; and various forex products and services. Further, the company offers phone, digital, and mobile banking services, as well as ATM services. Additionally, it provides equity, derivative trading, central funding unit, financial and corporate advisory, NRI, para banking, placements and syndication, project appraisal, capital market, and cash management services. The company was formerly known as UTI Bank Limited and changed its name to Axis Bank Limited in July 2007. Axis Bank Limited was incorporated in 1993 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 666.704,
         "Show Profile": false,
-        "Change From Previous Close": -3.0133617,
+        "Change From Previous Close": 1.4242696,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1197.3
+        "Last Traded Price": 1245.6
     },
     "fundamentals": {
-        "pe_ratio": 14.199479,
-        "eps": 84.32,
+        "pe_ratio": 14.78457,
+        "eps": 84.25,
         "revenue": 768435683328,
         "debt": 2614195126272,
-        "market_cap": 3720286044160,
+        "market_cap": 3871599230976,
         "revenue_growth": 5.7,
-        "price_change_1y": 18.622379993836844
+        "price_change_1y": 20.549675392222337
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 1014.1332914267962,
-            "high": 1015.132437526724,
-            "low": 1004.2417206442948,
-            "close": 1009.33740234375,
-            "volume": 4004140
-        },
-        {
-            "date": "2025-03-17",
-            "open": 1010.2366012913976,
-            "high": 1038.1128019842872,
-            "low": 1010.2366012913976,
-            "close": 1033.2669677734375,
-            "volume": 5938668
-        },
         {
             "date": "2025-03-18",
             "open": 1033.2669677734375,
@@ -2009,7 +1993,31 @@
             "high": 1234.5,
             "low": 1194.300048828125,
             "close": 1197.300048828125,
-            "volume": 9097157
+            "volume": 9098187
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1199.199951171875,
+            "high": 1219.9000244140625,
+            "low": 1180.0999755859375,
+            "close": 1214.699951171875,
+            "volume": 8743794
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1219.699951171875,
+            "high": 1232.300048828125,
+            "low": 1210.0,
+            "close": 1228.0999755859375,
+            "volume": 5707317
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1228.0,
+            "high": 1249.5999755859375,
+            "low": 1224.199951171875,
+            "close": 1245.5999755859375,
+            "volume": 1722423
         }
     ]
 }

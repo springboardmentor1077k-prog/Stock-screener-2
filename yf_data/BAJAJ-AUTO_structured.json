@@ -1,48 +1,32 @@
 {
     "ticker": "BAJAJ-AUTO",
-    "snapshot_date": "2026-03-13T18:36:44.727444",
+    "snapshot_date": "2026-03-18T10:35:25.922366",
     "company_profile": {
         "name": "Bajaj Auto Limited",
         "sector": "Consumer Cyclical",
         "industry": "Auto Manufacturers",
         "website": "https://www.bajajauto.com",
-        "market_cap": 2478366261248,
+        "market_cap": 2584342691840,
         "description": "Bajaj Auto Limited, together with its subsidiaries, engages in the development, manufacture, and distribution of automobiles in India and internationally. The company offers motorcycles, bikes, commercial vehicles, electric two-wheelers, and three-wheeler, as well as related parts and accessories. It also exports its products. The company was founded in 1945 and is based in Pune, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 1223.784,
         "Show Profile": false,
-        "Change From Previous Close": -3.1325037,
+        "Change From Previous Close": 1.5862561,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 8875.0
+        "Last Traded Price": 9254.5
     },
     "fundamentals": {
-        "pe_ratio": 27.915827,
-        "eps": 317.92,
+        "pe_ratio": 29.107693,
+        "eps": 317.94,
         "revenue": 590238384128,
         "debt": 195646095360,
-        "market_cap": 2478366261248,
+        "market_cap": 2584342691840,
         "revenue_growth": 23.1,
-        "price_change_1y": 21.256377784598747
+        "price_change_1y": 26.75637979665574
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 7358.750150898272,
-            "high": 7358.750150898272,
-            "low": 7231.719607555838,
-            "close": 7319.20263671875,
-            "volume": 454776
-        },
-        {
-            "date": "2025-03-17",
-            "open": 7314.618564608781,
-            "high": 7422.87491936499,
-            "low": 7249.274638764942,
-            "close": 7301.01318359375,
-            "volume": 286383
-        },
         {
             "date": "2025-03-18",
             "open": 7301.01318359375,
@@ -2009,7 +1993,31 @@
             "high": 9119.5,
             "low": 8832.5,
             "close": 8875.0,
-            "volume": 435603
+            "volume": 435631
+        },
+        {
+            "date": "2026-03-16",
+            "open": 8866.0,
+            "high": 9103.5,
+            "low": 8742.5,
+            "close": 9073.0,
+            "volume": 580318
+        },
+        {
+            "date": "2026-03-17",
+            "open": 9100.0,
+            "high": 9250.0,
+            "low": 9006.5,
+            "close": 9110.0,
+            "volume": 245258
+        },
+        {
+            "date": "2026-03-18",
+            "open": 9150.0,
+            "high": 9254.5,
+            "low": 9136.5,
+            "close": 9254.5,
+            "volume": 71733
         }
     ]
 }

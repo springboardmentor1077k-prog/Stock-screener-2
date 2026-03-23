@@ -1,48 +1,32 @@
 {
     "ticker": "ULTRACEMCO",
-    "snapshot_date": "2026-03-13T18:36:42.189416",
+    "snapshot_date": "2026-03-18T10:35:23.543812",
     "company_profile": {
         "name": "UltraTech Cement Limited",
         "sector": "Basic Materials",
         "industry": "Building Materials",
         "website": "https://www.ultratechcement.com",
-        "market_cap": 3122950045696,
+        "market_cap": 3298865971200,
         "description": "UltraTech Cement Limited, together with its subsidiaries, engages in the manufacture and sale of clinker, cement, ready mix concrete, and related products in India, the United Arab Emirates, Bahrain, and Sri Lanka. The company offers ordinary Portland, Portland pozzolana, composite, Weather Plus, and Portland slag; white cement, wall care putty, and value-added products; ready-mix concrete; dry mix mortars, such as tile and marble binders, plasters and mortars, industrial and precision grouts, repair and rehabilitation, and flooring screed; and waterproofing products, including liquid and cement waterproofing products. It also provides masonry products; and TMT steel bars, paints, waterproofing solutions and treatments, switchboards and fittings, plywood, shuttering ply, power and hand tools, PVC pipes, sanitary ware, roofing sheets, and water storage tanks, as well as flooring materials, such as marble, granite, and semi-precious stones through its retail stores under UltraTech Home Expert Store brand name. In addition, the company operates mobile concrete labs that offers on-ground technical assessment of construction materials; and provides Vaastu, pest control, and water testing services, as well as home loans. It offers its products under UltraTech D\u00e9cor, DuraFacad, Pervious, MaxSheen, AquaSeal, ThermoCon+, FreeFlow+, FireSafe, DuraPlus, CorroProtect, Litecon, iFloors, Rapid, and ZIP brands. The company was incorporated in 2000 and is based in Mumbai, India. UltraTech Cement Limited operates as a subsidiary of Grasim Industries Limited.",
         "logo_url": null,
         "Category": null,
         "Book Value": 2448.889,
         "Show Profile": false,
-        "Change From Previous Close": -4.265488,
+        "Change From Previous Close": 0.8815328,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 10616.0
+        "Last Traded Price": 11214.0
     },
     "fundamentals": {
-        "pe_ratio": 40.738327,
-        "eps": 260.59,
+        "pe_ratio": 43.112534,
+        "eps": 260.11,
         "revenue": 857753780224,
         "debt": 252149104640,
-        "market_cap": 3122950045696,
+        "market_cap": 3298865971200,
         "revenue_growth": 27.0,
-        "price_change_1y": 2.211924666876153
+        "price_change_1y": 6.997017014774787
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 10453.736369879332,
-            "high": 10453.736369879332,
-            "low": 10314.71718721423,
-            "close": 10386.263671875,
-            "volume": 219474
-        },
-        {
-            "date": "2025-03-17",
-            "open": 10480.070183042399,
-            "high": 10510.72547829385,
-            "low": 10382.190610385149,
-            "close": 10480.666015625,
-            "volume": 212061
-        },
         {
             "date": "2025-03-18",
             "open": 10480.666015625,
@@ -2009,7 +1993,31 @@
             "high": 11000.0,
             "low": 10573.0,
             "close": 10616.0,
-            "volume": 723891
+            "volume": 723904
+        },
+        {
+            "date": "2026-03-16",
+            "open": 10670.0,
+            "high": 11151.0,
+            "low": 10652.0,
+            "close": 11099.0,
+            "volume": 728077
+        },
+        {
+            "date": "2026-03-17",
+            "open": 11090.0,
+            "high": 11160.0,
+            "low": 10991.0,
+            "close": 11116.0,
+            "volume": 332933
+        },
+        {
+            "date": "2026-03-18",
+            "open": 11124.0,
+            "high": 11287.0,
+            "low": 11116.0,
+            "close": 11214.0,
+            "volume": 41981
         }
     ]
 }

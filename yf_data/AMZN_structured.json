@@ -1,56 +1,32 @@
 {
     "ticker": "AMZN",
-    "snapshot_date": "2026-03-13T18:34:36.305001",
+    "snapshot_date": "2026-03-18T10:34:35.161417",
     "company_profile": {
         "name": "Amazon.com, Inc.",
         "sector": "Consumer Cyclical",
         "industry": "Internet Retail",
         "website": "https://www.amazon.com",
-        "market_cap": 2249287794688,
+        "market_cap": 2310155010048,
         "description": "Amazon.com, Inc. engages in the retail sale of consumer products, advertising, and subscriptions service through online and physical stores in North America and internationally. The company operates through three segments: North America, International, and Amazon Web Services (AWS). It also manufactures and sells electronic devices, including Kindle, fire tablets, fire TVs, echo, ring, blink, and eero; and develops and produces media content. In addition, the company offers programs that enable sellers to sell their products in its stores; and programs that allow authors, independent publishers, musicians, filmmakers, Twitch streamers, skill and app developers, and others to publish and sell content. Further, it provides compute, storage, Artificial intelligence, database, analytics, machine learning, and other services, as well as advertising services through programs, such as sponsored ads, display, and video advertising. Additionally, the company offers Amazon Prime, a membership program. The company's products offered through its stores include merchandise and content purchased for resale and products offered by third-party sellers. It serves consumers, sellers, developers, enterprises, content creators, advertisers, and employees. The company was incorporated in 1994 and is headquartered in Seattle, Washington.",
         "logo_url": null,
         "Category": null,
         "Book Value": 38.306,
         "Show Profile": false,
-        "Change From Previous Close": -1.4672,
+        "Change From Previous Close": 1.63408,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 209.53
+        "Last Traded Price": 215.2
     },
     "fundamentals": {
-        "pe_ratio": 29.223152,
+        "pe_ratio": 30.013947,
         "eps": 7.17,
         "revenue": 716923994112,
         "debt": 178546999296,
-        "market_cap": 2249287794688,
+        "market_cap": 2310155010048,
         "revenue_growth": 13.600000000000001,
-        "price_change_1y": 8.066429129342417
+        "price_change_1y": 11.606673982950548
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 198.1699981689453,
-            "high": 198.8800048828125,
-            "low": 191.82000732421875,
-            "close": 193.88999938964844,
-            "volume": 41270800
-        },
-        {
-            "date": "2025-03-14",
-            "open": 197.41000366210938,
-            "high": 198.64999389648438,
-            "low": 195.32000732421875,
-            "close": 197.9499969482422,
-            "volume": 38096700
-        },
-        {
-            "date": "2025-03-17",
-            "open": 198.77000427246094,
-            "high": 199.0,
-            "low": 194.32000732421875,
-            "close": 195.74000549316406,
-            "volume": 47341800
-        },
         {
             "date": "2025-03-18",
             "open": 192.52000427246094,
@@ -2033,7 +2009,31 @@
             "high": 211.7100067138672,
             "low": 208.14999389648438,
             "close": 209.52999877929688,
-            "volume": 44276700
+            "volume": 44349500
+        },
+        {
+            "date": "2026-03-13",
+            "open": 209.61000061035156,
+            "high": 210.55999755859375,
+            "low": 206.22000122070312,
+            "close": 207.6699981689453,
+            "volume": 35662100
+        },
+        {
+            "date": "2026-03-16",
+            "open": 208.35000610351562,
+            "high": 212.72000122070312,
+            "low": 207.4499969482422,
+            "close": 211.74000549316406,
+            "volume": 42209300
+        },
+        {
+            "date": "2026-03-17",
+            "open": 212.88499450683594,
+            "high": 215.6999969482422,
+            "low": 212.42999267578125,
+            "close": 215.1999969482422,
+            "volume": 41662109
         }
     ]
 }

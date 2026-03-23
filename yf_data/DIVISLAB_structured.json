@@ -1,48 +1,32 @@
 {
     "ticker": "DIVISLAB",
-    "snapshot_date": "2026-03-13T18:36:47.253067",
+    "snapshot_date": "2026-03-18T10:35:28.375718",
     "company_profile": {
         "name": "Divi's Laboratories Limited",
         "sector": "Healthcare",
         "industry": "Drug Manufacturers - Specialty & Generic",
         "website": "https://www.divislabs.com",
-        "market_cap": 1611659739136,
+        "market_cap": 1623871324160,
         "description": "Divi's Laboratories Limited engages in the manufacture and sale of generic active pharmaceutical ingredients (APIs), intermediates, and nutraceuticals in India, North America, Asia, Europe, and internationally. The company also undertakes custom synthesis contract manufacturing services of APIs and intermediates; and supplies a range of carotenoids, such as beta carotene, astaxanthin, lycopene, and canthaxanthin, as well as lutein and vitamins used in the food, beverage, dietary supplement, pet food, and feed industries. It also exports its products. The company was formerly known as Divi's Research Center and changed its name to Divi's Laboratories Limited in 1994. Divi's Laboratories Limited was incorporated in 1990 and is based in Hyderabad, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 580.952,
         "Show Profile": false,
-        "Change From Previous Close": -3.358803,
+        "Change From Previous Close": 0.501109,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 6071.0
+        "Last Traded Price": 6117.0
     },
     "fundamentals": {
-        "pe_ratio": 64.861115,
-        "eps": 93.6,
+        "pe_ratio": 65.68943,
+        "eps": 93.12,
         "revenue": 103139999744,
         "debt": 900000000,
-        "market_cap": 1611659739136,
+        "market_cap": 1623871324160,
         "revenue_growth": 12.3,
-        "price_change_1y": 8.508097957264415
+        "price_change_1y": 8.358588658777444
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 5669.6837440648615,
-            "high": 5732.149314241328,
-            "low": 5578.598490341406,
-            "close": 5594.97412109375,
-            "volume": 219553
-        },
-        {
-            "date": "2025-03-17",
-            "open": 5594.974056017716,
-            "high": 5669.185944498752,
-            "low": 5556.747725061699,
-            "close": 5645.1455078125,
-            "volume": 133663
-        },
         {
             "date": "2025-03-18",
             "open": 5645.1455078125,
@@ -2009,7 +1993,31 @@
             "high": 6326.0,
             "low": 6055.0,
             "close": 6071.0,
-            "volume": 200922
+            "volume": 200936
+        },
+        {
+            "date": "2026-03-16",
+            "open": 6010.0,
+            "high": 6130.0,
+            "low": 5927.0,
+            "close": 6071.0,
+            "volume": 282845
+        },
+        {
+            "date": "2026-03-17",
+            "open": 6074.0,
+            "high": 6147.0,
+            "low": 6051.5,
+            "close": 6086.5,
+            "volume": 183604
+        },
+        {
+            "date": "2026-03-18",
+            "open": 6086.5,
+            "high": 6150.0,
+            "low": 6086.5,
+            "close": 6117.0,
+            "volume": 47342
         }
     ]
 }

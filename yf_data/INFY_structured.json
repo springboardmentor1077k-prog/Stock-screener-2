@@ -1,48 +1,32 @@
 {
     "ticker": "INFY",
-    "snapshot_date": "2026-03-13T18:34:43.916959",
+    "snapshot_date": "2026-03-18T10:34:42.446703",
     "company_profile": {
         "name": "Infosys Limited",
         "sector": "Technology",
         "industry": "Information Technology Services",
         "website": "https://www.infosys.com",
-        "market_cap": 5051129528320,
+        "market_cap": 5164833439744,
         "description": "Infosys Limited, together with its subsidiaries, provides consulting, technology, outsourcing, and digital services in North America, Europe, India, Switzerland, and internationally. It provides digital marketing and digital workplace, digital commerce, digital experience and interactions, and metaverse; data analytics and AI, applied AI, generative AI, and sustainability; blockchain, engineering, and Internet of Things; enterprise agile DevOps, API economy and microservices, application modernization, cloud, digital process automation, digital supply chain, Microsoft business application and cloud business, service experience transformation, energy transition, Network Transformation Services, Infrastructure Services cyber security, and quality engineering solutions; Oracle, SAP, and Saleforce solutions; Topaz, an AI-first set of services, solutions, and platforms using generative AI technologies; and Aster, a set of AI-amplified marketing services, solutions, and platforms. The company also offers Finacle, a core banking solution; Edge suite of products; Panaya platform, Infosys Equinox, Infosys Live Enterprise Suite, Infosys Wingspan, Infosys Helix, Infosys Meridian, Infosys Polycloud, Infosys Cortex, and Stater digital platforms; and Infosys McCamish, an insurance platform. It serves aerospace and defense, agriculture, automotive, chemical manufacturing, communication, consumer packaged goods, education, engineering procurement and construction, financial, healthcare, high technology, industrial manufacturing, information services and publishing, insurance, life science, logistics and distribution, media, entertainment, mining, oil and gas, private equity, professional, public, retail, semiconductor, travel, hospitality, utilities, and waste management industries. The company has a strategic collaboration with Anthropic PBC for the development of enterprise AI solutions to companies across telecommunications, financial services, manufacturing, and software development. Infosys Limited has strategic collaboration with Intel to develop purpose-built agentic services suite. The company was formerly known as Infosys Technologies Limited and changed its name to Infosys Limited in June 2011. Infosys Limited was incorporated in 1981 and is headquartered in Bengaluru, India.",
         "logo_url": null,
         "Category": null,
-        "Book Value": 211.60979,
+        "Book Value": 210.55545,
         "Show Profile": false,
-        "Change From Previous Close": -1.3825248,
+        "Change From Previous Close": 3.5291255,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1248.3
+        "Last Traded Price": 1276.4
     },
     "fundamentals": {
-        "pe_ratio": 17.641323,
-        "eps": 70.76,
+        "pe_ratio": 17.911871,
+        "eps": 71.26,
         "revenue": 19847000064,
         "debt": 978000000,
-        "market_cap": 5051129528320,
+        "market_cap": 5164833439744,
         "revenue_growth": 3.2,
-        "price_change_1y": -18.647800348222443
+        "price_change_1y": -17.350136160092525
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 1553.2816045131979,
-            "high": 1559.886194636392,
-            "low": 1525.163782654934,
-            "close": 1534.439208984375,
-            "volume": 7822888
-        },
-        {
-            "date": "2025-03-17",
-            "open": 1500.736758011993,
-            "high": 1548.1826065260266,
-            "low": 1500.736758011993,
-            "close": 1544.34619140625,
-            "volume": 7526032
-        },
         {
             "date": "2025-03-18",
             "open": 1544.34619140625,
@@ -2009,7 +1993,31 @@
             "high": 1269.5999755859375,
             "low": 1242.5999755859375,
             "close": 1248.300048828125,
-            "volume": 7365621
+            "volume": 7366098
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1240.199951171875,
+            "high": 1254.300048828125,
+            "low": 1224.199951171875,
+            "close": 1249.800048828125,
+            "volume": 12314450
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1245.0,
+            "high": 1245.0,
+            "low": 1215.0999755859375,
+            "close": 1232.9000244140625,
+            "volume": 11223276
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1238.0,
+            "high": 1280.5999755859375,
+            "low": 1234.9000244140625,
+            "close": 1276.4000244140625,
+            "volume": 3534701
         }
     ]
 }

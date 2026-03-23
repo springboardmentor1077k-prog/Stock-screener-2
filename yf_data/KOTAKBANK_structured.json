@@ -1,48 +1,32 @@
 {
     "ticker": "KOTAKBANK",
-    "snapshot_date": "2026-03-13T18:36:16.781221",
+    "snapshot_date": "2026-03-18T10:34:59.672754",
     "company_profile": {
         "name": "Kotak Mahindra Bank Limited",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://www.kotak.bank.in",
-        "market_cap": 3648503939072,
+        "market_cap": 3714144272384,
         "description": "Kotak Mahindra Bank Limited provides a range of banking and financial services to corporate and individual customers in India. It operates through Treasury, BMU, and Corporate Centre; Retail Banking; Corporate/Wholesale Banking; Vehicle Financing; Other Lending Activities; Broking; Advisory and Transactional Services; Asset Management; and Insurance segments. The company offers savings, current, retail institution, corporate, and salary accounts; NRE and NRO fixed deposits and foreign currency nonresident deposits; home, personal, business, payday, gold, education, two-wheeler, commercial vehicle and equipment, home improvement, car, business, and crop loans, as well as loans against securities and properties; smart EMI services; bill payment, fund transfer, FASTag, taxes, loan/utility payment, forex and remittance, and wearable payments; working capital solutions; and forex, credit, and debit card services. It also provides investment products; life, vehicle, property, health, car, and two-wheeler insurance; domestic and international trade; international export and import; bank guarantee, letter of credit, and export credit; cash management and trade and supply chain finance; and private banking services. In addition, the company offers demat accounts, mutual funds, and portfolio investment schemes; and wire transfer, click2remit, and remittance exchange house services. Kotak Mahindra Bank Limited was incorporated in 1985 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 169.003,
         "Show Profile": false,
-        "Change From Previous Close": -2.2515273,
+        "Change From Previous Close": -0.20042758,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 366.85
+        "Last Traded Price": 373.45
     },
     "fundamentals": {
-        "pe_ratio": 19.389536,
-        "eps": 18.92,
+        "pe_ratio": 19.75926,
+        "eps": 18.9,
         "revenue": 765436690432,
         "debt": 827000291328,
-        "market_cap": 3648503939072,
+        "market_cap": 3714144272384,
         "revenue_growth": 24.2,
-        "price_change_1y": -7.492576321692547
+        "price_change_1y": -6.20626847464133
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 394.6849653005036,
-            "high": 398.21089887864855,
-            "low": 393.45637081383774,
-            "close": 396.5627746582031,
-            "volume": 24628970
-        },
-        {
-            "date": "2025-03-17",
-            "open": 395.5639377354779,
-            "high": 399.3096192860545,
-            "low": 394.39530216186137,
-            "close": 398.16094970703125,
-            "volume": 15854645
-        },
         {
             "date": "2025-03-18",
             "open": 398.16094970703125,
@@ -2009,7 +1993,31 @@
             "high": 373.6000061035156,
             "low": 363.3999938964844,
             "close": 366.8500061035156,
-            "volume": 32178086
+            "volume": 32179473
+        },
+        {
+            "date": "2026-03-16",
+            "open": 366.8500061035156,
+            "high": 373.3500061035156,
+            "low": 364.04998779296875,
+            "close": 369.8500061035156,
+            "volume": 27927294
+        },
+        {
+            "date": "2026-03-17",
+            "open": 369.8500061035156,
+            "high": 375.1499938964844,
+            "low": 368.6000061035156,
+            "close": 374.20001220703125,
+            "volume": 15176772
+        },
+        {
+            "date": "2026-03-18",
+            "open": 375.0,
+            "high": 376.0,
+            "low": 371.1000061035156,
+            "close": 373.45001220703125,
+            "volume": 2524952
         }
     ]
 }

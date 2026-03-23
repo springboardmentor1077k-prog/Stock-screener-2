@@ -1,48 +1,32 @@
 {
     "ticker": "TCS",
-    "snapshot_date": "2026-03-13T18:34:46.602517",
+    "snapshot_date": "2026-03-18T10:34:44.898282",
     "company_profile": {
         "name": "Tata Consultancy Services Limited",
         "sector": "Technology",
         "industry": "Information Technology Services",
         "website": "https://www.tcs.com",
-        "market_cap": 8721399808000,
+        "market_cap": 8917138538496,
         "description": "Tata Consultancy Services Limited provides information technology (IT) and IT enabled services in the Americas, Europe, India, and internationally. The company provides TCS ADD, a suite of AI powered life sciences platforms; TCS BaNCS, a financial services platform; TCS BFSI Platforms, a cloud-native, as-a-service digital ecosystem for insurers and financial firms; TCS Chroma, a cloud-based human resource management system platform; TCS Customer Intelligence & Insights, an AI-driven customer analytics and real-time CDP solution; TCS ERP on Cloud, an SAP platform as a service; ignio, a cognitive automation software product; TCS iON, a learning ecosystem; and TCS HOBS, a cloud-native, catalog-centric platform for personalization of products and processes. It also offers TCS Intelligent Urban Exchange for enterprises and smart cities; TCS OmniStore, a retail commerce platform; TCS Optumera, a retail-connected strategic intelligence platform; TCS Tap, a platform for intelligent procurement; Quartz, a distributed ledger technology; TCS TwinX, an enterprise digital twin platform; TCS MasterCraft, an AI-driven cognitive automation product; Jile, an enterprise agile planning and delivery tool; and TCS DigiBOLT, an end-to-end, organization-wide enterprise platform. In addition, the company provides cloud, cognitive business, consulting, cybersecurity, data and analytics, enterprise solutions, IoT and digital engineering, TCS interactive, artificial intelligence, network solutions, and sustainability services. It serves banking; capital markets; consumer packaged goods and distribution; communications, media, and information services; education; energy, resources, and utilities; healthcare; high tech; insurance; life sciences; manufacturing; public services; retail; and travel and logistics industries. The company was founded in 1968 and is based in Mumbai, India. Tata Consultancy Services Limited is a subsidiary of Tata Sons Private Limited.",
         "logo_url": null,
         "Category": null,
         "Book Value": 313.727,
         "Show Profile": false,
-        "Change From Previous Close": -1.3060884,
+        "Change From Previous Close": 3.0475378,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 2410.5
+        "Last Traded Price": 2464.6
     },
     "fundamentals": {
-        "pe_ratio": 18.276594,
-        "eps": 131.89,
+        "pe_ratio": 18.702383,
+        "eps": 131.78,
         "revenue": 2608020062208,
         "debt": 108210003968,
-        "market_cap": 8721399808000,
+        "market_cap": 8917138538496,
         "revenue_growth": 4.9,
-        "price_change_1y": -28.97267715613834
+        "price_change_1y": -27.10139309607363
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 3385.306695598729,
-            "high": 3406.5717917540665,
-            "low": 3367.714708703622,
-            "close": 3393.764404296875,
-            "volume": 1693004
-        },
-        {
-            "date": "2025-03-17",
-            "open": 3372.4510196048896,
-            "high": 3412.5163478055665,
-            "low": 3361.1902786941764,
-            "close": 3380.8603515625,
-            "volume": 2690906
-        },
         {
             "date": "2025-03-18",
             "open": 3380.8603515625,
@@ -69,10 +53,10 @@
         },
         {
             "date": "2025-03-21",
-            "open": 3358.9186380800415,
-            "high": 3495.450223009194,
-            "low": 3349.252685164703,
-            "close": 3458.57470703125,
+            "open": 3358.918875185949,
+            "high": 3495.45046975286,
+            "low": 3349.2529215882914,
+            "close": 3458.574951171875,
             "volume": 4161925
         },
         {
@@ -109,10 +93,10 @@
         },
         {
             "date": "2025-03-28",
-            "open": 3529.0391458412178,
-            "high": 3538.656721076703,
-            "low": 3471.9132739836596,
-            "close": 3485.687255859375,
+            "open": 3529.0393930182477,
+            "high": 3538.656968927356,
+            "low": 3471.9135171595426,
+            "close": 3485.6875,
             "volume": 2051919
         },
         {
@@ -133,10 +117,10 @@
         },
         {
             "date": "2025-04-03",
-            "open": 3374.3842427691143,
-            "high": 3385.0167912281404,
-            "low": 3282.702582798802,
-            "close": 3289.46875,
+            "open": 3374.383992326158,
+            "high": 3385.0165399960483,
+            "low": 3282.7023391603534,
+            "close": 3289.468505859375,
             "volume": 4537821
         },
         {
@@ -149,10 +133,10 @@
         },
         {
             "date": "2025-04-07",
-            "open": 2996.4454369330797,
-            "high": 3181.4516833870694,
-            "low": 2953.963620596823,
-            "close": 3164.681396484375,
+            "open": 2996.445205771086,
+            "high": 3181.4514379526936,
+            "low": 2953.963392712106,
+            "close": 3164.68115234375,
             "volume": 6623955
         },
         {
@@ -181,18 +165,18 @@
         },
         {
             "date": "2025-04-15",
-            "open": 3203.683386247662,
-            "high": 3203.683386247662,
-            "low": 3130.415650876791,
-            "close": 3139.69482421875,
+            "open": 3203.683137131328,
+            "high": 3203.683137131328,
+            "low": 3130.4154074577086,
+            "close": 3139.694580078125,
             "volume": 3512160
         },
         {
             "date": "2025-04-16",
-            "open": 3139.6947635283577,
-            "high": 3168.596104196088,
-            "low": 3121.136181217996,
-            "close": 3164.439697265625,
+            "open": 3139.6945212968367,
+            "high": 3168.595859734791,
+            "low": 3121.1359404182936,
+            "close": 3164.439453125,
             "volume": 2384391
         },
         {
@@ -301,26 +285,26 @@
         },
         {
             "date": "2025-05-08",
-            "open": 3332.820588313161,
-            "high": 3360.851851961966,
-            "low": 3314.1652518601954,
-            "close": 3333.6904296875,
+            "open": 3332.8203442362383,
+            "high": 3360.8516058321925,
+            "low": 3314.165009149484,
+            "close": 3333.690185546875,
             "volume": 2543591
         },
         {
             "date": "2025-05-09",
-            "open": 3285.457254527544,
-            "high": 3331.0805031274213,
-            "low": 3284.5874131966707,
-            "close": 3325.377685546875,
+            "open": 3285.4574957373147,
+            "high": 3331.0807476867326,
+            "low": 3284.5876543425793,
+            "close": 3325.3779296875,
             "volume": 2531757
         },
         {
             "date": "2025-05-12",
-            "open": 3387.9166622272146,
-            "high": 3509.224377237062,
-            "low": 3385.2101480817496,
-            "close": 3499.461669921875,
+            "open": 3387.916425868549,
+            "high": 3509.22413241534,
+            "low": 3385.209911911905,
+            "close": 3499.46142578125,
             "volume": 2228678
         },
         {
@@ -341,10 +325,10 @@
         },
         {
             "date": "2025-05-15",
-            "open": 3444.9459251585763,
-            "high": 3479.743358746037,
-            "low": 3396.7129102189265,
-            "close": 3460.314697265625,
+            "open": 3444.945682102287,
+            "high": 3479.7431132346333,
+            "low": 3396.712670565691,
+            "close": 3460.314453125,
             "volume": 3548330
         },
         {
@@ -365,10 +349,10 @@
         },
         {
             "date": "2025-05-20",
-            "open": 3413.82137266364,
-            "high": 3439.1461226598826,
-            "low": 3377.2840226457647,
-            "close": 3381.4404296875,
+            "open": 3413.8211261851047,
+            "high": 3439.145874352896,
+            "low": 3377.283778805233,
+            "close": 3381.440185546875,
             "volume": 2038374
         },
         {
@@ -381,10 +365,10 @@
         },
         {
             "date": "2025-05-22",
-            "open": 3378.2502763697153,
-            "high": 3380.956790168703,
-            "low": 3336.0101126719387,
-            "close": 3360.8515625,
+            "open": 3378.250521774226,
+            "high": 3380.9570357698217,
+            "low": 3336.0103550080185,
+            "close": 3360.851806640625,
             "volume": 2034383
         },
         {
@@ -421,18 +405,18 @@
         },
         {
             "date": "2025-05-29",
-            "open": 3387.626457620242,
-            "high": 3414.4978538154573,
-            "low": 3370.034470581059,
-            "close": 3381.2470703125,
+            "open": 3387.6262130189975,
+            "high": 3414.497607273982,
+            "low": 3370.034227250032,
+            "close": 3381.246826171875,
             "volume": 3188072
         },
         {
             "date": "2025-05-30",
-            "open": 3373.417829977909,
-            "high": 3389.5599254056924,
-            "low": 3337.7505553386973,
-            "close": 3347.706298828125,
+            "open": 3373.4175839622008,
+            "high": 3389.5596782127777,
+            "low": 3337.7503119241223,
+            "close": 3347.7060546875,
             "volume": 3404365
         },
         {
@@ -2009,7 +1993,31 @@
             "high": 2445.89990234375,
             "low": 2397.0,
             "close": 2410.5,
-            "volume": 2466012
+            "volume": 2466488
+        },
+        {
+            "date": "2026-03-16",
+            "open": 2410.0,
+            "high": 2425.0,
+            "low": 2366.10009765625,
+            "close": 2409.199951171875,
+            "volume": 3807907
+        },
+        {
+            "date": "2026-03-17",
+            "open": 2420.0,
+            "high": 2420.0,
+            "low": 2360.0,
+            "close": 2391.699951171875,
+            "volume": 2993367
+        },
+        {
+            "date": "2026-03-18",
+            "open": 2410.0,
+            "high": 2475.10009765625,
+            "low": 2410.0,
+            "close": 2464.60009765625,
+            "volume": 1230170
         }
     ]
 }

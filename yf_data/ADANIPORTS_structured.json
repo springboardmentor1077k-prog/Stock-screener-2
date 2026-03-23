@@ -1,48 +1,32 @@
 {
     "ticker": "ADANIPORTS",
-    "snapshot_date": "2026-03-13T18:37:10.995533",
+    "snapshot_date": "2026-03-18T10:35:50.759046",
     "company_profile": {
         "name": "Adani Ports and Special Economic Zone Limited",
         "sector": "Industrials",
         "industry": "Marine Shipping",
         "website": "https://www.adaniports.com",
-        "market_cap": 3140756963328,
+        "market_cap": 3173703483392,
         "description": "Adani Ports and Special Economic Zone Limited, together with its subsidiaries, develops, operates, and maintains port infrastructure in India. The company is involved in the operation of ports and terminals, including bulk and break bulk, container, liquid, LPG, LNG, and crude cargo; ports related infrastructure development activities; and development of infrastructure at contiguous Special Economic Zone at Mundra. It also offers logistic services, which include logistic parks, container rail and bulk cargo logistic solutions, and warehousing, as well as auto, road, and agriculture logistic services. In addition, the company operates a fleet of dredging and reclamation service equipment comprising cutter suction, trailing suction hopper, grab, inland cutter suction, water injection, and specialized dredgers; split hopper, flat top, and jack up barges; and multi utility craft, survey vessels, floating crane, drag flow unit, and floating booster, as well as dozers, excavotors, loaders, and other equipment. Further, it provides non-scheduled passenger airline services; hospital and related services; and marine services, such as pilotage, laying, mooring of vessels at berth and mid-stream, and maintenance of buoys. Additionally, the company engages in the development, construction, operation, and maintenance of railway corridors; land development activities; integrated textile park and container freight station businesses; owns and operates harbour tugs, barges, other port crafts, ocean towage and offshore support vessels; and provision of cargo storage-cum logistics services. The company was incorporated in 1998 and is headquartered in Ahmedabad, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 310.464,
         "Show Profile": false,
-        "Change From Previous Close": -2.0337799,
+        "Change From Previous Close": 0.87879896,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1363.2
+        "Last Traded Price": 1377.5
     },
     "fundamentals": {
-        "pe_ratio": 23.605194,
-        "eps": 57.75,
+        "pe_ratio": 23.848684,
+        "eps": 57.76,
         "revenue": 364866306048,
         "debt": 568506974208,
-        "market_cap": 3140756963328,
+        "market_cap": 3173703483392,
         "revenue_growth": 21.9,
-        "price_change_1y": 22.393867841811396
+        "price_change_1y": 21.725516321733046
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 1129.5048015561129,
-            "high": 1133.9332079132257,
-            "low": 1109.651439759247,
-            "close": 1113.78125,
-            "volume": 1358839
-        },
-        {
-            "date": "2025-03-17",
-            "open": 1109.4026430326385,
-            "high": 1142.9892393390442,
-            "low": 1105.8199755765168,
-            "close": 1131.6444091796875,
-            "volume": 1489537
-        },
         {
             "date": "2025-03-18",
             "open": 1131.6444091796875,
@@ -2009,7 +1993,31 @@
             "high": 1390.0,
             "low": 1354.0,
             "close": 1363.199951171875,
-            "volume": 2688551
+            "volume": 2688559
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1356.5999755859375,
+            "high": 1383.0999755859375,
+            "low": 1347.0,
+            "close": 1373.9000244140625,
+            "volume": 3322087
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1379.0,
+            "high": 1379.0,
+            "low": 1351.199951171875,
+            "close": 1365.5,
+            "volume": 2605905
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1367.0999755859375,
+            "high": 1391.9000244140625,
+            "low": 1367.0999755859375,
+            "close": 1377.5,
+            "volume": 442630
         }
     ]
 }

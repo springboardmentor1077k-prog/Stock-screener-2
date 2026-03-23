@@ -1,48 +1,32 @@
 {
     "ticker": "RELIANCE",
-    "snapshot_date": "2026-03-13T18:36:09.020617",
+    "snapshot_date": "2026-03-18T10:34:52.176902",
     "company_profile": {
         "name": "Reliance Industries Limited",
         "sector": "Energy",
         "industry": "Oil & Gas Refining & Marketing",
         "website": "https://www.ril.com",
-        "market_cap": 18684284239872,
+        "market_cap": 19068606218240,
         "description": "Reliance Industries Limited engages in the hydrocarbon exploration and production, oil and chemicals, retail, and digital service businesses worldwide. It operates through Oil to Chemicals, Oil and Gas, Retail, Digital Services, and Others segments. The company offers refining and marketing products, including liquefied petroleum gas, propylene, naphtha, gasoline, jet/aviation turbine fuel, kerosine oil, diesel, sulphur, and petroleum coke. It also provides polymers, including high-density and low-density polyethylene (PE), linear low-density PE, homopolymer, random and impact copolymer, and polyvinyl chloride; fibre intermediates, such as purified terephthalic acid, and ethylene glycols and oxide; aromatics, such as paraxylene, ortho xylene, benzene, and linear alkyl benzene and paraffin; and textiles comprising fabrics, apparel, and auto furnishings. In addition, the company offers elastomers, such as polybutadiene rubber, styrene butadiene rubber, and butyl rubber; fibre and yarn polyesters; and bioenergy solutions, consisting of compressed biogas, and pellets and briquettes. Further, it engages in oil and gas exploration and production activities; and operates various stores comprising supermarket, hypermarket, wholesale cash and carry, specialty, and online stores, as well as stores that offer apparel, beauty and cosmetics, accessories, footwear, consumer electronics, and others. Additionally, the company operates media and entertainment platforms, and Network18 and television channels; publishes magazines; and offers highway hospitality and fleet management services. It also provides digital services, including connectivity, fibre, mobile devices, apps, business, and other digital solutions. The company was founded in 1957 and is based in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 648.12,
         "Show Profile": false,
-        "Change From Previous Close": -0.8260308,
+        "Change From Previous Close": 0.82289803,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1380.7
+        "Last Traded Price": 1409.1
     },
     "fundamentals": {
-        "pe_ratio": 22.435814,
-        "eps": 61.54,
+        "pe_ratio": 22.91592,
+        "eps": 61.49,
         "revenue": 10245479858176,
         "debt": 3745930018816,
-        "market_cap": 18684284239872,
+        "market_cap": 19068606218240,
         "revenue_growth": 10.4,
-        "price_change_1y": 11.083760364112385
+        "price_change_1y": 14.18876412986691
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 1255.0376050433522,
-            "high": 1259.1212710412995,
-            "low": 1238.901975238559,
-            "close": 1242.9359130859375,
-            "volume": 9505270
-        },
-        {
-            "date": "2025-03-17",
-            "open": 1237.208673957254,
-            "high": 1252.3980085038181,
-            "low": 1228.1946267891797,
-            "close": 1233.9217529296875,
-            "volume": 16640917
-        },
         {
             "date": "2025-03-18",
             "open": 1233.9217529296875,
@@ -2009,7 +1993,31 @@
             "high": 1400.800048828125,
             "low": 1378.4000244140625,
             "close": 1380.699951171875,
-            "volume": 17263343
+            "volume": 17265090
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1380.0,
+            "high": 1397.300048828125,
+            "low": 1363.5,
+            "close": 1395.0999755859375,
+            "volume": 22837802
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1399.0,
+            "high": 1405.9000244140625,
+            "low": 1388.199951171875,
+            "close": 1397.5999755859375,
+            "volume": 19007744
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1397.199951171875,
+            "high": 1412.0999755859375,
+            "low": 1397.199951171875,
+            "close": 1409.0,
+            "volume": 2444780
         }
     ]
 }

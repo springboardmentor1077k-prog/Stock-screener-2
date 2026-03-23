@@ -1,48 +1,32 @@
 {
     "ticker": "SBIN",
-    "snapshot_date": "2026-03-13T18:36:19.470625",
+    "snapshot_date": "2026-03-18T10:35:02.101754",
     "company_profile": {
         "name": "State Bank of India",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://sbi.bank.in",
-        "market_cap": 9664456556544,
+        "market_cap": 9836146196480,
         "description": "State Bank of India provides banking products and services in India and internationally. It operates through the Treasury, Corporate/Wholesale Banking, Retail Banking, and Other Banking Business segments. The company offers personal banking products and services, including current, savings, salary, and deposit accounts; home, personal, pension, auto, education, and gold loans, as well as loans against insurance policies, property, and securities; debit, business debit, prepaid, and green remit cards; overdrafts; mutual funds, insurance, equity trading, portfolio investment schemes, remittance services; digital lending; and mobile, internet, and digital banking services. It also provides corporate banking products and services comprising corporate accounts, working capital and project finance, deferred payment guarantees, corporate term loans, structured finance, dealer and channel financing, equipment leasing, loan syndication, construction equipment loans, financing Indian firms' overseas subsidiaries or JVs, and cash management, as well as trade and service products. In addition, the company offers NRI services, including accounts, investments, loans, and remittances; agricultural banking services; and international banking services. Further, it provides life and general insurance; estate planning services; merchant banking and advisory; securities broking; trusteeship service; factoring; payment solution; asset management; portfolio and investment management; credit cards; and custody and fund accounting services. State Bank of India was founded in 1806 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 641.361,
         "Show Profile": false,
-        "Change From Previous Close": -3.5200841,
+        "Change From Previous Close": 0.08453315,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1047.0
+        "Last Traded Price": 1065.6
     },
     "fundamentals": {
-        "pe_ratio": 11.403987,
-        "eps": 91.81,
+        "pe_ratio": 11.597736,
+        "eps": 91.88,
         "revenue": 3700534018048,
         "debt": 6853875990528,
-        "market_cap": 9664456556544,
+        "market_cap": 9836146196480,
         "revenue_growth": 14.499999999999998,
-        "price_change_1y": 46.736733531747575
+        "price_change_1y": 50.31414907168984
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 711.6111983443574,
-            "high": 717.0519385721029,
-            "low": 710.2387324158618,
-            "close": 713.5227661132812,
-            "volume": 5908337
-        },
-        {
-            "date": "2025-03-17",
-            "open": 714.5520981665495,
-            "high": 716.8558160007225,
-            "low": 708.0819790039528,
-            "close": 708.915283203125,
-            "volume": 5149563
-        },
         {
             "date": "2025-03-18",
             "open": 708.915283203125,
@@ -2009,7 +1993,31 @@
             "high": 1081.300048828125,
             "low": 1042.300048828125,
             "close": 1047.0,
-            "volume": 15975539
+            "volume": 15978675
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1048.699951171875,
+            "high": 1073.0,
+            "low": 1036.0999755859375,
+            "close": 1066.699951171875,
+            "volume": 15322269
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1073.9000244140625,
+            "high": 1073.9000244140625,
+            "low": 1047.0,
+            "close": 1064.699951171875,
+            "volume": 16427877
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1067.5,
+            "high": 1072.699951171875,
+            "low": 1061.300048828125,
+            "close": 1065.5999755859375,
+            "volume": 1675138
         }
     ]
 }

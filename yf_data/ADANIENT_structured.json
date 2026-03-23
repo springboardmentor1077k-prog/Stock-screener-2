@@ -1,48 +1,32 @@
 {
     "ticker": "ADANIENT",
-    "snapshot_date": "2026-03-13T18:37:13.426796",
+    "snapshot_date": "2026-03-18T10:35:53.000607",
     "company_profile": {
         "name": "Adani Enterprises Limited",
         "sector": "Energy",
         "industry": "Thermal Coal",
         "website": "https://www.adanienterprises.com",
-        "market_cap": 2670887436288,
+        "market_cap": 2733127761920,
         "description": "Adani Enterprises Limited, together with its subsidiaries, operates in the new energy ecosystem, data center, airports, roads, copper, digital space, ropeway system, and other sectors in India and internationally. It operates through the Integrated Resources Management (IRM), Mining Services, Commercial Mining, New Energy Ecosystem, Airport, Road, and Others segments. The company engages in the integrated ecosystem for manufacturing green hydrogen, including solar cells, modules, and wind manufacturing; construction, operation, and maintenance of airports and road assets; commercial mining activities; supply of bunker to fuels to shipping vessels; manufacture and supply of defense equipment; and copper smelting and refinery, as well metals manufacturing. It also provides airport-focused services, including duty-free shopping, food and beverages, car parking, meet-and-greet, flight tracking, and airport maps services; and procurement and logistics services for minerals, as well as mining services. In addition, the company is involved in the sourcing, storage, and marketing of apples, grapes, pomegranates, and frozen peas; wastewater treatment, recycling, reuse projects; an operation of a news network; and Infrastructure Development and Water Resource Management. Further, it holds a portfolio of small arms, ammunition, unmanned aerial vehicles, counter-drone systems, missiles, and aircraft services. It also provides education, training and skill development. The company was founded in 1988 and is headquartered in Ahmedabad, India. Adani Enterprises Limited operates as a subsidiary of S.B. Adani Family Trust.",
         "logo_url": null,
         "Category": null,
         "Book Value": 445.61,
         "Show Profile": false,
-        "Change From Previous Close": -2.0429583,
+        "Change From Previous Close": 1.5897137,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1961.1
+        "Last Traded Price": 2006.8
     },
     "fundamentals": {
-        "pe_ratio": 17.713846,
-        "eps": 110.71,
+        "pe_ratio": 18.141384,
+        "eps": 110.62,
         "revenue": 949951594496,
         "debt": 1094649315328,
-        "market_cap": 2670887436288,
+        "market_cap": 2733127761920,
         "revenue_growth": 8.6,
-        "price_change_1y": -11.66214383229163
+        "price_change_1y": -10.849416214953731
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 2247.885589273509,
-            "high": 2271.8736969402785,
-            "low": 2214.502237045115,
-            "close": 2219.99951171875,
-            "volume": 750310
-        },
-        {
-            "date": "2025-03-17",
-            "open": 2198.90990184413,
-            "high": 2285.766745359112,
-            "low": 2196.910892842454,
-            "close": 2251.583740234375,
-            "volume": 927737
-        },
         {
             "date": "2025-03-18",
             "open": 2251.583740234375,
@@ -2009,7 +1993,31 @@
             "high": 2008.5999755859375,
             "low": 1945.0,
             "close": 1961.0999755859375,
-            "volume": 1195216
+            "volume": 1195448
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1961.0,
+            "high": 1994.800048828125,
+            "low": 1946.5999755859375,
+            "close": 1978.0,
+            "volume": 1465828
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1989.9000244140625,
+            "high": 1990.0,
+            "low": 1945.0,
+            "close": 1975.4000244140625,
+            "volume": 1268988
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1988.9000244140625,
+            "high": 2027.0,
+            "low": 1982.199951171875,
+            "close": 2007.300048828125,
+            "volume": 455166
         }
     ]
 }

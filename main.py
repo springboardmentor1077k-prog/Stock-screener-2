@@ -166,6 +166,11 @@ ALLOWED_FIELDS = {
     "debt": "numeric",
     "market_cap": "numeric",
     "revenue_growth": "numeric",
+    "revenue_growth_calc": "numeric",
+    "avg_revenue_growth": "numeric",
+    "revenue_yoy_growth": "numeric",
+    "revenue_trend": "string",
+    "consistent_growth": "string",
     "price_change_1y": "numeric",
     "sector": "string",
     "reported_date": "date"
@@ -548,7 +553,7 @@ Rules:
 
 Allowed fields:
 pe_ratio, eps, revenue, debt, market_cap,
-revenue_growth, price_change_1y, sector, reported_date
+revenue_growth, price_change_1y, sector, reported_date,revenue_growth_calc,avg_revenue_growth,revenue_trend,consistent_growth,revenue_yoy_growth
 
 Allowed operators:
 <, <=, >, >=, =
@@ -663,7 +668,12 @@ User Query:
 def score_stock(stock):
     pe = float(stock.get("pe_ratio") or 0)
     eps = float(stock.get("eps") or 0)
-    growth = float(stock.get("revenue_growth") or 0)
+    value = stock.get("revenue_growth")
+
+    if isinstance(value, (int, float)):
+        growth = float(value)
+    else:
+        growth = 0
     momentum = float(stock.get("price_change_1y") or 0)
 
     pe_score = (1 / pe) if pe > 0 else 0
@@ -697,6 +707,41 @@ def screener(
     # NEW DSL FLOW
     try:
         parsed_json = parse_query_with_llm(payload.query)
+        # 🔥 FORCE FIX FOR GROWTH FIELD
+        query_text = payload.query.lower()
+
+        if "revenue_growth_calc" in query_text:
+            parsed_json["root"] = {
+                "logic": "AND",
+                "conditions": [
+                    {
+                        "field": "revenue_growth_calc",
+                        "operator": ">",
+                        "value": float(re.findall(r"\d+", query_text)[0])
+                    }
+                ]
+            }
+        if "consistent_growth" in query_text:
+
+            quarters_match = re.search(r'(\d+)\s*quarter', query_text)
+            quarters = int(quarters_match.group(1)) if quarters_match else 4
+
+            parsed_json = {
+                "root": {
+                    "logic": "AND",
+                    "conditions": [
+                        {
+                            "field": "consistent_growth",
+                            "operator": "=",
+                            "value": "true"
+                        }
+                    ]
+                },
+                "time_filter": {
+                    "type": "last_n_quarters",
+                    "value": quarters
+                }
+            }
 
     except Exception as e:
         print(" Gemini failed:", str(e))
@@ -845,7 +890,7 @@ def screener(
                 "pe_ratio": r[2],
                 "eps": r[3],
                 "market_cap": r[4],
-                "revenue_growth": r[5],
+                "revenue_growth": r[7],
                 "price_change_1y": r[6]
             })
 

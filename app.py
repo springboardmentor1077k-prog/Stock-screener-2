@@ -34,7 +34,7 @@ st.set_page_config(
 
 def safe_request(method, url, **kwargs):
     try:
-        res = requests.request(method, url, timeout=10, **kwargs)
+        res = requests.request(method, url, timeout=20, **kwargs)
 
         try:
             data = res.json()

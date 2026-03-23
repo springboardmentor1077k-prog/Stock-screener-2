@@ -1,48 +1,32 @@
 {
     "ticker": "MARUTI",
-    "snapshot_date": "2026-03-13T18:36:29.890426",
+    "snapshot_date": "2026-03-18T10:35:12.018440",
     "company_profile": {
         "name": "Maruti Suzuki India Limited",
         "sector": "Consumer Cyclical",
         "industry": "Auto Manufacturers",
         "website": "https://www.marutisuzuki.com",
-        "market_cap": 3958642573312,
+        "market_cap": 4134393610240,
         "description": "Maruti Suzuki India Limited manufactures, purchases, and sells motor vehicles, components, and spare parts in India. The company offers passenger vehicles, utility vehicles, and multi-purpose vehicles. It is also involved in the facilitation of pre-owned car sales, fleet management, and car financing activities. In addition, the company offers driving school, insurance, accessories, and financing products and services. It also exports its products to South Africa, Saudi Arabia, Chile, Japan, Mexico, and internationally. The company was formerly known as Maruti Udyog Limited and changed its name to Maruti Suzuki India Limited in September 2007. Maruti Suzuki India Limited was incorporated in 1981 and is headquartered in New Delhi, India. Maruti Suzuki India Limited is a subsidiary of Suzuki Motor Corporation.",
         "logo_url": null,
         "Category": null,
         "Book Value": 3172.502,
         "Show Profile": false,
-        "Change From Previous Close": -3.2280378,
+        "Change From Previous Close": 1.371869,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 12591.0
+        "Last Traded Price": 13150.0
     },
     "fundamentals": {
-        "pe_ratio": 26.51295,
-        "eps": 474.9,
+        "pe_ratio": 27.697039,
+        "eps": 474.78,
         "revenue": 1717736046592,
         "debt": 999000000,
-        "market_cap": 3958642573312,
+        "market_cap": 4134393610240,
         "revenue_growth": 28.7,
-        "price_change_1y": 10.539333025145647
+        "price_change_1y": 15.048227110203602
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 11510.220015731536,
-            "high": 11559.88269171903,
-            "low": 11366.72333394769,
-            "close": 11390.515625,
-            "volume": 260736
-        },
-        {
-            "date": "2025-03-17",
-            "open": 11390.516099558723,
-            "high": 11627.105793737772,
-            "low": 11333.681050684292,
-            "close": 11429.9892578125,
-            "volume": 275569
-        },
         {
             "date": "2025-03-18",
             "open": 11429.9892578125,
@@ -2009,7 +1993,31 @@
             "high": 12962.0,
             "low": 12483.0,
             "close": 12591.0,
-            "volume": 938549
+            "volume": 939594
+        },
+        {
+            "date": "2026-03-16",
+            "open": 12532.0,
+            "high": 12874.0,
+            "low": 12400.0,
+            "close": 12757.0,
+            "volume": 1416170
+        },
+        {
+            "date": "2026-03-17",
+            "open": 12790.0,
+            "high": 13100.0,
+            "low": 12686.0,
+            "close": 12972.0,
+            "volume": 1178941
+        },
+        {
+            "date": "2026-03-18",
+            "open": 13100.0,
+            "high": 13176.0,
+            "low": 13015.0,
+            "close": 13150.0,
+            "volume": 106484
         }
     ]
 }

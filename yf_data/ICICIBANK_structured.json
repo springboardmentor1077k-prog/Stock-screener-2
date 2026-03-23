@@ -1,48 +1,32 @@
 {
     "ticker": "ICICIBANK",
-    "snapshot_date": "2026-03-13T18:36:14.249387",
+    "snapshot_date": "2026-03-18T10:34:57.261694",
     "company_profile": {
         "name": "ICICI Bank Limited",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://www.icici.bank.in",
-        "market_cap": 8981072314368,
+        "market_cap": 9157142904832,
         "description": "ICICI Bank Limited, together with its subsidiaries, engages in the provision of various banking and financial services to retail and corporate customers in India and internationally. The company operates through Retail Banking, Wholesale Banking, Treasury, Other Banking, Life Insurance, General Insurance, and Others segments. It offers savings, salary, pension, current, trade, escrow, foreign currency, and vostro accounts, as well as time, fixed, recurring, and security deposits. The company also provides home, car, two-wheeler, personal, education, gold, and commercial business loans, as well as loans against securities, shares, mutual funds, and property; working capital finance, term loans, collateral free loans, loans without financials, finance for importers and exporters, and overdraft facilities, as well as loans for new entities and card swipes; and credit, debit, prepaid, travel, forex, and corporate cards. In addition, it offers pockets wallet; fixed income products; investment products, such as mutual funds, gold monetization schemes, initial public offerings, and other online investment services; and agri and rural business, farmer finance, tractor loans, and micro banking services. Further, the company provides portfolio management, trade, foreign exchange, locker, private and NRI banking, and cash management services; family wealth and demat accounts; commercial and investment banking, capital market, custodial, and institutional banking services; general, life health, personal accident, fire, travel, and motor insurance products; and internet, mobile, and phone banking services. Additionally, it offers securities investment, broking, trading, and underwriting services; and merchant banking, trusteeship, housing finance, pension fund management, asset management, investment advisory, points of presence, and private equity/venture capital fund management services. The company was founded in 1955 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 487.636,
         "Show Profile": false,
-        "Change From Previous Close": -0.92380184,
+        "Change From Previous Close": -0.7217639,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1254.8
+        "Last Traded Price": 1279.4
     },
     "fundamentals": {
-        "pe_ratio": 17.142078,
+        "pe_ratio": 17.478144,
         "eps": 73.2,
         "revenue": 1924702535680,
         "debt": 2154355490816,
-        "market_cap": 8981072314368,
+        "market_cap": 9157142904832,
         "revenue_growth": 3.0,
-        "price_change_1y": 1.1545267815909055
+        "price_change_1y": 1.5974720554351767
     },
     "historical_prices": [
-        {
-            "date": "2025-03-13",
-            "open": 1241.4707365370484,
-            "high": 1245.9858244254206,
-            "low": 1235.7647643884725,
-            "close": 1240.4783935546875,
-            "volume": 8132940
-        },
-        {
-            "date": "2025-03-17",
-            "open": 1247.4248742515454,
-            "high": 1264.1953748180651,
-            "low": 1245.1424367918191,
-            "close": 1259.2833251953125,
-            "volume": 11164812
-        },
         {
             "date": "2025-03-18",
             "open": 1259.2833251953125,
@@ -2009,7 +1993,31 @@
             "high": 1262.300048828125,
             "low": 1248.699951171875,
             "close": 1254.800048828125,
-            "volume": 17342777
+            "volume": 17344394
+        },
+        {
+            "date": "2026-03-16",
+            "open": 1255.0,
+            "high": 1276.800048828125,
+            "low": 1240.0999755859375,
+            "close": 1272.9000244140625,
+            "volume": 22740688
+        },
+        {
+            "date": "2026-03-17",
+            "open": 1278.9000244140625,
+            "high": 1294.4000244140625,
+            "low": 1273.0,
+            "close": 1288.699951171875,
+            "volume": 22303102
+        },
+        {
+            "date": "2026-03-18",
+            "open": 1286.0,
+            "high": 1290.0999755859375,
+            "low": 1270.800048828125,
+            "close": 1279.4000244140625,
+            "volume": 2838347
         }
     ]
 }
