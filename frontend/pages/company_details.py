@@ -3,14 +3,82 @@ from ui_components.navbar import logout_button
 import random
 import requests
 
+import pandas as pd
+
 company_name = st.session_state.get("selected_company")
 
 if not company_name:
     st.error("No company selected.")
     st.stop()
 
-st.title(f"Company Details: {company_name}")
+# st.title(f"Company Details: {company_name}")
 
+response = requests.post(
+    "http://127.0.0.1:7000/company-details",
+    json={"symbol": company_name}
+)
+
+data = response.json()
+
+if data:
+    st.title(data["name"])
+
+    st.markdown("---")
+
+    
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("Founded", data["founded"])
+
+    with col2:
+        st.metric("Type", data["type"])
+
+    with col3:
+        market_cap = data["market_cap"]
+        st.metric("💰 Market Cap", f"₹ {market_cap/1e12:.2f} T")
+
+
+    st.write(f"**Sector:** {data['sector']}")
+
+    st.markdown("---")
+
+
+    st.subheader("About Company")
+    st.write(data["description"])
+
+
+
+st.markdown("---")
+st.subheader("Financial Metrics")
+
+f = data["fundamentals"]
+
+# Convert to table format
+metrics_table = {
+    "Metric": [
+        "P/E Ratio",
+        "PEG Ratio",
+        "Promoter Holding (%)",
+        "EBITDA",
+        "Free Cash Flow"
+    ],
+    "Value": [
+        f.get("pe"),
+        f.get("peg"),
+        f.get("promoter_holding", "N/A"),
+        f"₹ {f.get('ebitda', 0):,}" if f.get("ebitda") else "N/A",
+        f"₹ {f.get('debt_free_cash') or 0:,}"
+    ]
+}
+
+df_metrics = pd.DataFrame(metrics_table)
+df_metrics.index += 1
+st.table(df_metrics)
+
+
+
+#prices
 current_price = round(random.uniform(1000, 3000), 2)
 
 st.subheader("Buy Stock")
@@ -26,9 +94,15 @@ buy_qty = st.number_input(
     key="buy_qty"
 )
 
+
+
+
+
+
+
 # Total price
 total_price = current_price * buy_qty
-st.write(f"🧾 Total Cost: ₹ {total_price:,.2f}")
+st.write(f"Total Cost: ₹ {total_price:,.2f}")
 
 # Buy button
 if st.button("Buy Stock"):

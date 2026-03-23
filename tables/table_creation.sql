@@ -225,3 +225,82 @@ VALUES
 
 
 -- SELECT * from portfolio where user_id = 5;
+
+
+
+CREATE TABLE company_details (
+    symbol_id INT PRIMARY KEY,
+    description TEXT,
+    founded_year INT,
+    company_type VARCHAR(50),  
+    market_cap BIGINT,
+
+    FOREIGN KEY (symbol_id)
+    REFERENCES symbol(symbol_id)
+    ON DELETE CASCADE
+);
+
+
+INSERT INTO company_details 
+(symbol_id, description, founded_year, company_type, market_cap)
+VALUES
+(8, 'Infosys is a global leader in IT services, consulting, and business process outsourcing. It helps companies with digital transformation, cloud computing, and enterprise solutions. Founded by N. R. Narayana Murthy and six others, it is one of India''s largest IT companies.',
+1981, 'Service-Based', 5250000000000);
+
+
+TRUNCATE company_details;
+
+-- fundamentals unique
+
+
+
+UPDATE fundamentals f
+SET peg = 0
+FROM symbol s
+WHERE f.symbol_id = s.symbol_id
+AND s.company_name = 'ITC Limited';
+
+
+
+INSERT INTO company_details 
+(symbol_id, description, founded_year, company_type, market_cap)
+VALUES
+
+-- RELIANCE
+(1,
+'Reliance Industries Limited is one of India''s largest conglomerates with businesses spanning energy, petrochemicals, retail, and telecommunications. It is known for its strong presence in oil refining and its rapid expansion into digital services through Jio.',
+1973,
+'Hybrid',
+18000000000000
+),
+
+-- TCS
+(2,
+'Tata Consultancy Services (TCS) is a global leader in IT services, consulting, and business solutions. It is part of the Tata Group and provides software services, cloud solutions, and digital transformation services to clients worldwide.',
+1968,
+'Service-Based',
+14000000000000
+),
+
+-- HDFC BANK
+(3,
+'HDFC Bank Limited is one of India''s leading private sector banks offering a wide range of banking and financial services including retail banking, wholesale banking, and treasury operations. It is known for its strong asset quality and digital banking services.',
+1994,
+'Service-Based',
+9000000000000
+),
+
+-- ITC
+(13,
+'ITC Limited is a diversified conglomerate with businesses in FMCG, cigarettes, hotels, paperboards, packaging, and agribusiness. The company has transformed itself from a tobacco-centric business to a major FMCG player in India.',
+1910,
+'Product-Based',
+3600000000000
+);
+
+
+UPDATE fundamentals f
+SET debt_free_cash = 0
+FROM symbol s
+WHERE f.symbol_id = s.symbol_id
+AND s.company_name = 'ITC Limited';
