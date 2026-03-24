@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
-from schemas import DSLQuery, PortfolioItem
+from schemas import DSLQuery, PortfolioItem, AlertItem
 import sqlite3
+import operator as op
 import os
 
 from schemas import DSLQuery
@@ -161,3 +162,102 @@ async def delete_portfolio_item(item_id: int):
     conn.close()
     
     return {"status": "success", "message": "Stock securely removed from portfolio"}
+# Helper to map string operators to Python math operators
+OPS_MAP = {
+    '<': op.lt,
+    '<=': op.le,
+    '>': op.gt,
+    '>=': op.ge,
+    '=': op.eq
+}
+
+# ==========================================
+# 🔔 ALERTS API ENDPOINTS & EVALUATION
+# ==========================================
+
+@app.post("/alert/add")
+async def add_alert(item: AlertItem):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT INTO alerts (user_id, symbol, field, operator, value, alert_type) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (item.user_id, item.symbol, item.field, item.operator, item.value, item.alert_type))
+    
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": f"Alert set: {item.symbol} {item.field} {item.operator} {item.value}"}
+
+@app.get("/alerts/{user_id}")
+async def get_alerts(user_id: str):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # Fetching active alerts only 
+    cursor.execute("SELECT * FROM alerts WHERE user_id=? AND is_active=1", (user_id,))
+    alerts = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return {"status": "success", "data": alerts}
+
+@app.delete("/alert/{alert_id}")
+async def delete_alert(alert_id: int):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    cursor = conn.cursor()
+    
+    cursor.execute("DELETE FROM alerts WHERE id=?", (alert_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "message": "Alert removed"}
+
+@app.get("/alerts/check/{user_id}")
+async def check_alerts(user_id: str):
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # 1. Fetch active alerts 
+    cursor.execute("SELECT * FROM alerts WHERE user_id=? AND is_active=1", (user_id,))
+    active_alerts = cursor.fetchall()
+    
+    triggered_notifications = []
+    
+    # 2. Loop through alerts 
+    for alert in active_alerts:
+        symbol = alert['symbol']
+        field = alert['field']
+        target_value = alert['value']
+        operator_str = alert['operator']
+        alert_id = alert['id']
+        
+        # 3. Get current data from fundamentals (our recent data source)
+        try:
+            cursor.execute(f"SELECT {field} FROM fundamentals WHERE symbol=?", (symbol,))
+            current_data = cursor.fetchone()
+            
+            if current_data and current_data[field] is not None:
+                current_value = current_data[field]
+                
+                # 4. Evaluate condition dynamically 
+                operation = OPS_MAP.get(operator_str)
+                if operation and operation(current_value, target_value):
+                    # CONDITION MET! Trigger alert! 
+                    msg = f"🔔 ALERT TRIGGERED: {symbol} {field} is now {current_value} (Target was {operator_str} {target_value})"
+                    triggered_notifications.append({"alert_id": alert_id, "message": msg})
+                    
+                    # Mark alert as inactive after triggering (so it doesn't spam) 
+                    cursor.execute("UPDATE alerts SET is_active=0 WHERE id=?", (alert_id,))
+        except Exception as e:
+            print(f"Error evaluating alert {alert_id}: {e}")
+            
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "triggered": triggered_notifications}

@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # 1. PAGE CONFIGURATION
-st.set_page_config(page_title="Aura AI - Pro Screener", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="AI - Pro Stock Screener", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
 # 2.CSS
 st.markdown("""
@@ -56,7 +56,7 @@ st.markdown("""
         color: white;
         box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);
     }
-    .stTextInput>div>div>input, .stNumberInput>div>div>input {
+    .stTextInput>div>div>input, .stNumberInput>div>div>input, .stSelectbox>div>div>div {
         border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.15);
         background-color: rgba(0, 0, 0, 0.5);
@@ -133,7 +133,7 @@ if st.session_state.current_page == "Screener":
         st.markdown("<br><h3 style='color: white;'>📊 Market Insights</h3>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True, hide_index=True)
         
-        # 🔥 NEW: ADD TO PORTFOLIO SECTION
+        # 🔥 ADD TO PORTFOLIO SECTION
         st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
         st.markdown("<h4 style='color: #00C6FF;'>💼 Add to Portfolio</h4>", unsafe_allow_html=True)
         
@@ -143,7 +143,6 @@ if st.session_state.current_page == "Screener":
         with p_col2:
             quantity = st.number_input("Quantity", min_value=1, value=10, step=1, label_visibility="collapsed")
         with p_col3:
-            # Getting dummy current price from the table if available
             default_price = float(df[df['symbol'] == selected_symbol]['pe_ratio'].values[0] * 100) if 'pe_ratio' in df.columns else 1000.0
             buy_price = st.number_input("Buy Price (₹)", min_value=1.0, value=default_price, step=10.0, label_visibility="collapsed")
         with p_col4:
@@ -170,7 +169,6 @@ elif st.session_state.current_page == "Portfolio":
                 if port_data:
                     port_df = pd.DataFrame(port_data)
                     
-                    # Highlight Profit/Loss with colors
                     def color_profit(val):
                         color = '#00FF00' if val > 0 else '#FF4B4B' if val < 0 else 'white'
                         return f'color: {color}'
@@ -178,7 +176,6 @@ elif st.session_state.current_page == "Portfolio":
                     styled_df = port_df.style.map(color_profit, subset=['profit_loss', 'profit_percentage'])
                     st.dataframe(styled_df, use_container_width=True, hide_index=True)
                     
-                    # Delete Stock Section
                     st.markdown("<br><h5>🗑️ Remove Stock</h5>", unsafe_allow_html=True)
                     del_col1, del_col2 = st.columns([2, 1])
                     with del_col1:
@@ -194,6 +191,91 @@ elif st.session_state.current_page == "Portfolio":
         except Exception as e:
             st.error("🚨 Failed to connect to the backend API.")
 
+# =========================================================
+# PAGE 3: ALERTS 
+# =========================================================
+elif st.session_state.current_page == "Alerts":
+    st.markdown("<h2 style='color: white;'>🔔 Intelligent Market Alerts</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #A0AEC0;'>Set conditions and let our AI monitor the market for you.</p>", unsafe_allow_html=True)
+    
+    tab1, tab2 = st.tabs(["➕ Create Alert", "📋 Manage & System Check"])
+    
+    # --- TAB 1: CREATE ALERT ---
+    with tab1:
+        st.markdown("<br><h4 style='color: #00C6FF;'>Define your trigger condition</h4>", unsafe_allow_html=True)
+        with st.form("alert_form"):
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                a_symbol = st.text_input("Symbol", placeholder="e.g., INFY")
+            with col2:
+                a_field = st.selectbox("Metric", ["pe_ratio", "revenue", "debt", "market_cap", "ebitda", "promoter_holding"])
+            with col3:
+                a_op = st.selectbox("Condition", ["<", "<=", ">", ">=", "="])
+            with col4:
+                a_val = st.number_input("Target Value", value=15.0)
+            
+            submit_alert = st.form_submit_button("🔔 Set Active Alert", type="primary")
+            
+            if submit_alert and a_symbol:
+                payload = {
+                    "user_id": "user1",
+                    "symbol": a_symbol.upper(),
+                    "field": a_field,
+                    "operator": a_op,
+                    "value": a_val,
+                    "alert_type": "metric"
+                }
+                res = requests.post("http://localhost:8000/alert/add", json=payload)
+                if res.status_code == 200:
+                    st.success(f"✅ Alert successfully created for {a_symbol.upper()}!")
+                else:
+                    st.error("❌ Failed to create alert.")
+
+    # --- TAB 2: MANAGE & EVALUATE ---
+    with tab2:
+        st.markdown("<br><h4>Your Active Alerts</h4>", unsafe_allow_html=True)
+        
+        try:
+            res = requests.get("http://localhost:8000/alerts/user1")
+            if res.status_code == 200:
+                alerts_data = res.json().get("data", [])
+                if alerts_data:
+                    st.dataframe(pd.DataFrame(alerts_data), use_container_width=True, hide_index=True)
+                    
+                    del_col1, del_col2 = st.columns([2, 1])
+                    with del_col1:
+                        del_id = st.selectbox("Select Alert ID to Delete", options=[a['id'] for a in alerts_data])
+                    with del_col2:
+                        if st.button("🗑️ Delete Alert"):
+                            del_res = requests.delete(f"http://localhost:8000/alert/{del_id}")
+                            if del_res.status_code == 200:
+                                st.success("Alert Deleted!")
+                                st.rerun()
+                else:
+                    st.info("No active alerts at the moment.")
+            
+            st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+            
+            st.markdown("<h4>🧠 Run System Evaluation</h4>", unsafe_allow_html=True)
+            st.caption("In production, this runs automatically via cron jobs. For this demo, we trigger it manually.")
+            
+            if st.button("🚀 Check Market Conditions Now", type="primary", use_container_width=True):
+                with st.spinner("Analyzing market data against your alert conditions..."):
+                    eval_res = requests.get("http://localhost:8000/alerts/check/user1")
+                    if eval_res.status_code == 200:
+                        triggered = eval_res.json().get("triggered", [])
+                        if triggered:
+                            for t in triggered:
+                                st.error(t["message"], icon="🚨")
+                            st.success("✅ Check complete. Triggered alerts have been logged and deactivated.")
+                        else:
+                            st.success("✅ Check complete. All metrics are within your safe limits. No alerts triggered.")
+        except Exception as e:
+            st.error("🚨 Failed to connect to the backend API.")
+
+# =========================================================
+# PAGE 4: FALLBACK / OTHERS
+# =========================================================
 else:
     st.markdown(f"<h2 style='text-align: center; color: white; margin-top: 50px;'>🚧 {st.session_state.current_page}</h2>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #00C6FF;'>Syncing your data... Advanced features coming soon!</p>", unsafe_allow_html=True)

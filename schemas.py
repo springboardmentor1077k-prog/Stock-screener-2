@@ -53,3 +53,11 @@ class PortfolioItem(BaseModel):
         if v <= 0:
             raise ValueError("Buy price must be a valid amount")
         return v
+
+class AlertItem(BaseModel):
+    user_id: str = "user1"
+    symbol: str
+    field: str
+    operator: str
+    value: float
+    alert_type: str = "metric"
