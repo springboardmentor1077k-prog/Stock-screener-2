@@ -1,3 +1,5 @@
+from urllib import response
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -13,7 +15,6 @@ if "folder" in params:
     st.session_state.selected_folder = params["folder"]
     st.session_state.page = "Portfolio"
     del st.query_params["folder"]
-    
 if "token" in params and "token" not in st.session_state:
     st.session_state.token = params["token"]
 if "username" in params and "username" not in st.session_state:
@@ -25,6 +26,13 @@ st.set_page_config(
     page_icon="📈",
     layout="wide"
 )
+
+query_params = st.query_params
+
+# EDIT CLICK
+if "edit_folder" in query_params:
+    st.session_state.rename_folder = query_params["edit_folder"]
+
 
 
 
@@ -108,6 +116,8 @@ if "portfolio_folders" not in st.session_state:
 
 if "selected_folder" not in st.session_state:
     st.session_state.selected_folder = None
+if "folders" not in st.session_state:
+    st.session_state.folders = []
 
 
 # AUTH FUNCTIONS
@@ -198,6 +208,8 @@ if st.session_state.token is None:
                         st.success("Registration successful. Please login.")
                     else:
                         show_error(data, "Registration failed")
+                        
+                        
 
 
 # MAIN APP
@@ -475,6 +487,7 @@ else:
 
                     else:
                         show_error(data)
+                symbol = st.text_input("Enter Symbol")
 
                 quantity = st.number_input("Quantity", min_value=1, value=1)
 
@@ -488,11 +501,11 @@ else:
                         "POST",
                         f"{API_URL}/portfolio",
                         json={
-                            "stock_symbol": save_symbol,
-                            "quantity": quantity,
-                            "buy_price": buy_price,
-                            "folder_name": folder_name
-                        },
+                            "stock_symbol": str(symbol).upper(),
+                            "quantity": int(quantity),
+                            "buy_price": float(buy_price),
+                            "folder_name": str(folder_name).strip().lower()
+                            },
                         headers=headers
                     )
 
@@ -547,7 +560,7 @@ else:
 
         # ---------- CREATE FOLDER BUTTON ----------
         if st.session_state.selected_folder is None:
-            col1, col2 = st.columns([8,2])
+            col1, col2 = st.columns([10,2])
 
             with col2:
                 if st.button("➕ Create Folder"):
@@ -558,44 +571,126 @@ else:
 
         if st.session_state.selected_folder is None:
 
-            status, data = safe_request(
-                "GET",
-                f"{API_URL}/portfolio",
-                headers=headers
-            )
+                folders = set()
 
-            if status == 200:
+                # backend folders
+                status, data = safe_request(
+                    "GET",
+                    f"{API_URL}/portfolio",
+                    headers=headers
+                )
 
-                df = pd.DataFrame(data["data"])
+                if status == 200 and "data" in data:
+                    df = pd.DataFrame(data["data"])
+                    if not df.empty:
+                        for f in df["folder_name"].dropna():
+                            folders.add(f.strip().lower())
 
-                if df.empty:
+                # session folders
+                for f in st.session_state.folders:
+                    folders.add(f.strip().lower())
+
+                folders = list(folders)
+
+                if len(folders) == 0:
                     st.info("No folders yet")
 
                 else:
-
-                    folders = df["folder_name"].unique()
-
                     for folder in folders:
 
-                        token = st.session_state.token
-                        username = st.session_state.username
+                        col1, col2, col3 = st.columns([8,1,1])
 
-                        st.markdown(
-                            f"""
-                            <a href='?folder={folder}&token={token}&username={username}' 
-                            style='text-decoration:none;color:black;'>
-                                <div style="
-                                    padding:14px;
-                                    border-bottom:1px solid #ddd;
-                                    font-weight:500;
-                                    cursor:pointer;
-                                ">
+                        with col1:
+                            token = st.session_state.token
+                            username = st.session_state.username
+
+                            st.markdown(
+                                f"""
+                                <a href="?folder={folder}&token={token}&username={username}" 
+                                style="text-decoration:none; font-size:16px;">
                                 📁 {folder}
-                                </div>
-                            </a>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                                </a>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                        with col2:
+                            if st.button("✏️", key=f"edit_folder_{folder}"):
+                                st.session_state.rename_folder = folder
+                                st.rerun()
+
+                        with col3:
+                            if st.button("🗑️", key=f"delete_folder_{folder}"):
+
+                                status, data = safe_request(
+                                    "GET",
+                                    f"{API_URL}/portfolio",
+                                    headers=headers
+                                )
+
+                                df = pd.DataFrame(data.get("data", []))
+
+                                folder_stocks = df[
+                                    df["folder_name"].fillna("").str.strip().str.lower() ==
+                                    folder.strip().lower()
+                                ]
+
+                                for _, stock in folder_stocks.iterrows():
+                                    safe_request(
+                                        "DELETE",
+                                        f"{API_URL}/portfolio/{stock['id']}",
+                                        headers=headers
+                                    )
+
+                                st.success(f"{folder} deleted ✅")
+                                st.rerun()
+
+                        st.divider()
+                    
+                    # -------- RENAME FOLDER --------
+                    if "rename_folder" in st.session_state:
+
+                        st.markdown(f"### ✏️ Rename Folder: {st.session_state.rename_folder}")
+
+                        new_name = st.text_input("New Folder Name")
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            if st.button("Save Rename"):
+
+                                if new_name.strip() == "":
+                                    st.warning("Enter folder name")
+                                    st.stop()
+
+                                status, data = safe_request(
+                                    "PUT",
+                                    f"{API_URL}/portfolio/rename-folder",
+                                    json={
+                                        "old_name": str(st.session_state.rename_folder),
+                                        "new_name": str(new_name.strip())
+                                    },
+                                    headers=headers
+                                )
+
+                                if status == 200:
+                                    st.success("Renamed ✅")
+                                    del st.session_state.rename_folder
+                                    st.rerun()
+                                else:
+                                    show_error(data)
+
+                        with col2:
+                            if st.button("Cancel Rename"):
+                                del st.session_state.rename_folder
+                                st.rerun()
+                        
+                    
+                    
+                    
+                    
+
+                    
 
 
         # ---------- OPEN FOLDER ----------
@@ -615,8 +710,58 @@ else:
             with col3:
                 if st.button("➕ Add Stock"):
                     st.session_state.show_add_stock = True
+        # -------- ADD STOCK UI INSIDE FOLDER --------
+            if st.session_state.show_add_stock:
 
+                st.markdown(f"### Add Stock to {folder}")
 
+                symbol = st.text_input("Enter Symbol").upper()
+                quantity = st.number_input("Quantity", min_value=1, value=1)
+                buy_price = st.number_input("Buy Price", min_value=0.0, value=0.0)
+
+                current_price = 0
+
+                if symbol:
+                    current_price = get_current_price(symbol)
+
+                    if current_price > 0:
+                        st.success(f"Current Price: ₹{round(current_price,2)}")
+                        st.info(f"Total Value: ₹{round(current_price * quantity,2)}")
+                    else:
+                        st.warning("Invalid symbol")
+
+                colA, colB = st.columns(2)
+
+                with colA:
+                    if st.button("Add Now"):
+
+                        if symbol == "":
+                            st.warning("Enter symbol")
+                            st.stop()
+
+                        status, data = safe_request(
+                            "POST",
+                            f"{API_URL}/portfolio",
+                            json={
+                                "stock_symbol": symbol,
+                                "quantity": quantity,
+                                "buy_price": buy_price,
+                                "folder_name": folder   # 🔥 VERY IMPORTANT
+                            },
+                            headers=headers
+                        )
+
+                        if status == 200:
+                            st.success("Stock Added ✅")
+                            st.session_state.show_add_stock = False
+                            st.rerun()
+                        else:
+                            show_error(data)
+
+                with colB:
+                    if st.button("Cancel"):
+                        st.session_state.show_add_stock = False
+                        st.rerun()
             # ---------- LOAD STOCKS ----------
             status, data = safe_request(
                 "GET",
@@ -624,94 +769,229 @@ else:
                 headers=headers
             )
 
-            if status == 200:
+            if status == 200 and "data" in data:
 
                 df = pd.DataFrame(data["data"])
+                
 
-                # get live price
-                df["current_price"] = df["symbol"].apply(get_current_price)
-
-                # calculations
-                df["invested"] = df["buy_price"] * df["quantity"]
-                df["current_value"] = df["current_price"] * df["quantity"]
-                df["profit"] = df["current_value"] - df["invested"]
-                df["profit_percent"] = (df["profit"] / df["invested"]) * 100
-
-
-                def format_change(p):
-                    if p >= 0:
-                        return f"▲ {round(p,2)}%"
-                    else:
-                        return f"▼ {round(p,2)}%"
-
-                df["Change"] = df["profit_percent"].apply(format_change)
-
-                folder_df = df[df["folder_name"] == folder]
-
-                if folder_df.empty:
-                    st.info("No stocks in this folder")
+                if df.empty:
+                    st.info("No stocks in portfolio")
 
                 else:
 
-                    st.markdown("### Your Stocks")
+                    folder_df = df[
+                        df["folder_name"].str.strip().str.lower() == str(folder).strip().lower()
+                    ].copy()
 
-                    # table header
-                    h1, h2, h3, h4, h5, h6, h7, h8 = st.columns(8)
+                    if folder_df.empty:
+                        st.info("No stocks in this folder")
 
-                    h1.markdown("**Symbol**")
-                    h2.markdown("**Company**")
-                    h3.markdown("**Quantity**")
-                    h4.markdown("**Buy Price**")
-                    h5.markdown("**Current Price**")
-                    h6.markdown("**Value**")
-                    h7.markdown("**Change**")
-                    h8.markdown("**Delete**")
+                    else:
 
-                    st.divider()
+                        st.markdown("### Your Stocks")
 
-                    for _, row in folder_df.iterrows():
+                        
+                        folder_df["current_price"] = folder_df["symbol"].apply(get_current_price)
+                        folder_df["current_value"] = folder_df["current_price"] * folder_df["quantity"]
+                        folder_df["invested"] = folder_df["buy_price"] * folder_df["quantity"]
+                        folder_df["profit"] = folder_df["current_value"] - folder_df["invested"]
+                        folder_df["profit_percent"] = (folder_df["profit"] / folder_df["invested"]) * 100
 
-                        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
+                        # fallback company name
+                        folder_df["company_name"] = folder_df["symbol"]
 
-                        c1.write(row["symbol"])
-                        c2.write(row["company_name"])
-                        c3.write(row["quantity"])
-                        c4.write(round(row["buy_price"],2))
-                        c5.write(round(row["current_price"],2))
-                        c6.write(round(row["current_value"],2))
+                        display_df = pd.DataFrame({
+                            "Symbol": folder_df["symbol"],
+                            "Company": folder_df["company_name"],
+                            "Quantity": folder_df["quantity"],
+                            "Buy Price": folder_df["buy_price"],
+                            "Current Price": folder_df["current_price"].round(2),
+                            "Value": folder_df["current_value"].round(2),
+                            "Change %": folder_df["profit_percent"].round(2)
+                        })
 
-                        symbol = row["symbol"]
-                        percent = round(row["profit_percent"], 2)
 
-                        if percent >= 0:
-                            change_text = f"▲ {percent}%"
-                            color = "green"
-                        else:
-                            change_text = f"▼ {percent}%"
-                            color = "red"
+                        # ---------- AI SCREENER STYLE TABLE ----------
 
-                        token = st.session_state.token
-                        username = st.session_state.username
+                        display_df = pd.DataFrame({
+                            "Symbol": folder_df["symbol"],
+                            "Company": folder_df["company_name"],
+                            "Quantity": folder_df["quantity"],
+                            "Buy Price": folder_df["buy_price"],
+                            "Current Price": folder_df["current_price"].round(2),
+                            "Value": folder_df["current_value"].round(2),
+                            "Change %": folder_df["profit_percent"].round(2),
+                        })
 
-                        c7.markdown(
-                            f"<a href='?symbol={symbol}&token={token}&username={username}' style='color:{color}; text-decoration:none; font-weight:600;'>{change_text}</a>",
-                            unsafe_allow_html=True
-                        )
-                        if c8.button("delete", key=f"delete_{row['symbol']}"):
+                        h1, h2, h3, h4, h5, h6, h7, h8, h9 = st.columns([2,3,2,2,2,2,2,1,1])
 
-                            status, data = safe_request(
-                                "DELETE",
-                                f"{API_URL}/portfolio/{row['id']}",
-                                headers=headers
+                        h1.markdown("**Symbol**")
+                        h2.markdown("**Company**")
+                        h3.markdown("**Qty**")
+                        h4.markdown("**Buy Price**")
+                        h5.markdown("**Current**")
+                        h6.markdown("**Value**")
+                        h7.markdown("**Change %**")
+                        h8.markdown("**Edit**")
+                        h9.markdown("**Delete**")
+
+                        st.divider()
+
+                        # ROWS
+                        for _, row in folder_df.iterrows():
+
+                            cols = st.columns([2,3,2,2,2,2,2,1,1])
+
+                            with cols[0]:
+                                st.write(row["symbol"])
+
+                            with cols[1]:
+                                st.write(row["company_name"])
+
+                            with cols[2]:
+                                st.write(row["quantity"])
+
+                            with cols[3]:
+                                st.write(row["buy_price"])
+
+                            with cols[4]:
+                                st.write(round(row["current_price"], 2))
+
+                            with cols[5]:
+                                st.write(round(row["current_value"], 2))
+
+                            with cols[6]:
+                                if row["profit_percent"] >= 0:
+                                    st.markdown(f"<span style='color:green'>{round(row['profit_percent'],2)}</span>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"<span style='color:red'>{round(row['profit_percent'],2)}</span>", unsafe_allow_html=True)
+
+                            with cols[7]:
+                                if st.button("✏️", key=f"edit_{row['id']}"):
+                                    st.session_state.edit_id = row["id"]
+                                    st.session_state.edit_qty = row["quantity"]
+                                    st.session_state.edit_price = row["buy_price"]
+                            with cols[8]:
+                                if st.button("🗑️", key=f"delete_{row['id']}"):
+
+                                    st.session_state.delete_id = row["id"]
+                                    st.session_state.delete_symbol = row["symbol"]  # optional (nice UX)
+
+                                    st.rerun()
+                        
+                        
+                        # -------- DELETE CONFIRMATION --------
+                        if "delete_id" in st.session_state:
+
+                            st.warning(f"⚠️ Are you sure you want to delete {st.session_state.delete_symbol}?")
+
+                            col1, col2 = st.columns(2)
+
+                            with col1:
+                                if st.button("Confirm Delete"):
+
+                                    status, data = safe_request(
+                                        "DELETE",
+                                        f"{API_URL}/portfolio/{st.session_state.delete_id}",
+                                        headers=headers
+                                    )
+
+                                    if status == 200:
+                                        st.success("Stock deleted 🗑️")
+                                        del st.session_state.delete_id
+                                        del st.session_state.delete_symbol
+                                        st.rerun()
+                                    else:
+                                        show_error(data)
+
+                            with col2:
+                                if st.button("Cancel", key="cancel_stock_delete"):
+                                    del st.session_state.delete_id
+                                    del st.session_state.delete_symbol
+                                    st.rerun()
+
+                        
+                        
+                        if "edit_id" in st.session_state:
+
+                            st.markdown("### ✏️ Update Stock")
+
+                            # 🔥 ACTION SELECT
+                            action = st.radio(
+                                "Action",
+                                ["Buy ➕", "Sell ➖"]
                             )
 
-                            if status == 200:
-                                st.success("Stock deleted")
-                                st.rerun()
-                            else:
-                                show_error(data)
+                            # 🔥 INPUT
+                            qty = st.number_input("Quantity", min_value=1)
 
+                            price = 0
+                            if action == "Buy ➕":
+                                price = st.number_input("Buy Price", min_value=0.0)
 
+                            col1, col2 = st.columns(2)
+
+                            with col1:
+                                if st.button("Confirm"):
+
+                                    current_qty = st.session_state.edit_qty
+                                    current_price = st.session_state.edit_price
+
+                                    # -------- BUY --------
+                                    if action == "Buy ➕":
+
+                                        new_qty = current_qty + qty
+
+                                        new_price = (
+                                            (current_qty * current_price + qty * price)
+                                            / new_qty
+                                        )
+
+                                    # -------- SELL --------
+                                    else:
+
+                                        new_qty = current_qty - qty
+
+                                        if new_qty <= 0:
+                                            # DELETE STOCK
+                                            safe_request(
+                                                "DELETE",
+                                                f"{API_URL}/portfolio/{st.session_state.edit_id}",
+                                                headers=headers
+                                            )
+
+                                            st.success("Stock removed 🗑️")
+                                            del st.session_state.edit_id
+                                            st.rerun()
+
+                                        new_price = current_price
+
+                                    # -------- UPDATE --------
+                                    status, data = safe_request(
+                                        "PUT",
+                                        f"{API_URL}/portfolio/{st.session_state.edit_id}",
+                                        json={
+                                            "quantity": int(new_qty),
+                                            "buy_price": float(new_price)
+                                        },
+                                        headers=headers
+                                    )
+
+                                    if status == 200:
+                                        st.success("Updated ✅")
+                                        del st.session_state.edit_id
+                                        st.rerun()
+                                    else:
+                                        show_error(data)
+
+                            with col2:
+                                if st.button("Cancel"):
+                                    del st.session_state.edit_id
+                                    st.rerun()
+                        
+            
+
+        
         # ---------- CREATE FOLDER MODAL ----------
         if st.session_state.show_create_folder:
 
@@ -723,56 +1003,41 @@ else:
 
             with col1:
                 if st.button("Create"):
-                    
 
-                    st.session_state.show_create_folder = False
-                    st.rerun()
+                    if folder_name.strip() == "":
+                        st.warning("Enter folder name")
 
-            with col2:
-                if st.button("Cancel"):
-                    st.session_state.show_create_folder = False
-                    st.rerun()
-            
+                    else:
+                        clean_name = folder_name.strip()
 
+                        # get backend folders also
+                        existing_names = []
 
-        # ---------- ADD STOCK MODAL ----------
-        if st.session_state.show_add_stock:
+                        # from session
+                        existing_names += st.session_state.folders
 
-            st.subheader("Add Stock")
+                        # from backend
+                        status, data = safe_request("GET", f"{API_URL}/portfolio", headers=headers)
 
-            symbol = st.text_input("Symbol").upper()
-            quantity = st.number_input("Quantity", min_value=1, value=1)
-            buy_price = st.number_input("Buy Price", min_value=0.0, value=0.0)
+                        if status == 200 and "data" in data:
+                            df = pd.DataFrame(data["data"])
+                            if not df.empty:
+                                existing_names += df["folder_name"].dropna().tolist()
 
-            if symbol:
-                price = get_current_price(symbol)
-                st.write("Current Price:", price)
-                st.write("Total Value:", round(price * quantity,2))
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                if st.button("Add"):
-                    status, data = safe_request(
-                        "POST",
-                        f"{API_URL}/portfolio",
-                        json={
-                            "stock_symbol": symbol,
-                            "quantity": quantity,
-                            "buy_price": buy_price,
-                            "folder_name": st.session_state.selected_folder
-                        },
-                        headers=headers
-                    )
-
-                    if status == 200:
-                        st.session_state.show_add_stock = False
-                        st.rerun()
+                        # check duplicate (case-insensitive)
+                        if any(f.lower() == clean_name.lower() for f in existing_names):
+                            st.warning("Folder already exists")
+                        else:
+                            st.session_state.folders.append(clean_name)
+                            st.session_state.show_create_folder = False
+                            st.rerun()
 
             with col2:
                 if st.button("Cancel"):
-                    st.session_state.show_add_stock = False
+                    st.session_state.show_create_folder = False
                     st.rerun()
+    
+    
                  
                 
 
@@ -823,7 +1088,7 @@ else:
             else:
                 show_error(data)
 
-        st.divider()
+        st.divider() # here is the stop right now okay...
 
         # ---------------- LOAD WATCHLIST ----------------
 

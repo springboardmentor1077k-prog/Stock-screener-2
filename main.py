@@ -1,5 +1,5 @@
 import math
-
+from fastapi import Body
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Request
@@ -146,6 +146,12 @@ class PortfolioCreate(BaseModel):
     quantity: int = Field(..., gt=0)
     buy_price: float = Field(..., gt=0)
     folder_name: str = "Default"
+class PortfolioUpdate(BaseModel):
+    quantity: int = Field(..., gt=0)
+    buy_price: float = Field(..., gt=0)
+class RenameFolderRequest(BaseModel):
+    old_name: str
+    new_name: str
 
 class AlertCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
@@ -154,6 +160,7 @@ class AlertCreate(BaseModel):
     threshold: float = Field(..., gt=0)
 class WatchlistCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
+    
     
 # ============================================================
 # DSL CONFIGURATION (STEP 1)
@@ -954,7 +961,6 @@ def add_to_portfolio(
     request: PortfolioCreate,
     current_user: dict = Depends(get_current_user)
 ):
-
     with engine.begin() as conn:
 
         symbol = conn.execute(text("""
@@ -964,19 +970,57 @@ def add_to_portfolio(
         if not symbol:
             raise HTTPException(status_code=404, detail="Symbol not found")
 
-        conn.execute(text("""
-            INSERT INTO portfolio
-            (user_id, symbol_id, quantity, buy_price, folder_name, added_at)
-            VALUES (:user_id, :symbol_id, :quantity, :buy_price, :folder, NOW())
+        # CHECK IF STOCK EXISTS
+        existing = conn.execute(text("""
+            SELECT id, quantity, buy_price
+            FROM portfolio
+            WHERE user_id = :user_id
+            AND symbol_id = :symbol_id
+            AND folder_name = :folder
         """), {
             "user_id": current_user["id"],
             "symbol_id": symbol[0],
-            "quantity": request.quantity,
-            "buy_price": request.buy_price,
             "folder": request.folder_name
-        })
+        }).fetchone()
 
-    return success_response(message="Stock added to portfolio")
+        if existing:
+            old_qty = existing[1]
+            old_price = existing[2]
+
+            new_qty = old_qty + request.quantity
+
+            avg_price = (
+                (old_qty * old_price + request.quantity * request.buy_price)
+                / new_qty
+            )
+
+            conn.execute(text("""
+                UPDATE portfolio
+                SET quantity = :qty,
+                    buy_price = :price
+                WHERE id = :id
+            """), {
+                "qty": new_qty,
+                "price": avg_price,
+                "id": existing[0]
+            })
+
+            return success_response(message="Stock updated")
+
+        else:
+            conn.execute(text("""
+                INSERT INTO portfolio
+                (user_id, symbol_id, quantity, buy_price, folder_name, added_at)
+                VALUES (:user_id, :symbol_id, :quantity, :buy_price, :folder, NOW())
+            """), {
+                "user_id": current_user["id"],
+                "symbol_id": symbol[0],
+                "quantity": request.quantity,
+                "buy_price": request.buy_price,
+                "folder": request.folder_name
+            })
+
+            return success_response(message="Stock added")
 
 
 @app.get("/portfolio")
@@ -991,24 +1035,74 @@ def get_portfolio(current_user: dict = Depends(get_current_user)):
                 s.company_name,
                 p.quantity,
                 p.buy_price,
-                p.folder_name
+                p.folder_name,
+                hp.close AS current_price
             FROM portfolio p
             JOIN symbols s ON p.symbol_id = s.id
+            LEFT JOIN LATERAL (
+                SELECT close
+                FROM historical_prices hp
+                WHERE hp.symbol_id = s.id
+                ORDER BY price_date DESC
+                LIMIT 1
+            ) hp ON TRUE
             WHERE p.user_id = :user_id
         """), {"user_id": current_user["id"]}).fetchall()
 
-    return success_response(data=[
-        {
+    result = []
+
+    for r in rows:
+        quantity = r[3]
+        buy_price = r[4]
+        current_price = r[6] or 0
+
+        current_value = float(quantity) * float(current_price)
+        invested = float(quantity) * float(buy_price)
+        profit = float(current_value) - float(invested)
+
+        profit_percent = (profit / float(invested)) * 100 if invested != 0 else 0
+
+        result.append({
             "id": r[0],
             "symbol": r[1],
             "company_name": r[2],
-            "quantity": r[3],
-            "buy_price": r[4],
+            "quantity": quantity,
+            "buy_price": buy_price,
+            "current_price": current_price,
+            "invested": invested,
+            "current_value": current_value,
+            "profit": profit,
+            "profit_percent": profit_percent,
             "folder_name": r[5]
-        }
-        for r in rows
-    ])
+        })
 
+    return success_response(data=result)
+
+@app.put("/portfolio/{portfolio_id}")
+def update_portfolio(
+    portfolio_id: int,
+    request: PortfolioUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    with engine.begin() as conn:
+
+        result = conn.execute(text("""
+            UPDATE portfolio
+            SET quantity = :qty,
+                buy_price = :price
+            WHERE id = :id
+            AND user_id = :user_id
+        """), {
+            "qty": request.quantity,
+            "price": request.buy_price,
+            "id": portfolio_id,
+            "user_id": current_user["id"]
+        })
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Stock not found")
+
+    return success_response(message="Portfolio updated")
 
 @app.delete("/portfolio/{portfolio_id}")
 def delete_portfolio(
@@ -1029,6 +1123,28 @@ def delete_portfolio(
             raise HTTPException(status_code=404, detail="Portfolio entry not found")
 
     return success_response(message="Deleted successfully")
+
+
+@app.put("/portfolio/rename-folder")
+def rename_folder(
+    request: RenameFolderRequest = Body(...),
+    current_user: dict = Depends(get_current_user)
+):
+    print("🔥 RECEIVED:", request.old_name, request.new_name)
+
+    with engine.begin() as conn:
+        conn.execute(text("""
+            UPDATE portfolio
+            SET folder_name = :new_name
+            WHERE user_id = :user_id
+            AND LOWER(folder_name) = LOWER(:old_name)
+        """), {
+            "new_name": request.new_name,
+            "old_name": request.old_name,
+            "user_id": current_user["id"]
+        })
+
+    return success_response(message="Folder renamed successfully")
 
 
 
