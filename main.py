@@ -5,7 +5,7 @@ from schemas import DSLQuery, PortfolioItem, AlertItem
 import sqlite3
 import operator as op
 import os
-
+import time
 from schemas import DSLQuery
 from llm_parser import parse_natural_language_to_dsl
 from compiler import compile_dsl_to_sql
@@ -54,21 +54,23 @@ async def process_query(request: QueryRequest):
     # Step 4: Execution Layer - Connect to DB
     current_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(current_dir, 'stocks.db')
-    
+
     conn = sqlite3.connect(db_path)
-    # This row_factory automatically converts database rows into dictionary format
     conn.row_factory = sqlite3.Row 
     cursor = conn.cursor()
+
+    start_time = time.time()
     
     # Execute the query securely
     cursor.execute(sql_query, params)
     rows = cursor.fetchall()
+    
+    end_time = time.time()
+    execution_time_ms = round((end_time - start_time) * 1000, 2)
+    
     print("🔥 SQL QUERY:", sql_query)
     print("🔥 PARAMS:", params)
-    print("🔥 TOTAL ROWS FETCHED:", len(rows))
-
-    # Convert row objects to standard Python dictionaries
-    results = [dict(row) for row in rows]
+    print(f"⏱️ EXECUTION TIME: {execution_time_ms} ms")
 
     # Convert row objects to standard Python dictionaries
     results = [dict(row) for row in rows]
@@ -80,7 +82,8 @@ async def process_query(request: QueryRequest):
         "count": len(results),
         "data": results,
         "debug_info": {
-        "compiled_sql": sql_query
+            "compiled_sql": sql_query,
+            "execution_time_ms": execution_time_ms
         }
     }
 # ==========================================

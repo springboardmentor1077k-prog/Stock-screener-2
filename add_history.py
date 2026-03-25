@@ -13,9 +13,20 @@ CREATE TABLE historical_metrics (
 ''')
 
 history_data = [
-    ('INFY', '2025-Q1', 1000), ('INFY', '2025-Q2', 1100), ('INFY', '2025-Q3', 1210), ('INFY', '2025-Q4', 1331),
-    ('TCS', '2025-Q1', 2000), ('TCS', '2025-Q2', 2050), ('TCS', '2025-Q3', 2100), ('TCS', '2025-Q4', 2150),
-    ('WIPRO', '2025-Q1', 800), ('WIPRO', '2025-Q2', 900), ('WIPRO', '2025-Q3', 1035), ('WIPRO', '2025-Q4', 1190)
+    # INFY Growth trend
+    ('INFY', '2025-Q1', 37500), ('INFY', '2025-Q2', 38000), ('INFY', '2025-Q3', 38500), ('INFY', '2025-Q4', 39000),
+    # TCS Consistent growth
+    ('TCS', '2025-Q1', 59000), ('TCS', '2025-Q2', 59500), ('TCS', '2025-Q3', 60000), ('TCS', '2025-Q4', 61500),
+    # WIPRO slight ups and downs
+    ('WIPRO', '2025-Q1', 22000), ('WIPRO', '2025-Q2', 22500), ('WIPRO', '2025-Q3', 22200), ('WIPRO', '2025-Q4', 22300),
+    # RELIANCE massive numbers
+    ('RELIANCE', '2025-Q1', 215000), ('RELIANCE', '2025-Q2', 220000), ('RELIANCE', '2025-Q3', 228000), ('RELIANCE', '2025-Q4', 237000),
+    # HDFC
+    ('HDFC', '2025-Q1', 48000), ('HDFC', '2025-Q2', 50000), ('HDFC', '2025-Q3', 54000), ('HDFC', '2025-Q4', 58000),
+    # TATAMOTORS
+    ('TATAMOTORS', '2025-Q1', 105000), ('TATAMOTORS', '2025-Q2', 104000), ('TATAMOTORS', '2025-Q3', 108000), ('TATAMOTORS', '2025-Q4', 113000),
+    # AIRTEL
+    ('AIRTEL', '2025-Q1', 35000), ('AIRTEL', '2025-Q2', 36000), ('AIRTEL', '2025-Q3', 36500), ('AIRTEL', '2025-Q4', 37500)
 ]
 
 cursor.executemany('''
@@ -25,4 +36,4 @@ VALUES (?, ?, ?)
 
 conn.commit()
 conn.close()
-print("✅ Raw Revenue Data successfully added to Database!")
+print("✅Historical Revenue Data successfully added!")
