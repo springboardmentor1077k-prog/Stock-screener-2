@@ -1,10 +1,12 @@
 import json
 import google.generativeai as genai
 import os
+from functools import lru_cache  
 
-# Set your API key here or in environment variables
 genai.configure(api_key="AIzaSyD8hIifr0Sh0JrHV6aGcX_dlEiOPycpPpU") 
 
+# @lru_cache adds in-memory caching. 
+@lru_cache(maxsize=100)
 def parse_natural_language_to_dsl(user_query: str) -> dict:
     prompt = f"""
     You are a strictly constrained parser. Convert the following natural language query into a structured DSL JSON format.
