@@ -279,3 +279,13 @@ elif st.session_state.current_page == "Alerts":
 else:
     st.markdown(f"<h2 style='text-align: center; color: white; margin-top: 50px;'>🚧 {st.session_state.current_page}</h2>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #00C6FF;'>Syncing your data... Advanced features coming soon!</p>", unsafe_allow_html=True)
+
+st.markdown("---") # Divider line
+
+# Educational & Responsibility Disclaimer
+st.warning("""
+**⚠️ IMPORTANT DISCLAIMER:**
+* **Educational Purposes Only:** This application is for educational and informational purposes only and does not constitute financial advice. 
+* **Data Accuracy:** The market data provided may not be accurate or real-time. 
+* **User Responsibility:** Users are fully responsible for their own investment decisions. Please conduct your own research before making any financial commitments.
+""")

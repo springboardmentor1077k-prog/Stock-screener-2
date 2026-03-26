@@ -10,6 +10,26 @@ from schemas import DSLQuery
 from llm_parser import parse_natural_language_to_dsl
 from compiler import compile_dsl_to_sql
 
+# Global Error Handler for Pydantic Validation Errors
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    # Safe validation error message showing to user
+    return JSONResponse(
+        status_code=422,
+        content={"status": "error", "message": "Invalid input provided. Please check your query."}
+    )
+
+# Global Error Handler for all other System/Database Errors
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    # Logging the real error internally for debugging 
+    print(f"INTERNAL SYSTEM ERROR: {str(exc)}")
+
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "message": "Something went wrong on our end. Please try again later."}
+    )
+
 app = FastAPI()
 
 class QueryRequest(BaseModel):
