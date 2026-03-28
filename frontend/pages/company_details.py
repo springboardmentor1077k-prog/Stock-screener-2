@@ -18,20 +18,17 @@ if not company_name:
         res = requests.post(
             "http://127.0.0.1:7000/get-portfolio",
             headers=headers,
-            timeout=5
+            timeout=300
         )
 
         if res.status_code == 200:
             portfolio = res.json().get("data", [])
 
             if portfolio:
-                # ✅ pick first company
+               
                 company_name = portfolio[0]["symbol"]
 
-                # store back in session
                 st.session_state["selected_company"] = company_name
-
-                st.info(f"Showing portfolio company: {company_name}")
 
             else:
                 st.warning("No companies in portfolio. Please buy a stock first.")
