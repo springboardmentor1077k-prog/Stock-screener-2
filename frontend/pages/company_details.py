@@ -6,9 +6,44 @@ import pandas as pd
 
 company_name = st.session_state.get("selected_company")
 
+company_name = st.session_state.get("selected_company")
+
+
 if not company_name:
-    st.error("No company selected.")
-    st.stop()
+    try:
+        headers = {
+            "Authorization": f"Bearer {st.session_state.get('token')}"
+        }
+
+        res = requests.post(
+            "http://127.0.0.1:7000/get-portfolio",
+            headers=headers,
+            timeout=5
+        )
+
+        if res.status_code == 200:
+            portfolio = res.json().get("data", [])
+
+            if portfolio:
+                # ✅ pick first company
+                company_name = portfolio[0]["symbol"]
+
+                # store back in session
+                st.session_state["selected_company"] = company_name
+
+                st.info(f"Showing portfolio company: {company_name}")
+
+            else:
+                st.warning("No companies in portfolio. Please buy a stock first.")
+                st.stop()
+
+        else:
+            st.error("Unable to fetch portfolio.")
+            st.stop()
+
+    except Exception as e:
+        st.error("Error fetching portfolio")
+        st.stop()
 
 # st.title(f"Company Details: {company_name}")
 
@@ -35,7 +70,7 @@ if data:
 
     with col3:
         market_cap = data["market_cap"]
-        st.metric("💰 Market Cap", f"₹ {market_cap/1e12:.2f} T")
+        st.metric("Market Cap", f"₹ {market_cap/1e12:.2f} T")
 
 
     st.write(f"**Sector:** {data['sector']}")
@@ -92,11 +127,6 @@ buy_qty = st.number_input(
     step=1,
     key="buy_qty"
 )
-
-
-
-
-
 
 
 # Total price
