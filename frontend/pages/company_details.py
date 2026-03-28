@@ -97,16 +97,22 @@ metrics_table = {
     "Value": [
         f.get("pe"),
         f.get("peg"),
-        f.get("promoter_holding", "N/A"),
-        f"₹ {f.get('ebitda', 0):,}" if f.get("ebitda") else "N/A",
-        f"₹ {f.get('debt_free_cash') or 0:,}"
+        f.get("promoter_holding"),
+        f.get("ebitda"),          
+        f.get("debt_free_cash")   
     ]
 }
 
 df_metrics = pd.DataFrame(metrics_table)
-df_metrics.index += 1
-st.table(df_metrics)
 
+def format_value(row):
+    if row["Metric"] in ["EBITDA", "Free Cash Flow"] and row["Value"]:
+        return f"₹ {row['Value']:,}"
+    return row["Value"]
+
+df_metrics["Value"] = df_metrics.apply(format_value, axis=1)
+df_metrics.index = range(1, len(df_metrics) + 1)
+st.dataframe(df_metrics, width="stretch")
 
 
 #prices
