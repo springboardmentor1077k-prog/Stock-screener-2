@@ -1,5 +1,5 @@
 import redis
-import json
+
 
 # Redis connection
 cache = redis.Redis(
