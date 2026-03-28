@@ -79,11 +79,11 @@ def query_endpoint(request: QueryRequest):
     nl_cache_key = get_nl_cache_key(nl_query)
     cached_dsl = r.get(nl_cache_key)
     if cached_dsl:
-        logger.info("🔥 NL CACHE HIT (Skipping LLM)")
+        logger.info("NL CACHE HIT (Skipping LLM)")
         dsl = json.loads(cached_dsl)
         
     else:
-        logger.info("❌ NL CACHE MISS → calling LLM")
+        logger.info("NL CACHE MISS → calling LLM")
 
         dsl = generate_dsl(nl_query)
         

@@ -105,12 +105,6 @@ metrics_table = {
 
 df_metrics = pd.DataFrame(metrics_table)
 
-def format_value(row):
-    if row["Metric"] in ["EBITDA", "Free Cash Flow"] and row["Value"]:
-        return f"₹ {row['Value']:,}"
-    return row["Value"]
-
-df_metrics["Value"] = df_metrics.apply(format_value, axis=1)
 df_metrics.index = range(1, len(df_metrics) + 1)
 st.dataframe(df_metrics, width="stretch")
 
