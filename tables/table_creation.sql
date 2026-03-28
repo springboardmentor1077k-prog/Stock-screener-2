@@ -142,7 +142,6 @@ CREATE TABLE alerts (
 
 
 
-
 INSERT INTO symbol (company_name, company_symbol, sector)
 VALUES
 ('Reliance Industries Ltd.', 'RELIANCE.NS', 'Energy'),
@@ -193,6 +192,51 @@ TRUNCATE company_details;
 -- fundamentals unique
 
 
+CREATE TABLE alert_master (
+    alert_id SERIAL PRIMARY KEY,
+
+    company_id INT,            
+    metric VARCHAR(50),
+    operator VARCHAR(5),
+    target_value FLOAT,
+
+    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (company_id, metric, operator, target_value)
+);
+
+
+CREATE TABLE user_alerts (
+    id SERIAL PRIMARY KEY,
+
+    user_id INT,
+    alert_id INT,
+
+    is_active BOOLEAN DEFAULT TRUE,
+
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (alert_id) REFERENCES alert_master(alert_id) ON DELETE CASCADE,
+
+    UNIQUE (user_id, alert_id)
+);
+ALTER TABLE alerts
+ADD COLUMN metric VARCHAR(50),
+ADD COLUMN operator VARCHAR(5),
+ADD COLUMN target_value FLOAT;
+
+ALTER TABLE alerts
+ALTER COLUMN company_id DROP NOT NULL;
 
 
 
+UPDATE fundamentals
+SET pe = 25
+WHERE symbol_id = (
+    SELECT symbol_id 
+    FROM symbol 
+    WHERE company_symbol = 'TCS.NS'
+);
+
+
+ALTER TABLE user_alerts
+ADD CONSTRAINT unique_user_alert UNIQUE (user_id, alert_id);

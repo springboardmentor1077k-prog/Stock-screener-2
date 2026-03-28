@@ -12,7 +12,7 @@ def generate_dsl(nl_query: str):
     No DB logic.
     """
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_APIKEY")
     
     if not api_key:
         print("GEMINI_API_KEY missing")
@@ -71,7 +71,7 @@ show companies with revenue growth greater than 10%
    "type":"last_n_quarters",
    "value":4
  }},
- "limit":20
+ "limit":6
   }}
   
 
@@ -89,7 +89,7 @@ show companies with revenue growth greater than 10%
    "type":"last_n_quarters",
    "value":4
   }},
-  "limit":20
+  "limit":6
   }}
   
 
@@ -110,7 +110,7 @@ show companies with revenue growth greater than 10%
    "type":"last_n_quarters",
    "value":4
  }},
- "limit":20
+ "limit":6
 }}
 
 
@@ -203,7 +203,7 @@ Notes:
   "conditions":[
    {{"field":"pe","operator":"<","value":20}}
   ],
-  "limit":20
+  "limit":6
   }}
 
   User Query:
@@ -216,7 +216,7 @@ DSL:
  "conditions":[
    {{"field":"ebitda","operator":">","value":1000000}}
  ],
- "limit":20
+ "limit":6
 }}
 
 User Query:
@@ -234,7 +234,7 @@ show companies with pe < 50 and ebitda for the past 3 quarters
    "type":"last_n_quarters",
    "value":3
   }},
- "limit":20
+ "limit":6
   }}
 
   Rules:

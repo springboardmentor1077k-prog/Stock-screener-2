@@ -5,6 +5,8 @@ import time
 import os
 import sys
 from ui_components.result import render_results_table
+from ui_components.navbar import logout_button
+
 
 if "results" not in st.session_state:
     st.session_state.results = None
@@ -12,11 +14,6 @@ if "results" not in st.session_state:
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-
-#Api call count function 
-def api_cal():
-    pass
 
 
 
@@ -33,7 +30,7 @@ if "loading" not in st.session_state:
 if "last_request_time" not in st.session_state:
     st.session_state.last_request_time = 0
     
-count_down = 5 #wait for 5 seconds
+count_down = 5 
 current_time = time.time()
 time_since_last = current_time - st.session_state.last_request_time
 
@@ -52,11 +49,12 @@ st.markdown("""
 - Show companies with PE more than 15  
 - Show companies with PE less than 20 and promoter holding greater than 10
 """)
-# st.write("Sending:", {"nl_query": nl_query})
+
 submit_btn = st.button(
     "Submit",
     disabled=st.session_state.loading
 )
+
 
 
 
@@ -81,7 +79,6 @@ if submit_btn:
                     data = response.json()
                     st.session_state.results = data
                     log.info("Query processed successfully")
-                    # st.success(data.get("message", "Query validated successfully."))
                     results = data.get("data", [])
                     count = data.get("count", 0)
 
@@ -89,9 +86,6 @@ if submit_btn:
                         st.warning("No companies matched your query.")
                     else:
                         st.success(f"Found {count} matching companies.")
-     
-                        #Function to fetch the data in a table
-                        # render_results_table(data)
                         st.session_state.results = data
 
             
@@ -133,3 +127,6 @@ if st.session_state.results is not None:
 if time_since_last < count_down:
     remaining = int(count_down - time_since_last)
     st.info(f"Please wait {remaining} seconds before submitting.")
+    
+    
+logout_button()

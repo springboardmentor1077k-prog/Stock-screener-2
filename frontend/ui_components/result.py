@@ -40,7 +40,7 @@ def render_results_table(data):
         df = df.sort_values(by=sort_column, ascending=ascending).reset_index(drop=True)
 
         # -------- PAGINATION --------
-        page_size = 5
+        page_size = 3
 
         if "last_query" not in st.session_state or st.session_state.last_query != str(data):
             st.session_state.page = 1
