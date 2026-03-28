@@ -6,42 +6,85 @@ import json
 router = APIRouter()
 
 ALLOWED_METRICS = ["pe", "peg", "ebitda", "promoter_holding"]
+ALLOWED_OPERATORS = {"<", ">", "="}
+BLACKLIST = ["drop", "delete", "insert", "update", "alter", "--", ";"]
+
+
+
+
+def normalize_query(query: str):
+    query = query.lower()
+
+    replacements = {
+        "less than": "<",
+        "greater than": ">",
+        "equal to": "=",
+        "equals": "=",
+        "more than": ">"
+    }
+
+    for k, v in replacements.items():
+        query = query.replace(k, v)
+
+    return query
 
 
 # PARSER
-
 def parse_query(query: str):
     query = query.lower().strip()
+    
+    for word in BLACKLIST:
+        if word in query:
+            return None
 
     words = query.split()
     company = None
 
     # detect company (first word if not metric)
-    if words[0] not in ALLOWED_METRICS:
+    if words and words[0] not in ALLOWED_METRICS:
+        if not re.match(r"^[a-zA-Z0-9]+$", words[0]): 
+            return None
         company = words[0]
         query = query[len(company):].strip()
 
     parts = re.split(r"\s+and\s+", query)
 
     conditions = []
-    pattern = r"(pe|peg|ebitda|promoter_holding)\s*(<|>|=)\s*(\d+(\.\d+)?)"
+    
+    
+    
+    pattern = r"^(pe|peg|ebitda|promoter_holding)\s*(<|>|=)\s*(\d+(\.\d+)?)$"
+
 
     for part in parts:
-        match = re.search(pattern, part)
+        part = part.strip()
+        match = re.match(pattern, part)
+
         if not match:
             return None
 
+        metric = match.group(1)
+        operator = match.group(2)
+        value = float(match.group(3))
+
+
+        if metric not in ALLOWED_METRICS:
+            return None
+        if operator not in ALLOWED_OPERATORS:
+            return None
+
         conditions.append({
-            "metric": match.group(1),
-            "operator": match.group(2),
-            "value": float(match.group(3))
+            "metric": metric,
+            "operator": operator,
+            "value": value
         })
 
     return {
         "company": company,
         "conditions": conditions
     }
-
+    
+    
 
 
 # SQL BUILDER
@@ -51,19 +94,26 @@ def build_sql(parsed, company_id=None):
     values = []
 
     for cond in parsed["conditions"]:
+
+        if cond["metric"] not in ALLOWED_METRICS:
+            raise ValueError("Invalid metric")
+
+        if cond["operator"] not in ALLOWED_OPERATORS:
+            raise ValueError("Invalid operator")
+
         where.append(f"{cond['metric']} {cond['operator']} %s")
         values.append(cond["value"])
 
-    if company_id:
+    if company_id is not None:
         where.append("f.symbol_id = %s")
         values.append(company_id)
 
     query = f"""
-        SELECT s.company_symbol
+        SELECT s.company_symbol, s.company_name
         FROM fundamentals f
         JOIN symbol s ON f.symbol_id = s.symbol_id
         WHERE {' AND '.join(where)}
-        LIMIT 5
+        LIMIT 3
     """
 
     return query, values
@@ -95,6 +145,7 @@ def add_alert(data: dict):
                 FROM symbol
                 WHERE LOWER(company_name) LIKE %s
                 OR LOWER(company_symbol) LIKE %s
+                ORDER BY LENGTH(company_name) ASC
                 LIMIT 1
             """, (f"%{parsed['company']}%", f"%{parsed['company']}%"))
 
@@ -215,10 +266,15 @@ def check_alerts():
             matches = cursor.fetchall()
 
             if matches:
+                unique_companies = {
+                m[0]: m[1] for m in matches}
+
                 triggered.append({
-                    "alert_id": alert_id,
-                    "companies": [m[0] for m in matches]
-                })
+                "alert_id": alert_id,
+                "companies": [
+                {"symbol": k, "name": v}
+                for k, v in unique_companies.items()
+                ]})
 
         conn.close()
 

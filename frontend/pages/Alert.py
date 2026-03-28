@@ -41,7 +41,7 @@ try:
 
         if triggered:
             for alert in triggered:
-                companies = ", ".join(alert["companies"])
+                companies = ", ".join([c["name"] for c in alert["companies"]])
 
                 st.success(
                     f"Alert conditions are met.\n\n"

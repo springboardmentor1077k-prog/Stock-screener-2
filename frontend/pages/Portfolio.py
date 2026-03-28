@@ -58,7 +58,7 @@ def create_chart(df):
 if data.get("status") == "success":
     user_name = data["username"]
     st.title(f"Welcome {user_name}")
-    st.write("This is your protfolio details")
+    st.write("This is your protfolio")
     
 
     portfolio = data["data"]

@@ -55,7 +55,7 @@ if st.session_state.mode == "Login":
             st.success("Login Successful")
 
 
-            st.switch_page("pages/Query.py")
+            st.switch_page("pages/Portfolio.py")
 
         else:
             st.error("Invalid mail or password")
