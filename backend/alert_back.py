@@ -13,7 +13,7 @@ BLACKLIST = ["drop", "delete", "insert", "update", "alter", "--", ";"]
 
 
 def normalize_query(query: str):
-    query = query.lower()
+    query = query.lower().strip()
 
     replacements = {
         "less than": "<",
@@ -30,90 +30,215 @@ def normalize_query(query: str):
 
 
 # PARSER
+
+
+
 def parse_query(query: str):
     query = query.lower().strip()
-    
+
     for word in BLACKLIST:
         if word in query:
             return None
-
+        
     words = query.split()
     company = None
 
-    # detect company (first word if not metric)
-    if words and words[0] not in ALLOWED_METRICS:
-        if not re.match(r"^[a-zA-Z0-9]+$", words[0]): 
-            return None
-        company = words[0]
-        query = query[len(company):].strip()
+    if words:
+        first_word = words[0]
 
+
+        if first_word not in ["pe", "peg", "ebitda", "promoter_holding",
+                         "revenue", "profit", "cash"]:
+        
+        # allow only safe company tokens
+            if re.match(r"^[a-zA-Z0-9]+$", first_word):
+                company = first_word
+                query = query[len(first_word):].strip()
+    
+    
+    
+    
+    # NORMALIZATION
+    
+    replacements = {
+        "less than": "<",
+        "greater than": ">",
+        "more than": ">",
+        "above": ">",
+        "below": "<",
+        "equal to": "=",
+        "equals": "="
+    }
+
+    for k, v in replacements.items():
+        query = query.replace(k, v)
+
+    
+    # DETECT TIME
+    
+    time_match = re.search(r"(last|past)\s*(\d+)?\s*quarter", query)
+
+    time_filter = None
+    if time_match:
+        n = time_match.group(2)
+        time_filter = int(n) if n else 1
+
+    
+    # SPLIT CONDITIONS
+    
     parts = re.split(r"\s+and\s+", query)
 
     conditions = []
-    
-    
-    
-    pattern = r"^(pe|peg|ebitda|promoter_holding)\s*(<|>|=)\s*(\d+(\.\d+)?)$"
 
+    has_growth = False
+    has_fundamental = False
 
     for part in parts:
         part = part.strip()
-        match = re.match(pattern, part)
 
+        
+        # DETECT GROWTH
+        
+        if any(word in part for word in ["growth", "increase", "decrease", "trend"]):
+            has_growth = True
+
+            if "revenue" in part:
+                field = "revenue_growth"
+            elif "ebitda" in part:
+                field = "ebitda_growth"
+            elif "profit" in part:
+                field = "net_profit_growth"
+            elif "cash" in part:
+                field = "debt_free_cash_growth"
+            else:
+                return None
+
+        else:
+            
+            # NORMAL METRICS
+            
+            match = re.search(r"(pe|peg|ebitda|promoter_holding)\s*(<|>|=)\s*(\d+(\.\d+)?)", part)
+            if not match:
+                return None
+
+            field = match.group(1)
+            has_fundamental = True
+
+        
+        # EXTRACT OPERATOR + VALUE
+        
+        match = re.search(r"(<|>|=)\s*(\d+(\.\d+)?)", part)
         if not match:
             return None
 
-        metric = match.group(1)
-        operator = match.group(2)
-        value = float(match.group(3))
-
-
-        if metric not in ALLOWED_METRICS:
-            return None
-        if operator not in ALLOWED_OPERATORS:
-            return None
+        operator = match.group(1)
+        value = float(match.group(2))
 
         conditions.append({
-            "metric": metric,
+            "field": field,
             "operator": operator,
             "value": value
         })
 
-    return {
-        "company": company,
-        "conditions": conditions
-    }
     
+    # ENTITY LOGIC
+    
+    if has_growth and has_fundamental:
+        entity = "symbol"
+    elif has_growth:
+        entity = "historical_metrics"
+    else:
+        entity = "fundamentals"
+
+    
+    # DEFAULT TIME FOR GROWTH
+    
+    if has_growth and not time_filter:
+        time_filter = 4
+
+    return {
+        "entity": entity,
+        "conditions": conditions,
+        "time_filter": time_filter,
+        "company": company
+    }
     
 
 
 # SQL BUILDER
 
+
 def build_sql(parsed, company_id=None):
     where = []
     values = []
 
+    entity = parsed.get("entity", "fundamentals")
+    time_filter = parsed.get("time_filter")
+
+    
+    # CONDITION BUILDING
+    
     for cond in parsed["conditions"]:
 
-        if cond["metric"] not in ALLOWED_METRICS:
-            raise ValueError("Invalid metric")
+        field = cond["field"]
+        operator = cond["operator"]
+        value = cond["value"]
 
-        if cond["operator"] not in ALLOWED_OPERATORS:
+        if operator not in ALLOWED_OPERATORS:
             raise ValueError("Invalid operator")
 
-        where.append(f"{cond['metric']} {cond['operator']} %s")
-        values.append(cond["value"])
+        # Map fields to correct table alias
+        if field.endswith("_growth") or field in ["revenue", "net_profit"]:
+            where.append(f"h.{field} {operator} %s")
+        else:
+            where.append(f"f.{field} {operator} %s")
 
+        values.append(value)
+
+    
+    # COMPANY FILTER
+    
     if company_id is not None:
-        where.append("f.symbol_id = %s")
+        where.append("s.symbol_id = %s")
         values.append(company_id)
 
+    
+    # ENTITY HANDLING
+    
+    if entity == "fundamentals":
+        base_query = """
+            FROM fundamentals f
+            JOIN symbol s ON f.symbol_id = s.symbol_id
+        """
+
+    elif entity == "historical_metrics":
+        base_query = """
+            FROM historical_metrics h
+            JOIN symbol s ON h.symbol_id = s.symbol_id
+        """
+
+    else:  # symbol (mixed query)
+        base_query = """
+            FROM symbol s
+            LEFT JOIN fundamentals f ON s.symbol_id = f.symbol_id
+            LEFT JOIN historical_metrics h ON s.symbol_id = h.symbol_id
+        """
+
+    
+    # TIME FILTER (ONLY FOR HISTORICAL)
+    
+    if time_filter and entity != "fundamentals":
+        where.append("h.quarter >= (SELECT MAX(quarter) - %s FROM historical_metrics)")
+        values.append(time_filter)
+
+    
+    # FINAL QUERY
+    
     query = f"""
-        SELECT s.company_symbol, s.company_name
-        FROM fundamentals f
-        JOIN symbol s ON f.symbol_id = s.symbol_id
+        SELECT DISTINCT s.company_symbol, s.company_name
+        {base_query}
         WHERE {' AND '.join(where)}
-        LIMIT 3
+        LIMIT 5
     """
 
     return query, values
@@ -138,8 +263,10 @@ def add_alert(data: dict):
         
         company_id = None
         company_name = None
+        
+        company = parsed.get("company")
 
-        if parsed["company"]:
+        if company:
             cursor.execute("""
                 SELECT symbol_id, company_name
                 FROM symbol
@@ -210,7 +337,7 @@ def get_alerts():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT ua.id, am.company_id, am.conditions, s.company_name
+            SELECT ua.id, am.alert_id, am.company_id, am.conditions, s.company_name
             FROM user_alerts ua
             JOIN alert_master am ON ua.alert_id = am.alert_id
             LEFT JOIN symbol s ON am.company_id = s.symbol_id
@@ -224,9 +351,10 @@ def get_alerts():
             "data": [
                 {
                     "id": r[0],
-                    "company_id": r[1],
-                    "conditions": r[2],
-                    "company_name": r[3]
+                    "alert_id": r[1],
+                    "company_id": r[2],
+                    "conditions": r[3],
+                    "company_name": r[4]
                 }
                 for r in rows
             ]
@@ -255,30 +383,27 @@ def check_alerts():
 
         alerts = cursor.fetchall()
 
-        triggered = []
+        results = []
 
         for alert_id, company_id, conditions in alerts:
 
-            parsed = {"conditions": conditions}
+            parsed = {"conditions": conditions,  "entity": "symbol"}
             query, values = build_sql(parsed, company_id)
 
             cursor.execute(query, values)
             matches = cursor.fetchall()
 
-            if matches:
-                unique_companies = {
-                m[0]: m[1] for m in matches}
-
-                triggered.append({
-                "alert_id": alert_id,
-                "companies": [
-                {"symbol": k, "name": v}
-                for k, v in unique_companies.items()
-                ]})
+            results.append({
+            "alert_id": alert_id,
+            "triggered": bool(matches),
+            "companies": [
+            {"symbol": m[0], "name": m[1]} for m in matches
+        ]
+    })
 
         conn.close()
 
-        return {"triggered": triggered}
+        return {"alerts": results}
 
     except Exception as e:
         print("CHECK ERROR:", e)

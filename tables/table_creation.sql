@@ -230,7 +230,7 @@ ALTER COLUMN company_id DROP NOT NULL;
 
 
 UPDATE fundamentals
-SET pe = 25
+SET pe = 5
 WHERE symbol_id = (
     SELECT symbol_id 
     FROM symbol 

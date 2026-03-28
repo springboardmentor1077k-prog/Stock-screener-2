@@ -3,13 +3,13 @@ import requests
 from ui_components.navbar import logout_button
 import logging
 
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
-
 
 
 token = st.session_state.get("token")
@@ -26,52 +26,7 @@ st.title("Alerts")
 
 
 
-
-try:
-    res = requests.get(
-        "http://127.0.0.1:7000/check-alerts",    
-        headers=headers,
-        timeout=5
-    )
-
-    if res.status_code == 200:
-        data = res.json()
-
-        triggered = data.get("triggered", [])
-
-        if triggered:
-            for alert in triggered:
-                companies = ", ".join([c["name"] for c in alert["companies"]])
-
-                st.success(
-                    f"Alert conditions are met.\n\n"
-                    f"Companies: {companies}"
-                )
-
-                st.toast(f"Alert triggered for {companies}")
-
-        else:
-            st.success("All good! No alerts triggered right now.")
-
-    elif res.status_code == 401:
-        st.warning("Session expired. Please login again.")
-
-    else:
-        st.info("Alerts are not available right now. Please try again later.")
-
-except requests.exceptions.ConnectionError:
-    st.info("Unable to connect to server. Please check backend is running.")
-
-except requests.exceptions.Timeout:
-    st.info("Server is taking too long. Try again in a moment.")
-
-except Exception as e:
-    logger.error(f"Backend error: {str(e)}")
-    st.error("Something went wrong. Please try again.")
-
-
-
-# CREATE ALERT (NL INPUT)
+# CREATE ALERT
 
 st.markdown("---")
 st.subheader("Create Alert")
@@ -99,25 +54,15 @@ if st.button("Create Alert"):
                 st.rerun()
 
             elif res.status_code == 400:
-                logger.warning(f"{res.json().get('detail', 'Invalid query format')}")
                 st.warning("Try with a proper format")
 
             else:
-                
-                st.error("Failed to create alert. Please try again.")
-
-        except requests.exceptions.ConnectionError:
-            logger.error("Cannot connect to server. Is backend running")
-            st.error("Internal server error")
-
-        except requests.exceptions.Timeout:
-            
-            st.error("Server is taking too long...... Try again")
+                st.error("Failed to create alert")
 
         except Exception as e:
-            logger.error("Unexpected error occurred"+ str(e))
-            st.error("Try again")
-          
+            logger.error(str(e))
+            st.error("Server error")
+
 
 
 # VIEW ALERTS
@@ -126,7 +71,12 @@ st.markdown("---")
 st.subheader("Your Alerts")
 
 try:
-    res = requests.get("http://127.0.0.1:7000/get-alerts")
+    # 🔹 GET ALERTS
+    res = requests.get(
+        "http://127.0.0.1:7000/get-alerts",
+        headers=headers,
+        timeout=5
+    )
 
     if res.status_code == 200:
         alerts = res.json().get("data", [])
@@ -135,11 +85,34 @@ try:
             st.info("No alerts created yet")
 
         else:
-            for alert in alerts:
+            # 🔹 GET STATUS
+            status_map = {}
+
+            try:
+                res_status = requests.get(
+                    "http://127.0.0.1:7000/check-alerts",
+                    headers=headers,
+                    timeout=5
+                )
+
+                if res_status.status_code == 200:
+                    status_data = res_status.json().get("alerts", [])
+
+                    for s in status_data:
+                        status_map[s["alert_id"]] = {
+                            "triggered": s["triggered"],
+                            "companies": s["companies"]
+                        }
+
+            except Exception as e:
+                logger.error(f"Status fetch failed: {str(e)}")
+
+            # 🔹 DISPLAY ALERTS
+            for idx, alert in enumerate(alerts, start=1):
 
                 cond_text = " AND ".join(
                     [
-                        f"{c['metric'].upper()} {c['operator']} {c['value']}"
+                        f"{c['field'].upper()} {c['operator']} {c['value']}"
                         for c in alert["conditions"]
                     ]
                 )
@@ -147,36 +120,48 @@ try:
                 if alert["company_name"]:
                     cond_text = f"{alert['company_name']} {cond_text}"
 
+                alert_status = status_map.get(alert["alert_id"], {})
+                is_triggered = alert_status.get("triggered", False)
+                companies = ", ".join(
+                    [c["name"] for c in alert_status.get("companies", [])]
+                )
+
                 col1, col2 = st.columns([6, 1])
 
                 with col1:
-                    st.write(cond_text)
+                    if is_triggered:
+                        st.success(f"🟢 {idx}. {cond_text}")
+
+                        # 🔔 REPEATED TOAST
+                        st.toast(f" Alert {idx} triggered → {companies}")
+
+                    else:
+                        st.markdown(f"⚪ {idx}. {cond_text}")
 
                 with col2:
                     if st.button("Delete", key=f"del_{alert['id']}"):
-                        
                         try:
                             res = requests.delete(
-                            f"http://127.0.0.1:7000/delete-alert/{alert['id']}")
+                                f"http://127.0.0.1:7000/delete-alert/{alert['id']}",
+                                headers=headers
+                            )
 
                             if res.status_code == 200:
-                                logger.info(f"Deleted alert {alert['id']}")
                                 st.success("Deleted successfully")
                                 st.rerun()
                             else:
-                                logger.warning(f"Delete failed: {res.text}")
                                 st.error("Delete failed")
 
                         except Exception as e:
-                            logger.error(f"Delete API error: {str(e)}")
-                            st.error("Unable to connect to server")
-                            
+                            logger.error(str(e))
+                            st.error("Server error")
 
-
-
+    else:
+        st.warning("Failed to fetch alerts")
 
 except Exception as e:
-    logger.error(f"Fetch alerts error: {str(e)}")
+    logger.error(str(e))
     st.warning("Unable to load alerts")
-    
+
+
 logout_button()

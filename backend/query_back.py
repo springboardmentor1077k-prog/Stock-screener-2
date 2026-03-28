@@ -6,7 +6,7 @@ from sql_builder import build_safe_query
 from execution import execute_query
 import logging
 import json
-# import redis
+import redis
 import json
 from datetime import datetime
 from decimal import Decimal
