@@ -28,6 +28,27 @@ def log_query(prompt, dsl, sql, values, results):
         f.write(json.dumps(log_entry) + "\n")
 '''
 
+
+r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+
+#Cache using redis
+def generate_cache_key(sql, values):
+    key = sql + "|" + json.dumps(values, sort_keys=True)
+    return f"query_cache:{hash(key)}"
+
+
+
+def serialize_results(results):
+    def convert(obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return obj
+
+    return json.dumps(results, default=convert)
+
+
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -73,10 +94,28 @@ def query_endpoint(request: QueryRequest):
     )
 
     sql, values = result
-    results = execute_query(sql, values)
+    cache_key = generate_cache_key(sql, values)
+    cached_data = r.get(cache_key)
     
-    nl_query = request.nl_query
-    # log_query(nl_query, dsl, sql, values, results)
+    if cached_data:
+        logger.info("CACHE HIT .....")
+        results = json.loads(cached_data)
+        
+        
+    else:
+        logger.info("CACHE MISS  going to querying DB")
+        results = execute_query(sql, values)
+        
+        r.setex(
+        cache_key,
+        300,  
+        serialize_results(results)
+    )
+         
+        
+    
+    # nl_query = request.nl_query
+   
     
     
     logger.info("Structured Query:")
