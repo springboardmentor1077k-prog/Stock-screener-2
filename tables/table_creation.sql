@@ -205,13 +205,7 @@ ALTER COLUMN company_id DROP NOT NULL;
 
 
 
-UPDATE fundamentals
-SET pe = 5
-WHERE symbol_id = (
-    SELECT symbol_id 
-    FROM symbol 
-    WHERE company_symbol = 'TCS.NS'
-);
+
 
 
 ALTER TABLE user_alerts

@@ -2,6 +2,9 @@ import streamlit as st
 import requests
 from ui_components.navbar import logout_button
 import logging
+from ui_components.footer import header
+
+header()
 
 
 logging.basicConfig(

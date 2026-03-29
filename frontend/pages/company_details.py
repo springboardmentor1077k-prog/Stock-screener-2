@@ -3,6 +3,9 @@ from ui_components.navbar import logout_button
 import random
 import requests
 import pandas as pd
+from ui_components.footer import header
+
+header()
 
 company_name = st.session_state.get("selected_company")
 

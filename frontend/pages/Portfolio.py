@@ -3,9 +3,9 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 from ui_components.navbar import logout_button
+from ui_components.footer import header
 
-
-
+header()
 token = st.session_state.get("token")
 
 if not token:

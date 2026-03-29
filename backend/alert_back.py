@@ -1,13 +1,39 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from database_back import get_connection
 import re
 import json
-
+from jwt_decode import decode_jwt
 router = APIRouter()
 
 ALLOWED_METRICS = ["pe", "peg", "ebitda", "promoter_holding"]
 ALLOWED_OPERATORS = {"<", ">", "="}
 BLACKLIST = ["drop", "delete", "insert", "update", "alter", "--", ";"]
+
+
+
+
+#get the jwt token for user specific datas
+def get_user_id_from_token(authorization: str, cursor):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid or missing token")
+
+    token = authorization.split(" ")[1]
+    payload = decode_jwt(token)
+
+    user_email = payload.get("email")
+
+    cursor.execute(
+        "SELECT user_id FROM users WHERE email = %s",
+        (user_email,)
+    )
+
+    user = cursor.fetchone()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user[0]
+
 
 
 
@@ -248,7 +274,7 @@ def build_sql(parsed, company_id=None):
 # ADD ALERT
 
 @router.post("/add-alert")
-def add_alert(data: dict):
+def add_alert(data: dict, authorization: str = Header()):
     try:
         parsed = parse_query(data.get("query", ""))
 
@@ -287,32 +313,24 @@ def add_alert(data: dict):
         
         # CHECK DUPLICATE
         
+
         cursor.execute("""
-            SELECT alert_id FROM alert_master
-            WHERE company_id IS NOT DISTINCT FROM %s
-            AND conditions = %s
+        INSERT INTO alert_master (company_id, conditions)
+        VALUES (%s, %s)
+        RETURNING alert_id
         """, (company_id, json.dumps(parsed["conditions"])))
 
-        row = cursor.fetchone()
-
-        if row:
-            alert_id = row[0]
-        else:
-            cursor.execute("""
-                INSERT INTO alert_master (company_id, conditions)
-                VALUES (%s, %s)
-                RETURNING alert_id
-            """, (company_id, json.dumps(parsed["conditions"])))
-            alert_id = cursor.fetchone()[0]
+        alert_id = cursor.fetchone()[0]
 
         
-        # LINK USER (STATIC USER = 1)
-        
+
+        user_id = get_user_id_from_token(authorization, cursor)
+
         cursor.execute("""
             INSERT INTO user_alerts (user_id, alert_id)
             VALUES (%s, %s)
             ON CONFLICT DO NOTHING
-        """, (1, alert_id))
+        """, (user_id, alert_id))
 
         conn.commit()
         conn.close()
@@ -331,18 +349,18 @@ def add_alert(data: dict):
 # GET ALERTS
 
 @router.get("/get-alerts")
-def get_alerts():
+def get_alerts(authorization: str = Header()):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
+        user_id = get_user_id_from_token(authorization, cursor)
         cursor.execute("""
-            SELECT ua.id, am.alert_id, am.company_id, am.conditions, s.company_name
-            FROM user_alerts ua
-            JOIN alert_master am ON ua.alert_id = am.alert_id
-            LEFT JOIN symbol s ON am.company_id = s.symbol_id
-            WHERE ua.user_id = 1 AND ua.is_active = TRUE
-        """)
+    SELECT ua.id, am.alert_id, am.company_id, am.conditions, s.company_name
+    FROM user_alerts ua
+    JOIN alert_master am ON ua.alert_id = am.alert_id
+    LEFT JOIN symbol s ON am.company_id = s.symbol_id
+    WHERE ua.user_id = %s AND ua.is_active = TRUE
+    """, (user_id,))
 
         rows = cursor.fetchall()
         conn.close()
@@ -369,17 +387,19 @@ def get_alerts():
 # CHECK ALERTS
 
 @router.get("/check-alerts")
-def check_alerts():
+def check_alerts(authorization: str = Header()):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
+        user_id = get_user_id_from_token(authorization, cursor)
+        
+        
         cursor.execute("""
-            SELECT am.alert_id, am.company_id, am.conditions
-            FROM user_alerts ua
-            JOIN alert_master am ON ua.alert_id = am.alert_id
-            WHERE ua.user_id = 1 AND ua.is_active = TRUE
-        """)
+        SELECT am.alert_id, am.company_id, am.conditions
+        FROM user_alerts ua
+        JOIN alert_master am ON ua.alert_id = am.alert_id
+        WHERE ua.user_id = %s AND ua.is_active = TRUE
+        """, (user_id,))
 
         alerts = cursor.fetchall()
 
@@ -414,15 +434,16 @@ def check_alerts():
 # DELETE ALERT
 
 @router.delete("/delete-alert/{id}")
-def delete_alert(id: int):
+def delete_alert(id: int, authorization: str = Header()):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
+        user_id = get_user_id_from_token(authorization, cursor)
+        
         cursor.execute("""
-            DELETE FROM user_alerts
-            WHERE id = %s AND user_id = 1
-        """, (id,))
+        DELETE FROM user_alerts
+        WHERE id = %s AND user_id = %s
+        """, (id, user_id))
 
         if cursor.rowcount == 0:
             raise HTTPException(404, "Alert not found")

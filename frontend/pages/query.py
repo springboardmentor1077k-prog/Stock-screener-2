@@ -6,6 +6,9 @@ import os
 import sys
 from ui_components.result import render_results_table
 from ui_components.navbar import logout_button
+from ui_components.footer import header
+
+header()
 
 
 if "results" not in st.session_state:
