@@ -12,13 +12,6 @@ ALTER COLUMN symbol_id
 SET DEFAULT nextval('symbol_symbol_id_seq');
 
 
-
--- DROP TABLE historical_metrics;
--- CREATE DATABASE stock_db;
-
--- SELECT current_database();
-
-
 CREATE TABLE fundamentals (
     fundamental_id SERIAL PRIMARY KEY,
     symbol_id INT NOT NULL,
@@ -147,20 +140,6 @@ VALUES
 ('Reliance Industries Ltd.', 'RELIANCE.NS', 'Energy'),
 ('Tata Consultancy Services Ltd.', 'TCS.NS', 'Technology');
 
-
-
-
-INSERT INTO users
-(email, name, hashed_password)
-VALUES
-('apurba@gmail.com', 'Apurba Mukherjee', 'fjeiof#4342'),
-('gem@gmail.com', 'Raj', 'jsgjiojew454');
-
-
-
-
-
-
 SELECT * FROM symbol;
 SELECT * FROM fundamentals;
 SELECT * FROM historical_metrics;
@@ -183,9 +162,6 @@ CREATE TABLE company_details (
     REFERENCES symbol(symbol_id)
     ON DELETE CASCADE
 );
-
-
-
 
 TRUNCATE company_details;
 
@@ -240,3 +216,6 @@ WHERE symbol_id = (
 
 ALTER TABLE user_alerts
 ADD CONSTRAINT unique_user_alert UNIQUE (user_id, alert_id);
+
+
+
