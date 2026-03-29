@@ -165,7 +165,7 @@ with nav5:
         st.switch_page("pages/watchlist_screen.py")
 
 with nav6:
-    if st.button("🔔", use_container_width=True):
+    if st.button("🕭", use_container_width=True):
         st.switch_page("pages/alert_screen.py")
 
 with nav7:
@@ -244,7 +244,7 @@ left, spacer, right = st.columns([1,0.15,1])
 
 with left:
 
-    st.markdown("<div class='section-title'>💡 Suggested Queries</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>𖡊 Suggested Queries</div>", unsafe_allow_html=True)
 
     suggestions = [
         "Show IT companies with PE ratio less than 25",
@@ -261,7 +261,7 @@ with left:
 
 with right:
 
-    st.markdown("<div class='section-title'>🕘 Recent Searches</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>⏱ Recent Searches</div>", unsafe_allow_html=True)
 
     if not st.session_state.query_history:
 

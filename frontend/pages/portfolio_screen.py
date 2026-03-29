@@ -89,7 +89,7 @@ with nav5:
         st.switch_page("pages/watchlist_screen.py")
 
 with nav6:
-    if st.button("🔔", use_container_width=True):
+    if st.button("🕭", use_container_width=True):
         st.switch_page("pages/alert_screen.py")
 
 with nav7:
@@ -145,6 +145,7 @@ Track performance, allocation and growth of your investments
 </p>
 """, unsafe_allow_html=True)
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+
 if not portfolio:
     st.markdown(
         """
@@ -160,6 +161,7 @@ if not portfolio:
         unsafe_allow_html=True
     )
     st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([3,2,3])
     with col2:
         if st.button("Add Stocks", use_container_width=True):
@@ -181,9 +183,20 @@ def metric_card(col, title, value, pct_change=None, value_color="#eaf2ff"):
             top_left, top_right = st.columns([3,1])
 
             with top_left:
-                st.caption(title)
+                st.markdown(f"""
+                <div style="
+                    font-size:18px;
+                    color:#94a3b8;
+                    margin-bottom:6px;
+                    font-weight:500;
+                    letter-spacing:0.3px;
+                ">
+                    {title}
+                </div>
+                """, unsafe_allow_html=True)
+
                 st.markdown(
-                    f"<span style='font-size:22px; font-weight:600; color:{value_color};'>{value}</span>",
+                    f"<span style='font-size:27px; font-weight:600; color:{value_color};'>{value}</span>",
                     unsafe_allow_html=True
                 )
 
@@ -196,7 +209,7 @@ def metric_card(col, title, value, pct_change=None, value_color="#eaf2ff"):
                         f"""
                         <div style="
                             color:{color};
-                            font-size:13px;
+                            font-size:18px;
                             font-weight:600;
                             text-align:right;
                             margin-top:18px;

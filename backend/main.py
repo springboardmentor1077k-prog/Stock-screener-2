@@ -28,16 +28,28 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
+from contextlib import asynccontextmanager
+import threading
+from backend.api.alerts.alerts_routes import background_alert_checker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = threading.Thread(target=background_alert_checker)
+    thread.daemon = True
+    thread.start()
+    yield
+
+
 app = FastAPI(
     title="AI Stock Screener API",
     description="Natural language stock screener powered by LLM + SQL compiler",
-    version="1.0"
+    version="1.0",
+    lifespan=lifespan
 )
 
 app.state.limiter = limiter

@@ -21,6 +21,12 @@ footer {visibility:hidden;}
 [data-testid="stSidebar"] {display:none;}
 [data-testid="collapsedControl"] {display:none;}
 
+.metric-row{
+    border-bottom:1px solid rgba(148,163,184,0.15);
+    padding-bottom:10px;
+    margin-bottom:10px;
+}
+            
 .block-container{
 padding-top:0rem;
 padding-bottom:1rem;
@@ -72,28 +78,39 @@ margin-top:20px;
 margin-bottom:20px;
 color:#e5e7eb;
 }
-
+    
 .company-name{
-font-size:18px;
+font-size:20px;
 font-weight:600;
 color:white;
 }
 
 .company-sub{
 color:#9ca3af;
-font-size:13px;
+font-size:15px;
 }
 
+.metrics-row {
+    padding-top: 16px;
+    padding-bottom: 10px;
+}
+            
 .metric-title{
-font-size:12px;
-color:#cbd5e1;
-margin-bottom:2px;
+    font-size:15px;
+    color:#94a3b8;
+    margin-bottom:10px;
+    letter-spacing:0.5px;
 }
 
 .metric-value{
-font-size:15px;
-font-weight:500;
-color:#e5e7eb;
+    font-size:20px;
+    font-weight:600;
+    color:#e5e7eb;
+    margin-bottom: 10px;
+}
+
+.metric-block{
+    padding-top:10px;
 }
 
 .result-count{
@@ -131,6 +148,12 @@ div[data-baseweb="select"] span{
 color:#e5e7eb !important;
 }
 
+div[data-testid="stButton"] button{
+    font-size:14px;
+    padding:6px 12px;
+    border-radius:8px;
+}
+            
 </style>
 """, unsafe_allow_html=True)
 
@@ -183,25 +206,27 @@ with nav5:
         st.switch_page("pages/watchlist_screen.py")
 
 with nav6:
-    if st.button("🔔", use_container_width=True):
+    if st.button("🕭", use_container_width=True):
         st.switch_page("pages/alert_screen.py")
 
 with nav7:
     if st.button("Logout"):
         st.session_state.token = None
         st.switch_page("app.py")
+        
+st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
 
-# ---------- TITLE ----------
-st.markdown(f"""
-<div class='result-title'>
-Results for: {st.session_state.last_query}
-</div>
-""", unsafe_allow_html=True)
+# ---------- TITLE + SORT (SAME ROW) ----------
+title_col, sort_col = st.columns([7.5,2.5])
 
-# ---------- SORT UI ----------
-left, right = st.columns([6,4])
+with title_col:
+    st.markdown(f"""
+    <div class='result-title' style='text-align:left; margin-top:6px; margin-bottom:6px;'>
+        ✎ᝰ.  Results for: {st.session_state.last_query}
+    </div>
+    """, unsafe_allow_html=True)
 
-with right:
+with sort_col:
     col1, col2 = st.columns(2)
 
     with col1:
@@ -218,7 +243,17 @@ with right:
             index=0 if st.session_state.sort_order == "ascending" else 1
         )
 
-# ✅ ONLY FIX: trigger rerun when sorting changes
+# Divider line under title row
+st.markdown("""
+<hr style="
+border: none;
+height: 1px;
+background: rgba(148,163,184,0.2);
+margin-top: 8px;
+margin-bottom: 20px;
+">
+""", unsafe_allow_html=True)
+
 if new_sort_by != st.session_state.sort_by or new_sort_order != st.session_state.sort_order:
     st.session_state.sort_by = new_sort_by
     st.session_state.sort_order = new_sort_order
@@ -260,103 +295,193 @@ if df.empty:
 total_pages = max(math.ceil(total_results / page_size), 1)
 
 # ---------- COMPANY CARD ----------
+def format_number(num):
+    if num is None:
+        return "—"
+    num = float(num)
+    if num >= 1_000_000_000_000:
+        return f"₹{num/1_000_000_000_000:.1f}T"
+    elif num >= 1_000_000_000:
+        return f"₹{num/1_000_000_000:.1f}B"
+    elif num >= 1_000_000:
+        return f"₹{num/1_000_000:.1f}M"
+    else:
+        return f"₹{num:.0f}"
+    
+def pe_color(pe):
+    if pe < 18:
+        return "#22c55e"  # green
+    elif pe <= 25:
+        return "#f59e0b"  # orange
+    else:
+        return "#ef4444"  # red
+
+def profit_color(p):
+    if p > 0.20:
+        return "#22c55e"
+    elif p >= 0.12:
+        return "#f59e0b"
+    else:
+        return "#ef4444"
+    
+def ai_label(pe, industry_pe=20):
+    if pe < industry_pe * 0.85:
+        return "Undervalued", "#22c55e"
+    elif pe > industry_pe * 1.15:
+        return "Overvalued", "#ef4444"
+    else:
+        return "Fair Value", "#f59e0b"
+
+
 def company_card(row):
     symbol = row.get("symbol", "—")
     sector = row.get("sector", "N/A")
 
-    with st.container(border=True):
-        col1, col2, col3, col4, col5, col6, col7 = st.columns([3,1,1,1,1,1,0.4])
+    pe = row.get("pe_ratio", 0)
+    profit = row.get("profit_margin", 0)
 
-        with col1:
-            st.markdown(f"<div class='company-name'>{row.get('company_name')}</div>", unsafe_allow_html=True)
+    pe_col = pe_color(pe)
+    profit_col = profit_color(profit)
+
+    label, label_color = ai_label(pe)
+
+    with st.container(border=True):
+        left, mid1, mid2, mid3, mid4, mid5, right = st.columns([3,1,1,1,1,1,1.5])
+
+        # ---- LEFT: Company Name + AI Tag ----
+        with left:
+            st.markdown(f"""
+            <div class='company-name'>
+                {row.get('company_name')}
+                <span style='
+                    color:{label_color};
+                    font-size:12px;
+                    margin-left:10px;
+                    padding:3px 8px;
+                    border-radius:6px;
+                    background:rgba(0,0,0,0.25);
+                    border:1px solid {label_color};
+                '>{label}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
             st.markdown(f"<div class='company-sub'>{symbol} • {sector}</div>", unsafe_allow_html=True)
 
-        with col2:
+        # ---- METRICS ----
+        with mid1:
             st.markdown(f"""
                 <div class='metric-title'>P/E</div>
-                <div class='metric-value'>{round(row.get("pe_ratio",0),2)}</div>
+                <div class='metric-value' style='color:{pe_col}; font-size:20px; font-weight:600'>
+                    {round(pe,2)}
+                </div>
             """, unsafe_allow_html=True)
 
-        with col3:
+        with mid2:
             st.markdown(f"""
                 <div class='metric-title'>Market Cap</div>
-                <div class='metric-value'>{row.get("market_cap")}</div>
+                <div class='metric-value' style='font-size:18px'>
+                    {format_number(row.get("market_cap"))}
+                </div>
             """, unsafe_allow_html=True)
 
-        with col4:
+        with mid3:
             st.markdown(f"""
                 <div class='metric-title'>Revenue</div>
-                <div class='metric-value'>{row.get("revenue")}</div>
+                <div class='metric-value' style='font-size:18px'>
+                    {format_number(row.get("revenue"))}
+                </div>
             """, unsafe_allow_html=True)
 
-        with col5:
+        with mid4:
             st.markdown(f"""
                 <div class='metric-title'>EBITDA</div>
-                <div class='metric-value'>{row.get("ebitda")}</div>
+                <div class='metric-value' style='font-size:18px'>
+                    {format_number(row.get("ebitda"))}
+                </div>
             """, unsafe_allow_html=True)
 
-        with col6:
-            profit = row.get("profit_margin",0)
+        with mid5:
             st.markdown(f"""
                 <div class='metric-title'>Profit</div>
-                <div class='metric-value'>{round(profit*100,2)}%</div>
+                <div class='metric-value' style='color:{profit_col}; font-size:20px; font-weight:600'>
+                    {round(profit*100,2)}%
+                </div>
             """, unsafe_allow_html=True)
 
-        with col7:
-            star = "⭐" if symbol in st.session_state.watchlist else "☆"
-            if st.button(star, key=f"watch_{symbol}"):
-                if symbol in st.session_state.watchlist:
-                    st.session_state.watchlist.remove(symbol)
-                else:
-                    st.session_state.watchlist.add(symbol)
-                st.rerun()
+        # ---- RIGHT SIDE BUTTONS ----
+        with right:
+            c1, c2 = st.columns(2)
 
-        if st.button("➕ Add", key=f"add_{row['symbol']}"):
+            with c1:
+                if st.button("➕ Add", key=f"add_{symbol}"):
+                    response = requests.post(
+                        f"{API_URL}/portfolio/add",
+                        headers={"Authorization": f"Bearer {st.session_state.token}"},
+                        json={
+                            "company_id": row["company_id"],
+                            "quantity": 1
+                        }
+                    )
 
-            response = requests.post(
-                f"{API_URL}/portfolio/add",
-                headers={"Authorization": f"Bearer {st.session_state.token}"},
-                json={
-                    "company_id": row["company_id"],
-                    "quantity": 1
-                }
-            )
+                    if response.status_code == 200:
+                        st.success(f"{symbol} added to portfolio")
+                    else:
+                        st.error("Failed to add")
 
-            if response.status_code == 200:
-                st.success(f"{row['symbol']} added to portfolio")
-            else:
-                st.error("Failed to add")
+            with c2:
+                star = "⭐" if symbol in st.session_state.watchlist else "☆"
+                if st.button(star, key=f"watch_{symbol}"):
+                    if symbol in st.session_state.watchlist:
+                        st.session_state.watchlist.remove(symbol)
+                    else:
+                        st.session_state.watchlist.add(symbol)
+                    st.rerun()
 
 # ---------- DISPLAY ----------
 for _, row in df.iterrows():
     company_card(row)
 
 # ---------- PAGINATION ----------
-st.write("")
-center = st.columns([2,3,2])
+st.markdown("""
+<hr style="
+border: none;
+height: 1px;
+background: rgba(148,163,184,0.2);
+margin-top: 15px;
+margin-bottom: 18px;
+">
+""", unsafe_allow_html=True)
 
-with center[1]:
+total_pages = max(math.ceil(total_results / page_size), 1)
 
-    col1, col2, col3 = st.columns([1,2,1])
+col1, col2, col3 = st.columns([1.5,1,1.5])
 
-    with col1:
-        if st.button("⬅ Previous", disabled=(page == 1)):
-            st.session_state.results_page -= 1
-            st.rerun()
+start = (page - 1) * page_size + 1
+end = min(page * page_size, total_results)
 
-    with col2:
-        st.markdown(f"<div style='text-align:center'>Page {page} of {total_pages}</div>", unsafe_allow_html=True)
+with col1:
+    if st.button("← Previous", disabled=(page == 1), use_container_width=True):
+        st.session_state.results_page -= 1
+        st.rerun()
 
-    with col3:
-        if st.button("Next ➡", disabled=(page >= total_pages)):
-            st.session_state.results_page += 1
-            st.rerun()
+with col2:
+    st.markdown(f"""
+    <div style='text-align:center; color:#94a3b8; font-size:14px; margin-top:6px;'>
+        Page {page} of {total_pages}
+    </div>
+    """, unsafe_allow_html=True)
 
-# ---------- BACK ----------
-st.write("")
+with col3:
+    if st.button("Next →", disabled=(page >= total_pages), use_container_width=True):
+        st.session_state.results_page += 1
+        st.rerun()
+
+# Back button 
+st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
 center = st.columns([3,2,3])
-
 with center[1]:
     if st.button("← Back to Search", use_container_width=True):
         st.session_state.results_page = 1
         st.switch_page("pages/query_screen.py")
+
