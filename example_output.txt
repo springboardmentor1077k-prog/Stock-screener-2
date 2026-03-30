@@ -1,0 +1,14 @@
+Generated SQL:
+SELECT * FROM companies WHERE companies.pe_ratio < %s
+Parameters:
+[15]
+
+Generated SQL:
+SELECT * FROM companies WHERE companies.pe_ratio < %s AND companies.debt_to_equity < %s
+Parameters:
+[20, 0.5]
+
+Generated SQL:
+SELECT * FROM companies WHERE companies.pe_ratio < %s OR financials.revenue_growth > %s
+Parameters:
+[20, 10]
