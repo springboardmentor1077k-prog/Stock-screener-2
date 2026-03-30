@@ -86,7 +86,7 @@ if submit_btn:
                     count = data.get("count", 0)
 
                     if count == 0:
-                        st.warning("No companies matched your query.")
+                        st.success("No companies matched your query.")
                     else:
                         st.success(f"Found {count} matching companies.")
                         st.session_state.results = data
