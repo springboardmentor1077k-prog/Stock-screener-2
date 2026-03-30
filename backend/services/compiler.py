@@ -6,16 +6,9 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
 
     ALLOWED_OPERATORS = ["=", ">", "<", ">=", "<=", "!="]
 
-    join_growth = False
-
-    # detect growth usage
-    for cond in conditions:
-        if cond["field"] == "price_growth":
-            join_growth = True
-
-    if time_filter:
-        join_growth = True
-
+    # Only join growth table if price_growth is used
+    join_growth = any(cond["field"] == "price_growth" for cond in conditions)
+    
     # -----------------------------
     # BASE SELECT
     # -----------------------------
@@ -84,28 +77,14 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
     # -----------------------------
     if join_growth:
         base_query += """
-        JOIN (
-            SELECT
-                company_id,
-                date,
-                COALESCE(
-                    (close - LAG(close) OVER (
-                        PARTITION BY company_id ORDER BY date
-                    )) * 1.0 /
-                    LAG(close) OVER (
-                        PARTITION BY company_id ORDER BY date
-                    ),
-                    0
-                ) AS price_growth
-            FROM historical_metrics
-        ) growth
+        JOIN price_growth growth
         ON growth.company_id = s.id
         """
 
     # -----------------------------
     # TIME FILTER
     # -----------------------------
-    if time_filter:
+    if time_filter and join_growth:
         if time_filter == "last_year":
             where_clauses.append("growth.date >= date('now','-1 year')")
         elif time_filter == "last_6_months":
@@ -125,7 +104,7 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
             base_query += """
             AND growth.date = (
                 SELECT MAX(date)
-                FROM historical_metrics h2
+                FROM price_growth h2
                 WHERE h2.company_id = s.id
             )
             """
@@ -133,7 +112,7 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
             base_query += """
             WHERE growth.date = (
                 SELECT MAX(date)
-                FROM historical_metrics h2
+                FROM price_growth h2
                 WHERE h2.company_id = s.id
             )
             """

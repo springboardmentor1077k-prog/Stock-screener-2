@@ -193,8 +193,9 @@ col1, col2, col3 = st.columns([1,2.5,1])
 with col2:
 
     query = st.text_input(
-        "",
-        placeholder="Search companies with PE ratio less than 25"
+        "Search",
+        placeholder="Search companies with PE ratio less than 25",
+        label_visibility="collapsed"
     )
 
     run_query = st.button(

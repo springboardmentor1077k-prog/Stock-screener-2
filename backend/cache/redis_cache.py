@@ -3,17 +3,16 @@ import json
 import os
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 
-def build_cache_key(query: str, page: int, page_size: int):
-    return f"query:{query}:page:{page}:size:{page_size}"
+def build_cache_key(cache_key: str, page: int, page_size: int):
+    return f"query:{cache_key}:page:{page}:size:{page_size}"
 
 
-def get_cached_query(query: str, page: int, page_size: int):
+def get_cached_query(cache_key: str, page: int, page_size: int):
     try:
-        key = build_cache_key(query, page, page_size)
+        key = build_cache_key(cache_key, page, page_size)
         cached = redis_client.get(key)
 
         if cached:
@@ -24,13 +23,13 @@ def get_cached_query(query: str, page: int, page_size: int):
         return None
 
 
-def cache_query(query: str, page: int, page_size: int, data):
+def cache_query(cache_key: str, page: int, page_size: int, data):
     try:
-        key = build_cache_key(query, page, page_size)
+        key = build_cache_key(cache_key, page, page_size)
 
         redis_client.setex(
             key,
-            300,
+            300,  # 5 min cache
             json.dumps(data)
         )
     except Exception:

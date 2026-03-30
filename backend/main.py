@@ -7,6 +7,7 @@ import os
 import logging
 import json
 import re
+import time
 
 from backend.services.schemas import DSLQuery
 from backend.services.llm_parser import parse_natural_language_to_dsl
@@ -155,13 +156,6 @@ async def process_query(
     sort_by = body.sort_by if body.sort_by in allowed_sort_fields else "pe_ratio"
     order = body.order if body.order in ["ascending", "descending"] else "descending"
 
-    # ---------- CACHE ----------
-    cache_key = f"{body.query}:{sort_by}:{order}:{page}:{page_size}"
-
-    cached = get_cached_query(cache_key, page, page_size)
-    if cached:
-        logger.info("Cache hit")
-        return cached
 
     # ---------- PARSE ----------
     interpreted_query = interpret_query(body.query)
@@ -197,6 +191,15 @@ async def process_query(
     # ---------- VALIDATION ----------
     validated_dsl = DSLQuery(**raw_dsl_dict)
 
+    
+    # ---------- CACHE ----------
+    cache_key = f"{validated_dsl.model_dump()}:{sort_by}:{order}:{page}:{page_size}"
+
+    cached = get_cached_query(cache_key, page, page_size)
+    if cached:
+        logger.info("Cache hit")
+        return cached
+
     # ---------- SQL ----------
     base_sql, base_params = compile_dsl_to_sql(
         validated_dsl.model_dump(),
@@ -210,18 +213,40 @@ async def process_query(
     paginated_sql = base_sql + " LIMIT ? OFFSET ?"
     paginated_params = base_params + [page_size, offset]
 
-    count_sql = f"SELECT COUNT(*) FROM ({base_sql}) as subquery"
+    # ---------- COUNT QUERY ----------
 
-    # ---------- DB ----------
+    if base_params:
+        count_sql = base_sql.split("ORDER BY")[0]
+        count_sql = f"SELECT COUNT(*) FROM ({count_sql}) as subquery"
+    else:
+        # No filters → fast count
+        count_sql = """
+        SELECT COUNT(*)
+        FROM symbols s
+        JOIN fundamentals f ON s.id = f.company_id
+        """
+
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(count_sql, base_params)
+        if base_params:
+            cursor.execute(count_sql, base_params)
+        else:
+            cursor.execute(count_sql)
+
         total_results = cursor.fetchone()[0]
+
+
+        start_time = time.time()
 
         cursor.execute(paginated_sql, paginated_params)
         rows = cursor.fetchall()
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        logger.info(f"Query Execution Time: {execution_time:.4f} seconds")
 
         cursor.execute("""
         INSERT INTO search_history (user_id, query_text, parsed_dsl)
@@ -234,7 +259,7 @@ async def process_query(
 
         conn.commit()
 
-    log_query(body.query, paginated_sql)
+    log_query(body.query, paginated_sql, execution_time)
 
     results = [dict(row) for row in rows]
 
