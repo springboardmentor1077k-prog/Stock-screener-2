@@ -229,8 +229,14 @@ def run_query_backend(q):
             st.switch_page("pages/result_screen.py")
 
         else:
-            st.error("Query failed")
-
+            if response.status_code == 400:
+                st.warning("Invalid input. Please check and try again.")
+            elif response.status_code == 401:
+                st.error("Authentication failed. Please login again.")
+            elif response.status_code == 404:
+                st.info("No matching stocks found.")
+            else:
+                st.error("Something went wrong. Please try again later.")
 
 if run_query and query:
     run_query_backend(query)
@@ -275,3 +281,18 @@ with right:
 
             if st.button(f"🔎 {q}", use_container_width=True):
                 run_query_backend(q)
+
+st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #aaa;
+    text-align: center;
+">
+Disclaimer: This platform is for educational purposes only. Data may not be real-time or fully accurate and should not be considered financial advice.
+</div>
+""", unsafe_allow_html=True)

@@ -262,20 +262,34 @@ if new_sort_by != st.session_state.sort_by or new_sort_order != st.session_state
 
 # ---------- FETCH ----------
 def fetch_page(page):
-    response = requests.post(
-        f"{API_URL}/query",
-        headers={"Authorization": f"Bearer {st.session_state.token}"},
-        json={
-            "query": st.session_state.last_query,
-            "page": page,
-            "page_size": page_size,
-            "sort_by": st.session_state.sort_by,
-            "order": st.session_state.sort_order
-        }
-    )
-    if response.status_code == 200:
-        return response.json()
-    return None
+    try:
+        response = requests.post(
+            f"{API_URL}/query",
+            headers={"Authorization": f"Bearer {st.session_state.token}"},
+            json={
+                "query": st.session_state.last_query,
+                "page": page,
+                "page_size": page_size,
+                "sort_by": st.session_state.sort_by,
+                "order": st.session_state.sort_order
+            }
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        elif response.status_code == 401:
+            st.error("Session expired. Please login again.")
+        elif response.status_code == 404:
+            st.info("No results found.")
+        else:
+            st.error("Failed to fetch results.")
+
+        return None
+
+    except requests.exceptions.ConnectionError:
+        st.error("Server unavailable.")
+        return None
 
 result = fetch_page(page)
 
@@ -485,3 +499,19 @@ with center[1]:
         st.session_state.results_page = 1
         st.switch_page("pages/query_screen.py")
 
+st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #aaa;
+    text-align: center;
+">
+Disclaimer: This platform is for educational purposes only. Data may not be real-time or fully accurate and should not be considered financial advice.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)

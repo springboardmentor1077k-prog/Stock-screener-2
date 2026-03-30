@@ -82,7 +82,7 @@ def decrease_stock(data: PortfolioRequest, Authorization: str = Header(...)):
 
     if not row:
         conn.close()
-        return {"message": "Stock not found"}
+        raise HTTPException(status_code=404, detail="Stock not found in portfolio")
 
     row_id = row[0]
     qty = row[1]

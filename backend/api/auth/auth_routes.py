@@ -37,7 +37,7 @@ def signup(data: SignupRequest):
     cursor.execute("SELECT id FROM users WHERE email=?", (data.email,))
     if cursor.fetchone():
         conn.close()
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Account already exists")
 
     password = data.password.strip()[:72]
     hashed_pw = hash_password(password)

@@ -172,9 +172,12 @@ with left_col:
 
             if response.status_code == 200:
                 st.success("Alert created successfully")
-                st.rerun()
+            elif response.status_code == 400:
+                st.warning("Invalid alert parameters.")
+            elif response.status_code == 401:
+                st.error("Session expired. Please login again.")
             else:
-                st.error("Failed to create alert")
+                st.error("Could not create alert. Try again later.")
 
 # ---------- RIGHT: ACTIVE ALERTS ----------
 with right_col:
@@ -369,3 +372,21 @@ if triggered_alerts:
 
 else:               
     st.info("No triggered alerts yet")
+
+
+st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #aaa;
+    text-align: center;
+">
+Disclaimer: This platform is for educational purposes only. Data may not be real-time or fully accurate and should not be considered financial advice.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)

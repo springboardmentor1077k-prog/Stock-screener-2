@@ -24,7 +24,7 @@ async def execute_query(sql, params):
             logger.info(f"Execution Time: {execution_time:.4f}s | SQL: {sql}")
 
             return [dict(row) for row in rows], execution_time
-
+    
     except Exception as e:
-        print("DB ERROR:", e)
+        logger.error(f"Database error: {str(e)}")
         return [], 0

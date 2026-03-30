@@ -99,11 +99,24 @@ with nav7:
 
 # ---------- FETCH ----------
 def fetch_portfolio():
-    res = requests.get(
-        f"{API_URL}/portfolio/",
-        headers={"Authorization": f"Bearer {st.session_state.token}"}
-    )
-    return res.json() if res.status_code == 200 else []
+    try:
+        res = requests.get(
+            f"{API_URL}/portfolio/",
+            headers={"Authorization": f"Bearer {st.session_state.token}"}
+        )
+
+        if res.status_code == 200:
+            return res.json()
+        elif res.status_code == 401:
+            st.error("Please login again.")
+        else:
+            st.error("Failed to load portfolio.")
+
+        return []
+
+    except requests.exceptions.ConnectionError:
+        st.error("Server unavailable.")
+        return []
 
 raw = fetch_portfolio()
 
@@ -464,3 +477,20 @@ for s in portfolio:
             f"</div>",
             unsafe_allow_html=True
         )
+
+st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #aaa;
+    text-align: center;
+">
+Disclaimer: This platform is for educational purposes only. Data may not be real-time or fully accurate and should not be considered financial advice.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='height:25px'></div>", unsafe_allow_html=True)

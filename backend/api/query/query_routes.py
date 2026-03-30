@@ -15,19 +15,19 @@ async def run_query(payload: dict, authorization: str = Header(...)):
 
     # ---------- AUTH ----------
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid auth header")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
     token = authorization.split(" ")[1]
     user_id = verify_token(token)
 
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
     # ---------- INPUT ----------
     query_text = payload.get("query")
 
     if not query_text:
-        raise HTTPException(status_code=400, detail="Query required")
+        raise HTTPException(status_code=400, detail="Please enter a valid query")
 
     page = payload.get("page", 1)
     page_size = payload.get("page_size", 5)
@@ -84,7 +84,7 @@ async def run_query(payload: dict, authorization: str = Header(...)):
             })
 
 
-    # ---------- ✅ SECTOR FIX (OUTSIDE LOOP) ----------
+    # ----------  SECTOR FIX  ----------
     words = query_text.lower().split()
 
     if "it" in words or "technology" in words:
@@ -104,8 +104,8 @@ async def run_query(payload: dict, authorization: str = Header(...)):
     # ---------- VALIDATION ----------
     try:
         dsl_query = DSLQuery(**dsl)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid query parameters")
 
     # ---------- SQL ----------
     sql_query, params = compile_dsl_to_sql(
@@ -121,8 +121,11 @@ async def run_query(payload: dict, authorization: str = Header(...)):
 
     print("ROWS:", len(results))
 
-
-    # ✅ ---------- FORCE CORRECT SORTING IN PYTHON ----------
+    # ---------- NO RESULTS SAFE MESSAGE ----------
+    if not results:
+        raise HTTPException(status_code=404, detail="No matching stocks found")
+    
+    #  ---------- FORCE CORRECT SORTING IN PYTHON ----------
     def clean_number(val):
         try:
             if val is None:

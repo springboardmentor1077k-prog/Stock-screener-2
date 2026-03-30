@@ -113,7 +113,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "status": "error",
             "code": "INTERNAL_SERVER_ERROR",
-            "message": str(exc)
+            "message": "Something went wrong. Please try again later."
         }
     )
 
