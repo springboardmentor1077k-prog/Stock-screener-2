@@ -1,0 +1,54 @@
+/* 🔥 App Background */
+body {
+    background-color: #0f172a;
+    color: white;
+}
+
+/* 🔥 Main Title */
+h1 {
+    color: #38bdf8;
+    text-align: center;
+    font-size: 40px;
+    font-weight: bold;
+}
+
+/* 🔥 Subtitles */
+h2, h3 {
+    color: #22c55e;
+}
+
+/* 🔥 Input box */
+input {
+    border-radius: 10px !important;
+    padding: 10px !important;
+}
+
+/* 🔥 Buttons */
+.stButton>button {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    color: white;
+    border-radius: 10px;
+    height: 3em;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* 🔥 Sidebar */
+.css-1d391kg {
+    background-color: #020617 !important;
+}
+
+/* 🔥 Table */
+[data-testid="stDataFrame"] {
+    background-color: #020617;
+    border-radius: 10px;
+}
+
+/* 🔥 Cards */
+.card {
+    background-color: #1e293b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
