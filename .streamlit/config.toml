@@ -1,0 +1,15 @@
+[theme]
+# Primary accent color (Buttons, active tabs, toggles)
+primaryColor = "#8B5CF6"
+
+# Main application background
+backgroundColor = "#0F172A"
+
+# Secondary background for sidebars, text inputs, etc.
+secondaryBackgroundColor = "#1E293B"
+
+# Font color for almost all text
+textColor = "#F8FAFC"
+
+# Font type
+font = "sans serif"

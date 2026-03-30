@@ -3,9 +3,10 @@ uvicorn
 pydantic
 streamlit
 requests
-mysql-connector-python
+psycopg2-binary
 python-dotenv
 redis
 PyJWT
 passlib[bcrypt]
 openai
+slowapi

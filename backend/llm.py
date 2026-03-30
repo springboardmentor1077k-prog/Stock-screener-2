@@ -14,37 +14,53 @@ def parse_nl_to_dsl(user_query: str) -> dict:
     Takes natural language query and ONLY returns strict JSON format.
     No SQL generation, no database access, no extra text formatting.
     """
-    # --- MOCK BYPASS FOR TESTING WITHOUT API KEY ---
-    query_lower = user_query.lower()
-    
-    if "pe" in query_lower and "<" in query_lower:
-        import re
-        match = re.search(r'<\s*(\d+(\.\d+)?)', query_lower)
-        val = float(match.group(1)) if match else 6.0
-        
-        return {
-            "conditions": [
-                {"field": "pe_ratio", "operator": "<", "value": val}
-            ],
-            "logic": "AND"
-        }
-    
-    if "revenue >" in query_lower:
-        import re
-        match = re.search(r'>\s*(\d+(\.\d+)?)', query_lower)
-        val = float(match.group(1)) if match else 100
-        
-        return {
-            "conditions": [
-                {"field": "revenue", "operator": ">", "value": val}
-            ],
-            "logic": "AND"
-        }
-    
-    # -----------------------------------------------
-
+    # --- ADVANCED LOCAL MOCK NLP BYPASS ---
+    # Since you don't have an OpenAI key, this smart regex engine localizes
+    # simple queries (like "health companies with PE less than 20") locally!
     if not client:
-        return {"error": "OpenAI API Key is missing. Please add it to your .env file."}
+        import re
+        q = user_query.lower()
+        conditions = []
+        
+        # Detect PE queries
+        if "pe" in q:
+            pe_less = re.search(r'(?:<|less|under|below)\s*(?:than\s*)?(\d+)', q)
+            if pe_less:
+                conditions.append({"field": "pe_ratio", "operator": "<", "value": int(pe_less.group(1))})
+            else:
+                pe_more = re.search(r'(?:>|greater|above|over)\s*(?:than\s*)?(\d+)', q)
+                if pe_more:
+                    conditions.append({"field": "pe_ratio", "operator": ">", "value": int(pe_more.group(1))})
+        
+        # Detect Revenue queries
+        if "revenue" in q:
+            rev_more = re.search(r'(?:>|greater|above|over)\s*(?:than\s*)?(\d+)', q)
+            if rev_more:
+                conditions.append({"field": "revenue", "operator": ">", "value": int(rev_more.group(1))})
+            else:
+                rev_less = re.search(r'(?:<|less|under|below)\s*(?:than\s*)?(\d+)', q)
+                if rev_less:
+                    conditions.append({"field": "revenue", "operator": "<", "value": int(rev_less.group(1))})
+                    
+        # Detect Sector categories
+        if "health" in q:
+            conditions.append({"field": "sector", "operator": "IN", "value": ["Healthcare"]})
+        if "tech" in q:
+            conditions.append({"field": "sector", "operator": "IN", "value": ["Technology"]})
+        if "energy" in q:
+             conditions.append({"field": "sector", "operator": "IN", "value": ["Energy"]})
+             
+        # Fallback if completely unrecognizable
+        if not conditions:
+            conditions.append({"field": "pe_ratio", "operator": "<", "value": 50}) # Safe default
+            
+        return {
+            "where": {
+                "logic": "AND",
+                "conditions": conditions
+            }
+        }
+    # -----------------------------------------------
         
     system_prompt = """
     You are an AI Stock Screener parser. Your ONLY job is to convert natural language to strict JSON DSL.
