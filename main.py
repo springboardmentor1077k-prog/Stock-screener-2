@@ -142,24 +142,26 @@ class NLRequest(BaseModel):
     query: str = Field(..., min_length=5)
 
 class PortfolioCreate(BaseModel):
-    stock_symbol: str = Field(..., min_length=1, max_length=5)
+    stock_symbol: str = Field(..., min_length=1, max_length=20)
     quantity: int = Field(..., gt=0)
     buy_price: float = Field(..., gt=0)
     folder_name: str = "Default"
 class PortfolioUpdate(BaseModel):
     quantity: int = Field(..., gt=0)
     buy_price: float = Field(..., gt=0)
+class FolderCreate(BaseModel):
+    folder_name: str
 class RenameFolderRequest(BaseModel):
     old_name: str
     new_name: str
 
 class AlertCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
-    metric: Literal["pe_ratio", "eps"]
+    metric: str
     condition: Literal["<", ">"]
     threshold: float = Field(..., gt=0)
 class WatchlistCreate(BaseModel):
-    stock_symbol: str = Field(..., min_length=1, max_length=5)
+    stock_symbol: str = Field(..., min_length=1, max_length=20)
     
     
 # ============================================================
@@ -455,28 +457,82 @@ def company_details(symbol: str):
         "revenue_growth": row[6],
         "price_change_1y": row[7]
     })
+    
+    
+@app.get("/company/{symbol}/full-details")
+def full_details(symbol: str):
+    import yfinance as yf
+
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+
+    return success_response(data={
+        "symbol": symbol.upper(),   
+
+        "company_name": info.get("longName"),
+        "sector": info.get("sector"),
+
+        "pe_ratio": info.get("trailingPE"),
+        "eps": info.get("trailingEps"),
+
+        "revenue": info.get("totalRevenue"),
+        "profit": info.get("netIncomeToCommon"),
+        "ebitda": info.get("ebitda"),
+
+        "debt": info.get("totalDebt"),
+        "cash": info.get("totalCash"),
+
+        "revenue_growth": info.get("revenueGrowth"),
+        "profit_margin": info.get("profitMargins"),
+
+        "roe": info.get("returnOnEquity"),
+        "roa": info.get("returnOnAssets"),
+
+        "market_cap": info.get("marketCap")
+    })
 # ============================================================
 # COMPANY PRICE HISTORY ENDPOINT
 # ============================================================
 
 @app.get("/company/{symbol}/price-history")
-def price_history(symbol: str):
+def price_history(symbol: str, period: str = "1Y"):
 
     with engine.connect() as conn:
 
-        rows = conn.execute(text("""
+        #  TIME FILTER
+        time_filter = ""
+
+        if period == "1D":
+            time_filter = "AND hp.price_date >= CURRENT_DATE - INTERVAL '1 day'"
+        elif period == "1W":
+            time_filter = "AND hp.price_date >= CURRENT_DATE - INTERVAL '7 days'"
+        elif period == "1M":
+            time_filter = "AND hp.price_date >= CURRENT_DATE - INTERVAL '1 month'"
+        elif period == "1Y":
+            time_filter = "AND hp.price_date >= CURRENT_DATE - INTERVAL '1 year'"
+        elif period == "5Y":
+            time_filter = "AND hp.price_date >= CURRENT_DATE - INTERVAL '5 years'"
+
+        rows = conn.execute(text(f"""
             SELECT hp.price_date,
+                   hp.open,
+                   hp.high,
+                   hp.low,
                    hp.close
             FROM historical_prices hp
             JOIN symbols s ON hp.symbol_id = s.id
             WHERE s.symbol = :symbol
+            {time_filter}
             ORDER BY hp.price_date
         """), {"symbol": symbol.upper()}).fetchall()
 
     return success_response(data=[
         {
             "date": r[0],
-            "close": r[1]
+            "open": r[1],
+            "high": r[2],
+            "low": r[3],
+            "close": r[4]
         }
         for r in rows
     ])
@@ -535,6 +591,24 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "token_type": "bearer"
     }
 
+@app.get("/history")
+def get_history(current_user: dict = Depends(get_current_user)):
+
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT raw_query
+            FROM query_history
+            WHERE user_id = :user_id
+            ORDER BY created_at DESC
+            
+        """), {
+            "user_id": current_user["id"]
+        }).fetchall()
+
+    return {
+        "success": True,
+        "data": [r[0] for r in rows]
+    }
 
 # ============================================================
 # STEP 4: LLM PARSER SERVICE
@@ -696,14 +770,14 @@ def score_stock(stock):
     )
 
 # ============================================================
-# SCREENER ENDPOINT (UPGRADED – SAFE + CACHE + STABLE)
+# SCREENER ENDPOINT 
 # ============================================================
 
 @app.post("/screener")
 @limiter.limit("5/minute")
 def screener(
-    request: Request,                 # REQUIRED for slowapi
-    payload: NLRequest,               # Your body model
+    request: Request,                 
+    payload: NLRequest,               
     
     current_user: dict = Depends(get_current_user)
 ):
@@ -714,7 +788,7 @@ def screener(
     # NEW DSL FLOW
     try:
         parsed_json = parse_query_with_llm(payload.query)
-        # 🔥 FORCE FIX FOR GROWTH FIELD
+        #  FORCE FIX FOR GROWTH FIELD
         query_text = payload.query.lower()
 
         if "revenue_growth_calc" in query_text:
@@ -759,7 +833,7 @@ def screener(
             detail="AI service temporarily unavailable. Please try again later."
         )
     # --------------------------------------------------------
-    # TIME FILTER FIX (RULE-BASED OVERRIDE)
+    # TIME FILTER FIX 
     # --------------------------------------------------------
 
     query_text = payload.query.lower()
@@ -844,7 +918,6 @@ def screener(
 
 # ============================================================
 # EXECUTION LAYER
-# Runs SQL query and fetches rows from database
 # ============================================================
 
     print("\n EXECUTION LAYER STARTED")
@@ -932,7 +1005,7 @@ def screener(
             pass
 
     # --------------------------------------------------------
-    # QUERY HISTORY LOG (UNCHANGED)
+    # QUERY HISTORY LOG 
     # --------------------------------------------------------
 
     '''with engine.begin() as conn:
@@ -949,11 +1022,20 @@ def screener(
         for k, v in r.items():
             if isinstance(v, float) and math.isnan(v):
                 r[k] = None
+                
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO query_history (user_id, raw_query)
+            VALUES (:user_id, :query)
+        """), {
+            "user_id": current_user["id"],
+            "query": payload.query
+        })
 
     return success_response(data=results)
 
 # ============================================================
-# PORTFOLIO CRUD (ID-Based REST)
+# PORTFOLIO CRUD 
 # ============================================================
 
 @app.post("/portfolio")
@@ -1124,32 +1206,117 @@ def delete_portfolio(
 
     return success_response(message="Deleted successfully")
 
-
-@app.put("/portfolio/rename-folder")
-def rename_folder(
-    request: RenameFolderRequest = Body(...),
+@app.post("/folders")
+def create_folder(
+    request: FolderCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    print("🔥 RECEIVED:", request.old_name, request.new_name)
+    with engine.connect() as conn:
+        existing = conn.execute(text("""
+            SELECT 1 FROM folders
+            WHERE user_id = :user_id
+            AND LOWER(folder_name) = LOWER(:folder_name)
+        """), {
+            "user_id": current_user["id"],
+            "folder_name": request.folder_name
+        }).fetchone()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Folder already exists")
 
     with engine.begin() as conn:
         conn.execute(text("""
+            INSERT INTO folders (user_id, folder_name)
+            VALUES (:user_id, :folder_name)
+        """), {
+            "user_id": current_user["id"],
+            "folder_name": request.folder_name
+        })
+
+    return {"success": True}
+
+@app.get("/folders")
+def get_folders(current_user: dict = Depends(get_current_user)):
+
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT folder_name
+            FROM folders
+            WHERE user_id = :user_id
+        """), {
+            "user_id": current_user["id"]
+        }).fetchall()
+
+    return {
+        "success": True,
+        "data": [r[0] for r in rows]
+    }
+
+
+@app.put("/portfolio/rename-folder")
+async def rename_folder(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    body = await request.json()   #  FORCE READ JSON
+
+    print("DEBUG BODY:", body)
+
+    old_name = body.get("old_name")
+    new_name = body.get("new_name")
+
+    if not old_name or not new_name:
+        raise HTTPException(status_code=400, detail="Invalid input")
+
+    with engine.begin() as conn:
+        result = conn.execute(text("""
             UPDATE portfolio
             SET folder_name = :new_name
             WHERE user_id = :user_id
-            AND LOWER(folder_name) = LOWER(:old_name)
+            AND folder_name = :old_name
         """), {
-            "new_name": request.new_name,
-            "old_name": request.old_name,
+            "new_name": new_name,
+            "old_name": old_name,
             "user_id": current_user["id"]
         })
 
-    return success_response(message="Folder renamed successfully")
+        print("ROWS UPDATED:", result.rowcount)
+
+    return {"success": True}
+
+@app.delete("/folders/{folder_name}")
+def delete_folder(
+    folder_name: str,
+    current_user: dict = Depends(get_current_user)
+):
+    with engine.begin() as conn:
+
+        # delete stocks inside folder
+        conn.execute(text("""
+            DELETE FROM portfolio
+            WHERE user_id = :user_id
+            AND folder_name = :folder
+        """), {
+            "user_id": current_user["id"],
+            "folder": folder_name
+        })
+
+        # delete folder
+        conn.execute(text("""
+            DELETE FROM folders
+            WHERE user_id = :user_id
+            AND folder_name = :folder
+        """), {
+            "user_id": current_user["id"],
+            "folder": folder_name
+        })
+
+    return {"success": True}
 
 
 
 # ============================================================
-# WATCHLIST CRUD (ID-Based REST)
+# WATCHLIST CRUD 
 # ============================================================
 
 class WatchlistCreate(BaseModel):
@@ -1222,33 +1389,23 @@ def delete_watchlist(
     return success_response(message="Removed from watchlist")
 
 # ============================================================
-# ALERTS CRUD (ID-Based REST)
+# ALERTS CRUD
 # ============================================================
 
+# ================= ALERT APIs =================
+
 @app.post("/alerts")
-def create_alert(
-    request: AlertCreate,
-    current_user: dict = Depends(get_current_user)
-):
+def create_alert(request: AlertCreate, current_user: dict = Depends(get_current_user)):
 
     with engine.begin() as conn:
-
-        symbol = conn.execute(text("""
-            SELECT id FROM symbols WHERE symbol = :symbol
-        """), {"symbol": request.stock_symbol}).fetchone()
-
-        if not symbol:
-            raise HTTPException(status_code=404, detail="Symbol not found")
-
         conn.execute(text("""
-            INSERT INTO alerts
-            (user_id, stock_symbol, metric, condition, threshold)
-            VALUES (:user_id, :stock_symbol, :metric, :condition, :threshold)
+            INSERT INTO alerts (user_id, stock_symbol, metric, operator, threshold)
+            VALUES (:user_id, :symbol, :metric, :operator, :threshold)
         """), {
             "user_id": current_user["id"],
-            "stock_symbol": request.stock_symbol,
+            "symbol": request.stock_symbol.upper(),
             "metric": request.metric,
-            "condition": request.condition,
+            "operator": request.condition,
             "threshold": request.threshold
         })
 
@@ -1260,15 +1417,15 @@ def get_alerts(current_user: dict = Depends(get_current_user)):
 
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT id, stock_symbol, metric, condition, threshold
+            SELECT id, stock_symbol, metric, operator, threshold
             FROM alerts
-            WHERE user_id = :user_id
-        """), {"user_id": current_user["id"]}).fetchall()
+            WHERE user_id = :uid
+        """), {"uid": current_user["id"]}).fetchall()
 
     return success_response(data=[
         {
             "id": r[0],
-            "stock_symbol": r[1],
+            "symbol": r[1],
             "metric": r[2],
             "condition": r[3],
             "threshold": r[4]
@@ -1278,28 +1435,119 @@ def get_alerts(current_user: dict = Depends(get_current_user)):
 
 
 @app.delete("/alerts/{alert_id}")
-def delete_alert(
-    alert_id: int,
-    current_user: dict = Depends(get_current_user)
-):
+def delete_alert(alert_id: int, current_user: dict = Depends(get_current_user)):
 
     with engine.begin() as conn:
-        result = conn.execute(text("""
+        conn.execute(text("""
             DELETE FROM alerts
-            WHERE id = :id AND user_id = :user_id
+            WHERE id = :id AND user_id = :uid
         """), {
             "id": alert_id,
-            "user_id": current_user["id"]
+            "uid": current_user["id"]
         })
 
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Alert not found")
+    return success_response(message="Deleted")
 
-    return success_response(message="Alert deleted")
 
 # ============================================================
 # ALERT EVALUATION ENGINE
 # ============================================================
-
 def evaluate_alerts():
-    print("Checking alerts...")
+
+    triggered = []
+
+    with engine.connect() as conn:
+
+        alerts = conn.execute(text("""
+            SELECT id, stock_symbol, metric, operator, threshold
+            FROM alerts
+            WHERE is_active = TRUE
+        """)).fetchall()
+
+        for a in alerts:
+
+            try:
+                symbol = a[1]
+                metric = a[2]
+                operator = a[3]
+                threshold = a[4]
+
+                # validate metric exists in DB
+                valid_fields = [
+                    "pe_ratio", "eps", "revenue", "debt",
+                    "market_cap", "revenue_growth",
+                    "price_change_1y"
+                ]
+
+                if metric not in valid_fields:
+                    continue
+
+                # GET metric value
+                metric_row = conn.execute(text(f"""
+                    SELECT f.{metric}
+                    FROM fundamentals f
+                    JOIN symbols s ON s.id = f.symbol_id
+                    WHERE s.symbol = :symbol
+                    ORDER BY f.reported_date DESC
+                    LIMIT 1
+                """), {"symbol": symbol}).fetchone()
+
+                if not metric_row or metric_row[0] is None:
+                    continue
+
+                current = metric_row[0]
+
+                #  CONDITION CHECK
+                triggered_flag = False
+
+                if operator == "<" and current < threshold:
+                    triggered_flag = True
+                elif operator == ">" and current > threshold:
+                    triggered_flag = True
+                elif operator == "<=" and current <= threshold:
+                    triggered_flag = True
+                elif operator == ">=" and current >= threshold:
+                    triggered_flag = True
+                elif operator == "=" and current == threshold:
+                    triggered_flag = True
+
+                if triggered_flag:
+                    triggered.append({
+                        "symbol": symbol,
+                        "metric": metric,
+                        "current_value": current,
+                        "threshold": threshold
+                    })
+
+            except Exception as e:
+                print(" ALERT ERROR:", str(e))
+                continue
+
+    return triggered
+
+@app.get("/alerts/check")
+def check_alerts(current_user: dict = Depends(get_current_user)):
+
+    triggered = evaluate_alerts()
+
+    return success_response(data=triggered)
+
+@app.get("/alerts/metrics")
+def get_metrics():
+
+    with engine.connect() as conn:
+
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'fundamentals'
+        """)).fetchall()
+
+    exclude = ["id", "symbol_id", "reported_date"]
+
+    metrics = [row[0] for row in result if row[0] not in exclude]
+
+    return success_response(data=metrics)
+
+
+

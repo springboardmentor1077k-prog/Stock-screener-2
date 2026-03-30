@@ -75,7 +75,7 @@ def compile_node(node, param_index=0):
         elif condition.field == "revenue_growth":
             clause = f"revenue_growth_calc {condition.operator} :{param_name}"
 
-        # 🔥 normal fields
+        #  normal fields
         else:
             clause = f"{alias}.{column} {condition.operator} :{param_name}"
 
