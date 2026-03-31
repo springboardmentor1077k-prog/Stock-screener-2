@@ -1,6 +1,5 @@
 import streamlit as st
 from ui_components.navbar import logout_button
-import random
 import requests
 import pandas as pd
 from ui_components.footer import header
@@ -10,7 +9,6 @@ header()
 
 company_name = st.session_state.get("selected_company")
 
-company_name = st.session_state.get("selected_company")
 
 
 if not company_name:
@@ -36,6 +34,7 @@ if not company_name:
 
             else:
                 st.warning("No companies in portfolio. Please buy a stock first.")
+                logout_button()
                 st.stop()
 
         else:
@@ -46,7 +45,7 @@ if not company_name:
         st.error("Error fetching portfolio")
         st.stop()
 
-# st.title(f"Company Details: {company_name}")
+
 
 response = requests.post(
     "http://127.0.0.1:7000/company/company-details",
@@ -173,3 +172,11 @@ if st.button("Buy Stock"):
 
 
 logout_button()
+
+
+
+
+
+
+
+

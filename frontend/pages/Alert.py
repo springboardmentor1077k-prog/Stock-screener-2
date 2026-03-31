@@ -51,6 +51,8 @@ if st.button("Create Alert"):
                 headers=headers,
                 timeout=5
             )
+            
+            st.write(res.json())
 
             if res.status_code == 200:
                 st.success("Alert created successfully")
@@ -136,7 +138,7 @@ try:
                         st.success(f"✅ {idx}. {cond_text}")
 
                         
-                        st.toast(f" Alert {idx} triggered → {companies}")
+                        st.toast(f" Alert {idx} triggered -> {companies}")
 
                     else:
                         st.markdown(f"⚪ {idx}. {cond_text}")

@@ -272,7 +272,6 @@ def build_sql(parsed, company_id=None):
 
 
 # ADD ALERT
-
 @router.post("/add-alert")
 def add_alert(data: dict, authorization: str = Header()):
     try:
@@ -284,9 +283,7 @@ def add_alert(data: dict, authorization: str = Header()):
         conn = get_connection()
         cursor = conn.cursor()
 
-        
         # FIND COMPANY
-        
         company_id = None
         company_name = None
         
@@ -300,7 +297,7 @@ def add_alert(data: dict, authorization: str = Header()):
                 OR LOWER(company_symbol) LIKE %s
                 ORDER BY LENGTH(company_name) ASC
                 LIMIT 1
-            """, (f"%{parsed['company']}%", f"%{parsed['company']}%"))
+            """, (f"%{company}%", f"%{company}%"))
 
             row = cursor.fetchone()
 
@@ -310,29 +307,39 @@ def add_alert(data: dict, authorization: str = Header()):
             company_id = row[0]
             company_name = row[1]
 
-        
         # CHECK DUPLICATE
+        conditions_json = json.dumps(parsed["conditions"], sort_keys=True)
 
         cursor.execute("""
-        SELECT alert_id FROM alert_master
-        WHERE company_id IS NOT DISTINCT FROM %s
-        AND conditions = %s
-        """, (company_id, json.dumps(parsed["conditions"])))
+            SELECT alert_id FROM alert_master
+            WHERE company_id IS NOT DISTINCT FROM %s
+            AND conditions = %s
+        """, (company_id, conditions_json))
 
         row = cursor.fetchone()   
 
         if row:
-            alert_id = row[0]    
+            alert_id = row[0]
         else:
             cursor.execute("""
-            INSERT INTO alert_master (company_id, conditions)
-            VALUES (%s, %s)
-            RETURNING alert_id
-        """, (company_id, json.dumps(parsed["conditions"])))
+                INSERT INTO alert_master (company_id, conditions)
+                VALUES (%s, %s)
+                RETURNING alert_id
+            """, (company_id, conditions_json))
 
-        alert_id = cursor.fetchone()[0]   
-            
+            alert_id = cursor.fetchone()[0]   # ✅ FIXED (inside else)
+
+        # LINK TO USER
+        user_id = get_user_id_from_token(authorization, cursor)
+
+        cursor.execute("""
+            INSERT INTO user_alerts (user_id, alert_id)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+        """, (user_id, alert_id))
+
         conn.commit()
+        cursor.close()   # ✅ added
         conn.close()
 
         return {"status": "Alert added"}
@@ -343,7 +350,6 @@ def add_alert(data: dict, authorization: str = Header()):
     except Exception as e:
         print("ADD ERROR:", e)
         raise HTTPException(500, "Internal error")
-
 
 
 # GET ALERTS

@@ -63,6 +63,12 @@ if data.get("status") == "success":
 
     portfolio = data["data"]
     df = pd.DataFrame(portfolio)
+    
+    if df.empty:
+        st.warning("Your portfolio is empty. Buy a stock first.")
+        logout_button()
+        st.stop()
+    
     df["Invested in Stocks"] = df["quantity"] * df["buy_price"]
     df["current_price"] = df["buy_price"] * 1.1   # temporary
     df.index = df.index + 1
