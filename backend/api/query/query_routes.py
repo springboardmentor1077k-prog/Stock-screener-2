@@ -33,7 +33,8 @@ async def run_query(payload: dict, authorization: str = Header(...)):
     page_size = payload.get("page_size", 5)
 
     # ---------- SORT ----------
-    sort_by = payload.get("sort_by", "pe_ratio")
+
+    sort_by = payload.get("sort_by") or dsl.get("sort_by", "pe_ratio")
     order = payload.get("order", "descending")
 
     # ---------- PARSER ----------
@@ -83,29 +84,18 @@ async def run_query(payload: dict, authorization: str = Header(...)):
                 "value": value
             })
 
-
-    # ----------  SECTOR FIX  ----------
-    words = query_text.lower().split()
-
-    if "it" in words or "technology" in words:
-        cleaned_conditions.append({
-            "field": "sector",
-            "operator": "=",
-            "value": "Technology"
-        })
-
-
     # ---------- APPLY ----------
     if cleaned_conditions:
         dsl["conditions"] = cleaned_conditions
-    else:
-        dsl = fallback_parser(query_text)
 
+    # Do NOT call fallback again here — it will overwrite DSL
     # ---------- VALIDATION ----------
     try:
         dsl_query = DSLQuery(**dsl)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid query parameters")
+    
+    print("FINAL DSL:", dsl_query.model_dump())
 
     # ---------- SQL ----------
     sql_query, params = compile_dsl_to_sql(
@@ -157,3 +147,31 @@ async def run_query(payload: dict, authorization: str = Header(...)):
         "cached": False,
         "total_results": len(results)
     }
+
+@router.get("/history")
+async def get_search_history(authorization: str = Header(...)):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    token = authorization.split(" ")[1]
+    user_id = verify_token(token)
+
+    import sqlite3, os
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    DB_PATH = os.path.join(BASE_DIR, "database", "stock_screener.db")
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT query_text
+        FROM search_history
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 4
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return {"history": [r[0] for r in rows]}

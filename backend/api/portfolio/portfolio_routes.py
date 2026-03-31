@@ -48,8 +48,16 @@ def add_stock(data: PortfolioRequest, Authorization: str = Header(...)):
     
     price_row = cursor.fetchone()
     current_price = float(price_row[0]) if price_row and price_row[0] else 0.0
-    variation = random.uniform(0.75, 1.25)
-    buy_price = current_price * variation
+    category = random.choice(["growth", "stable", "slow", "loss"])
+
+    if category == "growth":
+        buy_price = current_price * random.uniform(0.6, 0.8)   # big profit
+    elif category == "stable":
+        buy_price = current_price * random.uniform(0.8, 0.9)   # medium profit
+    elif category == "slow":
+        buy_price = current_price * random.uniform(0.95, 1.05) # small change
+    else:  # loss
+        buy_price = current_price * random.uniform(1.1, 1.3)   # loss
 
     cursor.execute("""
         INSERT INTO portfolio (user_id, company_id, quantity, buy_price)

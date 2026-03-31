@@ -169,7 +169,8 @@ CREATE TABLE IF NOT EXISTS search_history (
     query_text TEXT NOT NULL,
     parsed_dsl TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(user_id, query_text)
 );
 """)
 

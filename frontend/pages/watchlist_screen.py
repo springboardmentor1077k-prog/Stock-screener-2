@@ -359,6 +359,8 @@ if watchlist:
 
                 if b2.button("Remove", key=f"rem_{row['company_id']}"):
                     remove_watchlist(row["company_id"])
+                    st.session_state.toast = "Removed from watchlist"
+                    st.session_state.refresh_watchlist = True
                     st.rerun()
 else:
     st.markdown("""
@@ -375,7 +377,7 @@ else:
 
 # ---------- DISCLAIMER ----------
 
-st.markdown("<div style='height:300px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:100px'></div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("""

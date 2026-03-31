@@ -97,7 +97,38 @@ border:none;
 font-weight:600;
 color:white;
 }
+            
+/* REMOVE STREAMLIT INNER RED BORDER */
+input {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
 
+/* Remove red error highlight */
+input:invalid {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* BaseWeb input inner div */
+div[data-baseweb="base-input"] {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Keep only outer container border */
+div[data-baseweb="input"] {
+    border: 1px solid #1e3a5f !important;
+    background-color: #081424 !important;
+    border-radius: 8px !important;
+}
+
+/* Focus effect */
+div[data-baseweb="input"]:focus-within {
+    border: 1px solid #3b82f6 !important;
+    box-shadow: 0 0 8px rgba(59,130,246,0.35) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -205,16 +236,16 @@ def signup():
             unsafe_allow_html=True
         )
 
-
 # ---------- ROUTING ----------
-query_params = st.query_params
+params = st.query_params
 
-if "page" in query_params:
-    st.session_state.page = query_params["page"]
+if "page" in params:
+    st.session_state.page = params["page"]
 
 if st.session_state.token is None:
-
     if st.session_state.page == "signup":
         signup()
     else:
         login()
+else:
+    st.switch_page("pages/query_screen.py")

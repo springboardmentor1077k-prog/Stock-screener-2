@@ -153,6 +153,13 @@ async def process_query(
     # ---------- PARSE ----------
     interpreted_query = interpret_query(body.query)
     raw_dsl_dict = parse_natural_language_to_dsl(interpreted_query)
+    dsl_sort = raw_dsl_dict.get("sort_by")
+    dsl_limit = raw_dsl_dict.get("limit")
+
+    # Only override sorting if it's a Top N query
+    if dsl_limit and dsl_sort in allowed_sort_fields:
+        sort_by = dsl_sort
+        order = "descending"
 
     # ---------- SAFE CONDITIONS ----------
     conditions = raw_dsl_dict.get("conditions", [])
@@ -203,8 +210,16 @@ async def process_query(
     # ---------- PAGINATION ----------
     offset = (page - 1) * page_size
 
-    paginated_sql = base_sql + " LIMIT ? OFFSET ?"
-    paginated_params = base_params + [page_size, offset]
+    limit = validated_dsl.model_dump().get("limit")
+
+    if limit:
+        paginated_sql = base_sql
+        paginated_params = base_params
+        total_results = limit
+    else:
+        offset = (page - 1) * page_size
+        paginated_sql = base_sql + " LIMIT ? OFFSET ?"
+        paginated_params = base_params + [page_size, offset]    
 
     # ---------- COUNT QUERY ----------
 
@@ -230,9 +245,12 @@ async def process_query(
 
         total_results = cursor.fetchone()[0]
 
+        # FIX FOR TOP N QUERIES
+        limit = validated_dsl.model_dump().get("limit")
+        if limit:
+            total_results = limit
 
         start_time = time.time()
-
         cursor.execute(paginated_sql, paginated_params)
         rows = cursor.fetchall()
 
@@ -242,14 +260,27 @@ async def process_query(
         logger.info(f"Query Execution Time: {execution_time:.4f} seconds")
 
         cursor.execute("""
-        INSERT INTO search_history (user_id, query_text, parsed_dsl)
-        VALUES (?, ?, ?)
-        """, (
-            user_id,
-            body.query,
-            json.dumps(validated_dsl.model_dump())
-        ))
+        SELECT query_text FROM search_history
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+        """, (user_id,))
 
+        last = cursor.fetchone()
+
+        if not last or last["query_text"] != body.query:
+            cursor.execute("""
+            INSERT INTO search_history (user_id, query_text, parsed_dsl, created_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id, query_text)
+            DO UPDATE SET
+                parsed_dsl = excluded.parsed_dsl,
+                created_at = CURRENT_TIMESTAMP
+            """, (
+                user_id,
+                body.query,
+                json.dumps(validated_dsl.model_dump())
+            ))
         conn.commit()
 
     log_query(body.query, paginated_sql, execution_time)
@@ -272,31 +303,27 @@ async def process_query(
 
     return response_data
 
-
 @app.get("/history")
 def get_search_history(authorization: str = Header(...)):
 
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
+        raise HTTPException(status_code=401)
 
     token = authorization.split(" ")[1]
     user_id = verify_token(token)
-
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         cursor.execute("""
-        SELECT query_text, created_at
+        SELECT query_text
         FROM search_history
         WHERE user_id = ?
         ORDER BY created_at DESC
-        LIMIT 20
+        LIMIT 4
         """, (user_id,))
 
         rows = cursor.fetchall()
 
-    return [dict(row) for row in rows]
+    return [row["query_text"] for row in rows]

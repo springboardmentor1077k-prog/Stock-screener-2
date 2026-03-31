@@ -208,6 +208,19 @@ with col2:
 
 
 # ---------- BACKEND ----------
+def fetch_recent_queries():
+    try:
+        res = requests.get(
+            f"{API_URL}/history",
+            headers={"Authorization": f"Bearer {st.session_state.token}"}
+        )
+        if res.status_code == 200:
+            return res.json() 
+        return []
+    except Exception as e:
+        st.write("History error:", e)
+        return []
+    
 def run_query_backend(q):
 
     with st.spinner("Analyzing market..."):
@@ -272,18 +285,15 @@ with right:
 
     st.markdown("<div class='section-title'>⏱ Recent Searches</div>", unsafe_allow_html=True)
 
-    if not st.session_state.query_history:
+    recent_queries = fetch_recent_queries()
 
+    if not recent_queries:
         st.write("No searches yet")
         st.write("Your previous queries will appear here")
-
     else:
-
-        for q in st.session_state.query_history[:5]:
-
-            if st.button(f"🔎 {q}", use_container_width=True):
+        for i, q in enumerate(recent_queries):
+            if st.button(f"🔎 {q}", key=f"recent_{i}", use_container_width=True):
                 run_query_backend(q)
-
 st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
 
 st.markdown("""

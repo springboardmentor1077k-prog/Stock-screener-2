@@ -7,10 +7,6 @@ API_URL = "http://127.0.0.1:8000"
 
 st.set_page_config(page_title="StockSense AI Results", layout="wide")
 
-# ---------- WATCHLIST STATE ----------
-if "watchlist" not in st.session_state:
-    st.session_state.watchlist = set()
-
 # ---------- GLOBAL STYLE ----------
 st.markdown("""
 <style>
@@ -153,7 +149,31 @@ div[data-testid="stButton"] button{
     padding:6px 12px;
     border-radius:8px;
 }
-            
+
+/* REMOVE RED BORDER FROM SELECTBOX (Sort By, Order) */
+
+div[data-baseweb="select"] > div {
+    border: 1px solid rgba(59,130,246,0.35) !important;
+    box-shadow: none !important;
+    background-color: rgba(17, 25, 40, 0.6) !important;
+}
+
+/* When focused */
+div[data-baseweb="select"]:focus-within > div {
+    border: 1px solid #3b82f6 !important;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.3) !important;
+}
+
+/* Remove red error ring completely */
+div[data-baseweb="select"] * {
+    box-shadow: none !important;
+}
+
+<style>
+div[data-testid="stButton"] button {
+    white-space: nowrap !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -165,6 +185,33 @@ if "token" not in st.session_state:
 if "last_query" not in st.session_state:
     st.warning("No query available")
     st.stop()
+
+def fetch_portfolio():
+    res = requests.get(
+        f"{API_URL}/portfolio",
+        headers={"Authorization": f"Bearer {st.session_state.token}"}
+    )
+    if res.status_code == 200:
+        return set([item["symbol"] for item in res.json()])
+    return set()
+
+def fetch_watchlist():
+    res = requests.get(
+        f"{API_URL}/watchlist",
+        headers={"Authorization": f"Bearer {st.session_state.token}"}
+    )
+    if res.status_code == 200:
+        return set([item["symbol"] for item in res.json()])
+    return set()
+
+# ---------- STATE FLAGS ----------
+if "portfolio" not in st.session_state:
+    st.session_state.portfolio = set()
+    st.session_state.refresh_portfolio = True
+
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = set()
+    st.session_state.refresh_watchlist = True
 
 # ---------- PAGE STATE ----------
 if "results_page" not in st.session_state:
@@ -216,6 +263,40 @@ with nav7:
         st.switch_page("app.py")
         
 st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+
+import time
+
+if "toast" in st.session_state:
+    st.markdown(f"""
+    <div style="
+        position: fixed;
+        top: 90px;
+        right: 40px;
+        background: rgba(34,197,94,0.15);
+        border: 1px solid #22c55e;
+        color: #86efac;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 999;
+        animation: fadeOut 3s forwards;
+    ">
+        {st.session_state.toast}
+    </div>
+
+    <style>
+    @keyframes fadeOut {{
+        0% {{opacity: 1;}}
+        70% {{opacity: 1;}}
+        100% {{opacity: 0;}}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    time.sleep(3)
+    del st.session_state.toast
+    st.rerun()
+
 
 # ---------- TITLE + SORT (SAME ROW) ----------
 title_col, sort_col = st.columns([7.5,2.5])
@@ -307,7 +388,19 @@ if df.empty:
     st.warning("No results found for this query")
     st.stop()
 
-total_pages = max(math.ceil(total_results / page_size), 1)
+if total_results <= page_size:
+    total_pages = 1
+else:
+    total_pages = max(math.ceil(total_results / page_size), 1)
+
+# ---------- SYNC WITH BACKEND ONLY WHEN NEEDED ----------
+if st.session_state.get("refresh_portfolio"):
+    st.session_state.portfolio = fetch_portfolio()
+    st.session_state.refresh_portfolio = False
+
+if st.session_state.get("refresh_watchlist"):
+    st.session_state.watchlist = fetch_watchlist()
+    st.session_state.refresh_watchlist = False
 
 # ---------- COMPANY CARD ----------
 def format_number(num):
@@ -361,7 +454,7 @@ def company_card(row):
     label, label_color = ai_label(pe)
 
     with st.container(border=True):
-        left, mid1, mid2, mid3, mid4, mid5, right = st.columns([3,1,1,1,1,1,1.5])
+        left, mid1, mid2, mid3, mid4, mid5, right = st.columns([3,1,1,1,1,1,1.8])
 
         # ---- LEFT: Company Name + AI Tag ----
         with left:
@@ -428,7 +521,9 @@ def company_card(row):
             c1, c2 = st.columns(2)
 
             with c1:
-                if st.button("➕ Add", key=f"add_{symbol}"):
+                is_added = symbol in st.session_state.portfolio
+                add = "✔ Added" if is_added else "➕ Add"
+                if st.button(add, key=f"portfolio_{symbol}", disabled=is_added):
                     response = requests.post(
                         f"{API_URL}/portfolio/add",
                         headers={"Authorization": f"Bearer {st.session_state.token}"},
@@ -439,18 +534,31 @@ def company_card(row):
                     )
 
                     if response.status_code == 200:
-                        st.success(f"{symbol} added to portfolio")
+                        st.session_state.toast = f"{symbol} added to portfolio"
+                        st.session_state.refresh_portfolio = True
                     else:
-                        st.error("Failed to add")
+                        st.session_state.toast = "Failed to add to portfolio"
+
+                    st.rerun()
 
             with c2:
                 star = "⭐" if symbol in st.session_state.watchlist else "☆"
                 if st.button(star, key=f"watch_{symbol}"):
-                    if symbol in st.session_state.watchlist:
-                        st.session_state.watchlist.remove(symbol)
+
+                    response = requests.post(
+                        f"{API_URL}/watchlist/add",
+                        headers={"Authorization": f"Bearer {st.session_state.token}"},
+                        params={"company_id": row["company_id"]}
+                    )
+
+                    if response.status_code == 200:
+                        st.session_state.toast = f"{symbol} added to watchlist"
+                        st.session_state.refresh_watchlist = True
                     else:
-                        st.session_state.watchlist.add(symbol)
+                        st.session_state.toast = "Failed to add to watchlist"
+
                     st.rerun()
+
 
 # ---------- DISPLAY ----------
 for _, row in df.iterrows():
@@ -467,7 +575,10 @@ margin-bottom: 18px;
 ">
 """, unsafe_allow_html=True)
 
-total_pages = max(math.ceil(total_results / page_size), 1)
+if total_results <= page_size:
+    total_pages = 1
+else:
+    total_pages = max(math.ceil(total_results / page_size), 1)
 
 col1, col2, col3 = st.columns([1.5,1,1.5])
 

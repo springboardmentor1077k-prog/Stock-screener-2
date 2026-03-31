@@ -26,7 +26,7 @@ ALLOWED_TIME_FILTERS = {
     "last_year",
     "last_4_quarters",
     "recent_quarters",
-    "last_6_months"   # ✅ ADD THIS (you used it elsewhere)
+    "last_6_months"  
 }
 
 
@@ -57,13 +57,13 @@ class Condition(BaseModel):
 
 class DSLQuery(BaseModel):
 
-    # ❌ OLD: min_length=1 (causes crash)
-    # ✅ NEW: allow empty, we handle fallback in routes
     conditions: List[Condition] = Field(default_factory=list, max_length=5)
 
     logic: str = "AND"
 
     time_filter: Optional[str] = None
+
+    limit: int | None = None
 
     @field_validator("logic")
     def validate_logic(cls, v):

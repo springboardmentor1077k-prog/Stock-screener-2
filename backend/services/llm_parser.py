@@ -42,12 +42,20 @@ def fallback_parser(query: str) -> dict:
     # -----------------------------
     # PE ratio
     # -----------------------------
-    pe_match = re.search(r"pe\s*ratio\s*(less than|<)\s*(\d+)", query)
+    pe_match = re.search(r"(pe|pe ratio)\s*(less than|<)\s*(\d+)", query)
     if pe_match:
         conditions.append({
             "field": "pe_ratio",
             "operator": "<",
-            "value": int(pe_match.group(2))
+            "value": int(pe_match.group(3))
+        })
+
+    pe_match2 = re.search(r"(pe|pe ratio)\s*(greater than|>|more than)\s*(\d+)", query)
+    if pe_match2:
+        conditions.append({
+            "field": "pe_ratio",
+            "operator": ">",
+            "value": int(pe_match2.group(3))
         })
 
     # -----------------------------
@@ -73,28 +81,50 @@ def fallback_parser(query: str) -> dict:
         })
 
     # -----------------------------
+    # Profit Margin
+    # -----------------------------
+
+    pm_match = re.search(r"profit\s*margin\s*(greater than|>|more than)\s*(\d+)", query)
+    if pm_match:
+        conditions.append({
+            "field": "profit_margin",
+            "operator": ">",
+            "value": float(pm_match.group(2)) / 100
+        })
+
+    pm_match2 = re.search(r"profit\s*margin\s*(less than|<)\s*(\d+)", query)
+    if pm_match2:
+        conditions.append({
+            "field": "profit_margin",
+            "operator": "<",
+            "value": float(pm_match2.group(2)) / 100
+        })
+
+    # -----------------------------
     # GROWTH DETECTION
     # -----------------------------
-    if "growth" in query or "increase" in query:
+    if "growth" in query or "increase" in query or "grew" in query:
 
+        # Field detection
         if "price" in query:
             field = "price_growth"
         else:
             field = "price_growth"
 
-        if "greater than" in query or "more than" in query:
+        # Operator detection
+        if "greater than" in query or "more than" in query or "above" in query:
             operator = ">"
-        elif "less than" in query:
+        elif "less than" in query or "below" in query:
             operator = "<"
         else:
-            operator = ">"
+            operator = ">"  # default
 
+        # Extract percentage number
         match = re.search(r"\d+\.?\d*", query)
-
         if match:
             value = float(match.group())
 
-            # convert % to decimal
+            # Convert percentage to decimal
             if value > 1:
                 value = value / 100
 
@@ -104,59 +134,81 @@ def fallback_parser(query: str) -> dict:
                 "value": value
             })
 
+
     # -----------------------------
     # Sector detection
     # -----------------------------
-    if "it" in words or "technology" in words:
-        conditions.append({
-            "field": "sector",
-            "operator": "=",
-            "value": "Technology"
-        })
+    if "it" in words or "technology" in words or "tech" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Technology"})
 
-    if "bank" in words or "banking" in words:
-        conditions.append({
-            "field": "sector",
-            "operator": "=",
-            "value": "Financial Services"
-        })
+    elif "bank" in words or "banking" in words or "financial" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Financial Services"})
 
-    if "pharma" in words or "healthcare" in words:
-        conditions.append({
-            "field": "sector",
-            "operator": "=",
-            "value": "Healthcare"
-        })
+    elif "pharma" in words or "healthcare" in words or "hospital" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Healthcare"})
+
+    elif "energy" in words or "oil" in words or "gas" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Energy"})
+
+    elif "consumer defensive" in query:
+        conditions.append({"field": "sector", "operator": "=", "value": "Consumer Defensive"})
+
+    elif "consumer cyclical" in query or "auto" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Consumer Cyclical"})
+
+    elif "materials" in words or "chemicals" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Basic Materials"})
+
+    elif "telecom" in words or "communication" in words:
+        conditions.append({"field": "sector", "operator": "=", "value": "Communication Services"})
 
     # -----------------------------
     # TIME FILTER 
     # -----------------------------
-    if "last year" in query:
+    if "last year" in query or "past year" in query:
         time_filter = "last_year"
 
-    elif "6 month" in query:
+    elif "6 month" in query or "last 6 months" in query:
         time_filter = "last_6_months"
 
-    elif "last 4 quarters" in query:
+    elif "last 4 quarters" in query or "past 4 quarters" in query:
         time_filter = "last_4_quarters"
 
-    elif "recent" in query:
+    elif "recent" in query or "latest" in query:
         time_filter = "recent_quarters"
+
+
+    # SORT FIELD DETECTION
+    if "market cap" in query:
+        sort_by = "market_cap"
+    elif "revenue" in query:
+        sort_by = "revenue"
+    elif "profit margin" in query:
+        sort_by = "profit_margin"
+    else:
+        sort_by = "pe_ratio"
+
+    # -----------------------------
+    # TOP N DETECTION
+    # -----------------------------
+    top_match = re.search(r"top\s+(\d+)", query)
+    limit = None
+
+    if top_match:
+        limit = int(top_match.group(1))
 
     # -----------------------------
     # Default condition
     # -----------------------------
+    # If no numeric conditions, allow sector-only queries
     if not conditions:
-        conditions.append({
-            "field": "pe_ratio",
-            "operator": "<",
-            "value": 30
-        })
-
+        conditions = []
     return {
         "conditions": conditions,
         "logic": "AND",
-        "time_filter": time_filter
+        "time_filter": time_filter,
+        "limit": limit,
+        "sort_by": sort_by
     }
 
 

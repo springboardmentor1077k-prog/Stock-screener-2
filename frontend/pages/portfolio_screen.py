@@ -45,6 +45,13 @@ color:#eaf2ff;
 text-shadow:0 0 10px rgba(59,130,246,0.35);
 }
 
+/* REMOVE RED BORDER */
+
+div[data-baseweb="input"]:focus-within{
+border:1px solid rgba(59,130,246,0.35) !important;
+box-shadow:none !important;
+}
+            
 div[data-testid="stButton"] button{
 font-size:14px;
 padding:7px 10px;
@@ -142,6 +149,7 @@ for s in raw:
     data_map[k]["current_value"] += s["current_value"]
 
 portfolio = list(data_map.values())
+
 
 # ---------- FORMAT ----------
 def format_currency(val):
@@ -246,13 +254,20 @@ metric_card(col3, "Profit", format_currency(profit),
 col_search, col_refresh = st.columns([5, 1])
 
 with col_search:
-    search = st.text_input("", placeholder="Search holdings...")
+    search = st.text_input("", placeholder="Search holdings...").strip().lower()
 
 with col_refresh:
     st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
     if st.button("↻ Refresh", use_container_width=True):
         st.rerun()
 
+# ---------- APPLY SEARCH FILTER ----------
+if search:
+    portfolio = [
+        s for s in portfolio
+        if search in s["company"].lower()
+        or search in s["symbol"].lower()
+    ]
 # ---------- RANGE ----------
 title_col, range_col = st.columns([4, 1])
 
@@ -405,13 +420,13 @@ st.markdown("###  Current Holdings")
 def get_status(pct):
     if pct >= 15:
         return "Growth", "#22c55e"
-    elif pct >= 5:
+    elif pct >= 7:
         return "Stable", "#3b82f6"
-    elif pct >= 0:
-        return "Slow", "#eab308"
+    elif pct >= -2:
+        return "Flat", "#eab308"
     else:
         return "Loss", "#ef4444"
-
+    
 for s in portfolio:
 
     investment = s["investment_value"]
@@ -455,6 +470,7 @@ for s in portfolio:
         # Actions on right side
         with cols[6]:
             b1, b2, b3 = st.columns(3)
+            symbol = s.get("symbol")
 
             if b1.button("➕", key=f"add_{s['symbol']}"):
                 add_stock(s["company_id"])
@@ -470,6 +486,8 @@ for s in portfolio:
 
             if b3.button("🗑️", key=f"del_{s['symbol']}"):
                 remove_stock(s["company_id"])
+                st.session_state.toast = "Removed from portfolio"
+                st.session_state.refresh_portfolio = True  # update frontend state
                 st.rerun()
 
         # Status badge aligned right

@@ -3,7 +3,7 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
     conditions = dsl_query.get("conditions", [])
     logic = dsl_query.get("logic", "AND")
     time_filter = dsl_query.get("time_filter")
-
+    limit = dsl_query.get("limit")
     ALLOWED_OPERATORS = ["=", ">", "<", ">=", "<=", "!="]
 
     # Only join growth table if price_growth is used
@@ -76,20 +76,27 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
     # GROWTH JOIN
     # -----------------------------
     if join_growth:
-        base_query += """
-        JOIN price_growth growth
-        ON growth.company_id = s.id
-        """
 
-    # -----------------------------
-    # TIME FILTER
-    # -----------------------------
-    if time_filter and join_growth:
         if time_filter == "last_year":
-            where_clauses.append("growth.date >= date('now','-1 year')")
+            date_filter = "WHERE date >= date('now','-1 year')"
         elif time_filter == "last_6_months":
-            where_clauses.append("growth.date >= date('now','-6 months')")
+            date_filter = "WHERE date >= date('now','-6 months')"
+        elif time_filter == "last_4_quarters":
+            date_filter = "WHERE date >= date('now','-12 months')"
+        elif time_filter == "recent_quarters":
+            date_filter = "WHERE date >= date('now','-3 months')"
+        else:
+            date_filter = ""
 
+        base_query += f"""
+        JOIN (
+            SELECT company_id, MAX(price_growth) as price_growth
+            FROM price_growth
+            {date_filter}
+            GROUP BY company_id
+        ) growth ON growth.company_id = s.id
+        """
+            
     # -----------------------------
     # WHERE
     # -----------------------------
@@ -97,28 +104,7 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
         base_query += " WHERE " + f" {logic} ".join(where_clauses)
 
     # -----------------------------
-    # LATEST DATE FILTER
-    # -----------------------------
-    if join_growth and any(c["field"] == "price_growth" for c in conditions):
-        if "WHERE" in base_query:
-            base_query += """
-            AND growth.date = (
-                SELECT MAX(date)
-                FROM price_growth h2
-                WHERE h2.company_id = s.id
-            )
-            """
-        else:
-            base_query += """
-            WHERE growth.date = (
-                SELECT MAX(date)
-                FROM price_growth h2
-                WHERE h2.company_id = s.id
-            )
-            """
-
-    # -----------------------------
-    # ✅ CLEAN ORDER BY (FINAL FIX)
+    #  CLEAN ORDER BY (FINAL FIX)
     # -----------------------------
     ALLOWED_SORT_FIELDS = [
         "pe_ratio",
@@ -129,9 +115,12 @@ def compile_dsl_to_sql(dsl_query: dict, sort_by=None, order="descending"):
     ]
 
     if sort_by in ALLOWED_SORT_FIELDS:
-
         direction = "DESC" if order == "descending" else "ASC"
-
         base_query += f" ORDER BY f.{sort_by} {direction}"
-        
+
+
+        # APPLY LIMIT IF EXISTS
+    if limit:
+        base_query += f" LIMIT {limit}"
+
     return base_query, params

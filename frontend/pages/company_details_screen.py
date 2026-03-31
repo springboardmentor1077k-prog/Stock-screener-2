@@ -147,6 +147,10 @@ div[data-testid="stButton"] button{
     padding:6px 12px;
     border-radius:8px;
 }
+
+div[data-testid="stButton"] button {
+    white-space: nowrap !important;
+}
             
 </style>
 """, unsafe_allow_html=True)
@@ -155,6 +159,33 @@ div[data-testid="stButton"] button{
 if "token" not in st.session_state:
     st.warning("Login first")
     st.stop()
+
+def fetch_portfolio():
+    res = requests.get(
+        f"{API_URL}/portfolio",
+        headers={"Authorization": f"Bearer {st.session_state.token}"}
+    )
+    if res.status_code == 200:
+        return set([item["symbol"] for item in res.json()])
+    return set()
+
+def fetch_watchlist():
+    res = requests.get(
+        f"{API_URL}/watchlist",
+        headers={"Authorization": f"Bearer {st.session_state.token}"}
+    )
+    if res.status_code == 200:
+        return set([item["symbol"] for item in res.json()])
+    return set()
+
+# ---------- STATE FLAGS ----------
+if "portfolio" not in st.session_state:
+    st.session_state.portfolio = set()
+    st.session_state.refresh_portfolio = True
+
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = set()
+    st.session_state.refresh_watchlist = True
 
 # ---------- NAVBAR ----------
 nav1, nav2, nav3, nav4, nav5, nav6, nav7 = st.columns([4,1,1,1,1,0.6,1])
@@ -189,6 +220,39 @@ with nav7:
     if st.button("Logout"):
         st.session_state.token = None
         st.switch_page("app.py")
+
+import time
+
+if "toast" in st.session_state:
+    st.markdown(f"""
+    <div style="
+        position: fixed;
+        top: 90px;
+        right: 40px;
+        background: rgba(34,197,94,0.15);
+        border: 1px solid #22c55e;
+        color: #86efac;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 999;
+        animation: fadeOut 3s forwards;
+    ">
+        {st.session_state.toast}
+    </div>
+
+    <style>
+    @keyframes fadeOut {{
+        0% {{opacity: 1;}}
+        70% {{opacity: 1;}}
+        100% {{opacity: 0;}}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    time.sleep(3)
+    del st.session_state.toast
+    st.rerun()
 
 # ---------- FETCH MARKETS ----------
 def fetch_markets():
@@ -267,6 +331,15 @@ def add_portfolio(company_id):
         }
     )
 
+# ---------- SYNC WITH BACKEND ONLY WHEN NEEDED ----------
+if st.session_state.get("refresh_portfolio"):
+    st.session_state.portfolio = fetch_portfolio()
+    st.session_state.refresh_portfolio = False
+
+if st.session_state.get("refresh_watchlist"):
+    st.session_state.watchlist = fetch_watchlist()
+    st.session_state.refresh_watchlist = False
+
 # ---------- COMPANY CARD ----------
 for row in markets:
 
@@ -279,7 +352,7 @@ for row in markets:
     label, label_color = ai_label(pe)
 
     with st.container(border=True):
-        left, mid1, mid2, mid3, mid4, mid5, right = st.columns([3,1,1,1,1,1,1.5])
+        left, mid1, mid2, mid3, mid4, mid5, right = st.columns([3,1,1,1,1,1,1.8])
 
         # Company + Tag
         with left:
@@ -318,16 +391,27 @@ for row in markets:
 
         # Button
         with right:
-            b1, b2 = st.columns(2)
+            b1, b2 = st.columns([1,1])
+            symbol = row.get("symbol")
 
-            if b1.button("➕ Add", key=f"port_{row['company_id']}"):
+            # Portfolio button
+            is_added = symbol in st.session_state.portfolio
+            add_text = "✔ Added" if is_added else "➕ Add"
+
+            if b1.button(add_text, key=f"port_{row['company_id']}", disabled=is_added):
                 add_portfolio(row["company_id"])
-                st.success("Added to portfolio")
+                st.session_state.toast = f"{symbol} added to portfolio"
+                st.session_state.refresh_portfolio = True
                 st.rerun()
 
-            if b2.button("☆", key=f"watch_{row['company_id']}"):
+            # Watchlist button
+            is_watch = symbol in st.session_state.watchlist
+            star = "⭐" if is_watch else "☆"
+
+            if b2.button(star, key=f"watch_{row['company_id']}"):
                 add_watchlist(row["company_id"])
-                st.success("Added to watchlist")
+                st.session_state.toast = f"{symbol} added to watchlist"
+                st.session_state.refresh_watchlist = True
                 st.rerun()
 
 st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
