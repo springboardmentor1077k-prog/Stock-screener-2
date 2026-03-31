@@ -2,169 +2,124 @@
 
 ## Overview
 
-The AI-Powered Stock Screener and Advisory Platform is a full-stack application designed to help retail and professional investors make data-driven investment decisions using natural language queries, financial analytics, and AI-powered insights.
+The AI-Powered Stock Screener and Advisory Platform is a full-stack application that allows users to screen and analyze stocks using natural language queries. The system converts user queries into structured database queries using an AI-based parser and DSL (Domain Specific Language) compiler, executes them on financial data, and returns filtered stock results.
 
-The platform allows users to screen stocks using plain English queries, track their portfolio performance, manage watchlists, create alerts, and analyze market data through interactive dashboards. The system uses Large Language Models (LLMs) to interpret user queries, convert them into structured logic, execute them on financial datasets, and return actionable insights.
-
-This project demonstrates how AI can be integrated with financial data systems to build an intelligent stock analysis and advisory platform.
+The platform also includes portfolio tracking, watchlist management, alerts, search history, and interactive financial dashboards.
 
 ---
 
 ## Key Features
 
-### 1. AI Stock Screener
+### AI Stock Screener
 
 * Natural language query interface
-* LLM converts user query → DSL → SQL
-* Guardrails and validation for safe query execution
-* Dynamic filtering using financial metrics (PE, ROE, Revenue, EBITDA, etc.)
-* Returns structured stock insights
+* Query converted to **DSL → SQL**
+* Financial filters: P/E, Market Cap, Revenue, EBITDA, Profit Margin, Price Growth
+* Sector-based filtering
+* Time-based filters: Last year, Last 6 months, Last 4 quarters
+* Sorting and pagination
+* Query execution time logging
 
-### 2. AI Advisory & Insights
+### Portfolio Management
 
-* Provides data-driven stock insights
-* Financial metric analysis
-* Portfolio performance insights
-* Market trend and performance visualization
-* Decision-support analytics for investors
-
-### 3. Portfolio Management
-
-* Add stocks to portfolio
-* Remove stocks from portfolio
-* Track investment value, current value, and profit/loss
-* Portfolio allocation breakdown
+* Add, remove, increase, decrease stocks
+* Track investment value, current value, profit/loss
+* Portfolio allocation chart
 * Portfolio growth visualization
 * Return percentage calculation
 
-### 4. Watchlist Management
+### Watchlist
 
-* Add stocks to watchlist
-* Remove stocks from watchlist
-* Track selected stocks
+* Add and remove stocks
+* Track selected companies
 
-### 5. Alerts & Notifications
+### Search History
 
-* Create alerts based on financial conditions
-* Trigger alerts when screening conditions are met
+* Stores user queries
+* Displays recent searches
+* Updates timestamp when the same query is searched again
+
+### Alerts
+
+* Create alerts based on stock conditions
 * Store and manage alert rules
 
-### 6. Community Module
+### Market Dashboard
 
-* Users can post and share investment ideas
-* Discussion system for stocks and strategies
+* Browse all companies
+* View financial metrics
+* Add to portfolio or watchlist
 
-### 7. Market Data Integration
+### Logging & Performance Monitoring
 
-* Fetch company fundamentals and stock prices
-* Store historical stock data
-* Used for screening, portfolio tracking, and analytics
+* Logs user query, DSL, SQL query, and execution time
+* Used for debugging and optimization
 
 ---
 
 ## System Architecture
 
-The platform follows a layered AI + Data architecture:
-
 ```
-User (Natural Language Query)
+    User Query (Natural Language)
             ↓
-        LLM Parser
+    LLM Parser → DSL
             ↓
-        DSL Validator
+    SQL Compiler
             ↓
-        SQL Compiler
+    SQLite Database
             ↓
-        Database Execution
+    FastAPI Backend
             ↓
-        Analytics Engine
-            ↓
-        API Response
-            ↓
-        Frontend Dashboard
+    Streamlit Frontend Dashboard
 ```
-
-This architecture ensures secure query execution, validated AI outputs, and reliable financial analytics.
 
 ---
 
-## Database Schema (Main Tables)
+## Database Tables
 
-| Table              | Description               |
-| ------------------ | ------------------------- |
-| symbols            | Company basic information |
-| fundamentals       | Financial metrics         |
-| historical_metrics | Historical stock prices   |
-| users              | User accounts             |
-| portfolio          | User holdings             |
-| watchlist          | Saved stocks              |
-| alerts             | Alert conditions          |
-| search_history     | Query history             |
-| posts              | Community posts           |
+| Table          | Description    |
+| -------------- | -------------- |
+| symbols        | Company info   |
+| fundamentals   | Financial data |
+| price_growth   | Growth data    |
+| users          | User accounts  |
+| portfolio      | User holdings  |
+| watchlist      | Saved stocks   |
+| alerts         | Alert rules    |
+| search_history | User queries   |
 
 ---
 
 ## Tech Stack
 
-### Backend
-
-* FastAPI
-* Python
-* SQLite
-* Redis (Caching)
-
-### Frontend
-
-* Streamlit
-
-### AI Integration
-
-* Gemini / LLM API
-* DSL Query Parser
-* SQL Compiler
-
-### Data Source
-
-* Yahoo Finance API (yfinance)
+* **Frontend:** Streamlit, Plotly
+* **Backend:** FastAPI, Python, SQLite
+* **AI:** Gemini API, Rule-based fallback parser
+* **Data:** Yahoo Finance API (yfinance)
 
 ---
 
-## How to Run the Project
+## How to Run
 
-### Install Dependencies
-
-```
-pip install fastapi uvicorn streamlit yfinance pandas plotly python-dotenv
-```
-
-### Setup Environment Variables
-
-Create `.env` file:
+### Install dependencies
 
 ```
-GOOGLE_API_KEY=your_api_key
+pip install fastapi uvicorn streamlit yfinance pandas plotly python-dotenv aiosqlite
 ```
 
-### Create Database
+### Create database
 
 ```
 python backend/database/create_db.py
 ```
 
-### Fetch Market Data
+### Run backend
 
 ```
-python backend/ingestion/yfinance_fetch.py
-python backend/ingestion/ingest_api_data.py
+uvicorn backend.main:app --reload
 ```
 
-### Run Backend
-
-```
-python -m uvicorn backend.main:app --reload
-```
-
-### Run Frontend
+### Run frontend
 
 ```
 streamlit run frontend/app.py
@@ -172,10 +127,12 @@ streamlit run frontend/app.py
 
 ---
 
-## Example Natural Language Queries
+## Example Queries
 
-* Show companies with PE ratio less than 20
-* Find companies with revenue growth above 10%
-* Show companies with high ROE and low debt
-* Find undervalued IT stocks
-* Show stocks with strong fundamentals and positive earnings
+* Show companies with PE ratio less than 25
+* Find companies with profit margin greater than 15
+* Show IT sector companies with high revenue
+* Find companies with price growth greater than 10% last year
+* Show top 5 companies by market cap
+* Find undervalued companies with strong fundamentals
+
