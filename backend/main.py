@@ -7,6 +7,7 @@ import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel
+from typing import Optional
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -51,6 +52,7 @@ class QueryRequest(BaseModel):
     limit: int = 10
     sort_by: str = "pe_ratio"
     sort_order: str = "asc"
+    time_filter: Optional[int] = None
 
 @app.get("/")
 @limiter.limit("10/minute")
@@ -97,7 +99,7 @@ def login(request: Request, user: LoginRequest):
             # JWT Token Authentication with user_id and expiration
             token = create_access_token({"sub": db_user['username'], "user_id": db_user['id']})
             # Sensitive data like db_user fields are NOT returned in response
-            return {"access_token": token, "token_type": "bearer"}
+            return {"access_token": token, "token_type": "bearer", "user_id": db_user['id']}
     finally:
         release_connection(conn)
 
@@ -120,6 +122,13 @@ def ask_ai(request: Request, data: QueryRequest, username: str = Depends(verify_
     dsl_data["limit"] = data.limit
     dsl_data["page"] = data.page
     dsl_data["order_by"] = [{"field": data.sort_by, "direction": data.sort_order}]
+        
+    # Inject UI time filter directive if selected
+    if data.time_filter is not None and data.time_filter > 0:
+        dsl_data["time_filter"] = {
+            "type": "last_m_quarters",
+            "value": data.time_filter
+        }
         
     # 3. Validation: Validate DSL rigidly on incoming requests
     is_valid, err_msg = validate_dsl(dsl_data)

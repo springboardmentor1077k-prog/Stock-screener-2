@@ -50,36 +50,59 @@ def parse_nl_to_dsl(user_query: str) -> dict:
         if "energy" in q:
              conditions.append({"field": "sector", "operator": "IN", "value": ["Energy"]})
              
+        # Detect time filters specifically
+        time_filter = None
+        # e.g., "last 4 quarters"
+        q_match = re.search(r'last\s+(\d+)\s+quarters?', q)
+        if q_match:
+            time_filter = {
+                "type": "last_m_quarters",
+                "value": int(q_match.group(1))
+            }
+            
         # Fallback if completely unrecognizable
         if not conditions:
             conditions.append({"field": "pe_ratio", "operator": "<", "value": 50}) # Safe default
             
-        return {
+        result = {
             "where": {
                 "logic": "AND",
                 "conditions": conditions
             }
         }
+        
+        if time_filter:
+            result["time_filter"] = time_filter
+            
+        return result
     # -----------------------------------------------
         
     system_prompt = """
     You are an AI Stock Screener parser. Your ONLY job is to convert natural language to strict JSON DSL.
     
-    Allowed fields: pe_ratio, revenue, ebitda, debt_to_equity
+    Allowed fields: pe_ratio, revenue, ebitda, debt_to_equity, revenue_growth, eps_growth
     Allowed operators: =, !=, <, <=, >, >=
     
     Format:
     {
-      "conditions": [
-        {"field": "...", "operator": "...", "value": 123}
-      ],
-      "logic": "AND"
+      "where": {
+        "conditions": [
+          {"field": "...", "operator": "...", "value": 123}
+        ],
+        "logic": "AND"
+      },
+      "time_filter": {
+        "type": "last_m_quarters",
+        "value": 4
+      }
     }
     
     CRITICAL RULES:
     1. Output pure JSON only. No markdown, no conversation, no markdown blocks like ```json.
     2. Do NOT generate SQL.
     3. Do NOT make up fields. Only use the allowed fields.
+    4. "time_filter" is optional. Only include it if the user asks for a specific timeframe in quarters, e.g. "last 4 quarters".
+    5. The value for time_filter must be an integer between 1 and 12.
     """
     
     try:

@@ -10,3 +10,5 @@ PyJWT
 passlib[bcrypt]
 openai
 slowapi
+yfinance
+

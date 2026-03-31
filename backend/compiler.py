@@ -9,7 +9,9 @@ TABLE_MAPPING = {
     "pe_ratio": ("fundamentals", "pe_ratio"),
     "revenue": ("fundamentals", "revenue"),
     "ebitda": ("fundamentals", "ebitda"),
-    "debt_to_equity": ("fundamentals", "debt_to_equity")
+    "debt_to_equity": ("fundamentals", "debt_to_equity"),
+    "revenue_growth": ("historical_metrics", "revenue_growth"),
+    "eps_growth": ("historical_metrics", "eps_growth")
 }
 
 # Supported operators mapped directly to PostgreSQL equivalents
@@ -49,6 +51,17 @@ def validate_dsl(dsl_data):
         for field in dsl_data["select"]:
             if field not in TABLE_MAPPING:
                 return False, f"Invalid select field: {field}"
+
+    # Validate time_filter if present
+    if "time_filter" in dsl_data:
+        tf = dsl_data["time_filter"]
+        if not isinstance(tf, dict):
+            return False, "time_filter must be a dictionary."
+        if tf.get("type") != "last_m_quarters":
+            return False, "time_filter type must be 'last_m_quarters' for now."
+        val = tf.get("value")
+        if not isinstance(val, int) or val < 1 or val > 12:
+            return False, "time_filter value must be a positive integer between 1 and 12."
 
     return True, ""
 
@@ -95,7 +108,14 @@ def _compile_condition_tree(node, parameters):
             # Base leaf
             field = cond["field"]
             table, column = TABLE_MAPPING[field]
-            table_alias = "s" if table == "symbols" else "f"
+            
+            # Use proper table aliases
+            if table == "symbols":
+                table_alias = "s"
+            elif table == "historical_metrics":
+                table_alias = "h"
+            else:
+                table_alias = "f"
             
             operator = str(cond["operator"]).upper()
             sql_op = OPERATOR_MAP[operator]
@@ -127,26 +147,70 @@ def compile_sql_from_dsl(dsl_data, default_limit=10, default_page=1):
     
     # 1. SELECT Construction
     select_fields = dsl_data.get("select", [])
+    
+    # Check if we have a time filter
+    has_time_filter = "time_filter" in dsl_data
+    requires_historical = has_time_filter
+    
+    # Check if conditions use historical
+    if "where" in dsl_data:
+        # Simple string check for 'historical_metrics' mapped fields
+        def _check_historical_fields(node):
+            for cond in node.get("conditions", []):
+                if "logic" in cond:
+                    if _check_historical_fields(cond): return True
+                else:
+                    field = cond.get("field")
+                    if field in TABLE_MAPPING and TABLE_MAPPING[field][0] == "historical_metrics":
+                        return True
+            return False
+        if _check_historical_fields(dsl_data["where"]):
+            requires_historical = True
+
     if not select_fields:
         # Default projection
         sql_select = "SELECT s.symbol, s.company_name, s.sector, f.pe_ratio, f.revenue, f.ebitda, f.debt_to_equity"
+        if requires_historical:
+            sql_select += ", h.revenue_growth"
     else:
         select_fragments = []
         for field in select_fields:
             table, column = TABLE_MAPPING[field]
-            alias = "s" if table == "symbols" else "f"
+            if table == "symbols": alias = "s"
+            elif table == "historical_metrics": alias = "h"
+            else: alias = "f"
             select_fragments.append(f"{alias}.{column}")
         sql_select = "SELECT " + ", ".join(select_fragments)
         
-    # 2. FROM Construction (Always join base relation securely)
-    sql_from = "FROM symbols s JOIN fundamentals f ON s.id = f.company_id"
+    # 2. FROM Construction 
+    # Use LEFT JOIN for historical metrics to include companies with missing quarterly data gracefully
+    if requires_historical:
+        sql_from = "FROM symbols s JOIN fundamentals f ON s.id = f.company_id LEFT JOIN historical_metrics h ON s.id = h.company_id"
+    else:
+        sql_from = "FROM symbols s JOIN fundamentals f ON s.id = f.company_id"
     
     # 3. WHERE Construction (Recursive)
     sql_where = ""
+    where_exprs = []
+    
+    # Process AST conditions
     if "where" in dsl_data:
-        where_expr = _compile_condition_tree(dsl_data["where"], parameters)
-        if where_expr.strip():
-            sql_where = f"WHERE {where_expr}"
+        user_where_expr = _compile_condition_tree(dsl_data["where"], parameters)
+        if user_where_expr.strip():
+            where_exprs.append(f"({user_where_expr})")
+            
+    # Add time filter condition directly in WHERE clause
+    if has_time_filter:
+        tf_value = dsl_data["time_filter"]["value"]
+        months_to_look_back = tf_value * 3
+        
+        # SQL logic: h.quarter >= current_date - interval 'X months' OR h.quarter IS NULL 
+        # Including IS NULL handles cases where history data might be missing but we want the company kept.
+        time_sql = f"(h.quarter >= current_date - interval '{months_to_look_back} months' OR h.quarter IS NULL)"
+        where_exprs.append(time_sql)
+        
+    if where_exprs:
+        sql_where = "WHERE " + " AND ".join(where_exprs)
             
     # 4. ORDER BY Construction
     sql_order = ""
@@ -156,7 +220,9 @@ def compile_sql_from_dsl(dsl_data, default_limit=10, default_page=1):
         for ob in order_by_list:
             if ob["field"] in TABLE_MAPPING:
                 table, col = TABLE_MAPPING[ob["field"]]
-                alias = "s" if table == "symbols" else "f"
+                if table == "symbols": alias = "s"
+                elif table == "historical_metrics": alias = "h"
+                else: alias = "f"
                 direction = "DESC" if str(ob.get("direction", "ASC")).upper() == "DESC" else "ASC"
                 order_frags.append(f"{alias}.{col} {direction}")
         if order_frags:
