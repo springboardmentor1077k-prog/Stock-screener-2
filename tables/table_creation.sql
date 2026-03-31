@@ -253,4 +253,3 @@ CREATE INDEX idx_hist_symbol_metric
 ON historical_metrics(symbol_id, revenue, net_profit);
 
 
-

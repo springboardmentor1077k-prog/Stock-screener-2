@@ -312,26 +312,26 @@ def add_alert(data: dict, authorization: str = Header()):
 
         
         # CHECK DUPLICATE
-        
 
         cursor.execute("""
-        INSERT INTO alert_master (company_id, conditions)
-        VALUES (%s, %s)
-        RETURNING alert_id
+        SELECT alert_id FROM alert_master
+        WHERE company_id IS NOT DISTINCT FROM %s
+        AND conditions = %s
         """, (company_id, json.dumps(parsed["conditions"])))
 
-        alert_id = cursor.fetchone()[0]
+        row = cursor.fetchone()   
 
-        
-
-        user_id = get_user_id_from_token(authorization, cursor)
-
-        cursor.execute("""
-            INSERT INTO user_alerts (user_id, alert_id)
+        if row:
+            alert_id = row[0]    
+        else:
+            cursor.execute("""
+            INSERT INTO alert_master (company_id, conditions)
             VALUES (%s, %s)
-            ON CONFLICT DO NOTHING
-        """, (user_id, alert_id))
+            RETURNING alert_id
+        """, (company_id, json.dumps(parsed["conditions"])))
 
+        alert_id = cursor.fetchone()[0]   
+            
         conn.commit()
         conn.close()
 

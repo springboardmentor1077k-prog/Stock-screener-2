@@ -74,7 +74,7 @@ st.markdown("---")
 st.subheader("Your Alerts")
 
 try:
-    # 🔹 GET ALERTS
+   
     res = requests.get(
         "http://127.0.0.1:7000/get-alerts",
         headers=headers,
@@ -88,7 +88,7 @@ try:
             st.info("No alerts created yet")
 
         else:
-            # 🔹 GET STATUS
+         
             status_map = {}
 
             try:
@@ -133,9 +133,9 @@ try:
 
                 with col1:
                     if is_triggered:
-                        st.success(f"🟢 {idx}. {cond_text}")
+                        st.success(f"✅ {idx}. {cond_text}")
 
-                        # 🔔 REPEATED TOAST
+                        
                         st.toast(f" Alert {idx} triggered → {companies}")
 
                     else:
