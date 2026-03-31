@@ -151,11 +151,13 @@ with nav1:
 
 
 with nav2:
-    st.button("Discover", use_container_width=True)
+    if st.button("Discover", use_container_width=True):
+        st.switch_page("pages/query_screen.py")
 
 with nav3:
-    st.button("Markets", use_container_width=True)
-
+    if st.button("Markets", use_container_width=True):
+        st.switch_page("pages/company_details_screen.py")
+    
 with nav4:
     if st.button("Portfolio", use_container_width=True):
         st.switch_page("pages/portfolio_screen.py")
@@ -282,7 +284,7 @@ with right:
             if st.button(f"🔎 {q}", use_container_width=True):
                 run_query_backend(q)
 
-st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:50px'></div>", unsafe_allow_html=True)
 
 st.markdown("""
 <div style="

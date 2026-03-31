@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
     user_id INTEGER NOT NULL,
     company_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, company_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (company_id) REFERENCES symbols(id)
 );
@@ -175,17 +176,6 @@ CREATE TABLE IF NOT EXISTS search_history (
 cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON search_history(user_id)")
 cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_time ON search_history(created_at)")
 
-# -----------------------------
-# COMMUNITY POSTS
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    content TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-""")
 
 # -----------------------------
 # BASIC INDEXES

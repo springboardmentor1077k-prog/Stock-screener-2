@@ -195,7 +195,8 @@ with nav2:
         st.switch_page("pages/query_screen.py")
 
 with nav3:
-    st.button("Markets", use_container_width=True)
+    if st.button("Markets", use_container_width=True):
+        st.switch_page("pages/company_details_screen.py")
 
 with nav4:
     if st.button("Portfolio", use_container_width=True):

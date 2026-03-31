@@ -76,7 +76,8 @@ with nav2:
         st.switch_page("pages/query_screen.py")
 
 with nav3:
-    st.button("Markets", use_container_width=True)
+    if st.button("Markets", use_container_width=True):
+        st.switch_page("pages/company_details_screen.py")
 
 with nav4:
     if st.button("Portfolio", use_container_width=True):
@@ -87,7 +88,8 @@ with nav5:
         st.switch_page("pages/watchlist_screen.py")
 
 with nav6:
-    st.button("🕭", use_container_width=True)
+    if st.button("🕭", use_container_width=True):
+        st.switch_page("pages/alert_screen.py")
 
 with nav7:
     if st.button("Logout"):

@@ -9,7 +9,7 @@ API_URL = "http://127.0.0.1:8000"
 
 st.set_page_config(page_title="StockSense AI", layout="wide")
 
-# ---------- STYLE (UNCHANGED) ----------
+# ---------- STYLE ----------
 st.markdown("""
 <style>
 header {visibility:hidden;}
@@ -79,10 +79,12 @@ with nav2:
         st.switch_page("pages/query_screen.py")
 
 with nav3:
-    st.button("Markets", use_container_width=True)
+    if st.button("Markets", use_container_width=True):
+        st.switch_page("pages/company_details_screen.py")
 
 with nav4:
-    st.button("Portfolio", use_container_width=True)
+    if st.button("Portfolio", use_container_width=True):
+        st.switch_page("pages/portfolio_screen.py")
 
 with nav5:
     if st.button("Watchlist", use_container_width=True):

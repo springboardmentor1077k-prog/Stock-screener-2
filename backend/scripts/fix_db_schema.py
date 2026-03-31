@@ -28,7 +28,7 @@ def clean_number(val):
 def migrate_table(conn, table_name, numeric_columns):
     cursor = conn.cursor()
 
-    print(f"\n🚀 Migrating table: {table_name}")
+    print(f"\n Migrating table: {table_name}")
 
     # get all columns
     cursor.execute(f"PRAGMA table_info({table_name})")
@@ -87,17 +87,17 @@ def migrate_table(conn, table_name, numeric_columns):
 
     conn.commit()
 
-    print(f"✅ {table_name} migrated successfully!")
+    print(f" {table_name} migrated successfully!")
 
 
 def main():
     if not os.path.exists(DB_PATH):
-        print("❌ Database not found")
+        print(" Database not found!!!")
         return
 
     conn = sqlite3.connect(DB_PATH)
 
-    # 🎯 UPDATE THESE BASED ON YOUR DB
+    #  UPDATE THESE BASED ON YOUR DB
     migrate_table(conn, "fundamentals", [
         "pe_ratio",
         "market_cap",
@@ -111,7 +111,7 @@ def main():
 
     conn.close()
 
-    print("\n🎉 DATABASE FIXED SUCCESSFULLY!")
+    print("\n DATABASE FIXED SUCCESSFULLY!")
 
 
 if __name__ == "__main__":

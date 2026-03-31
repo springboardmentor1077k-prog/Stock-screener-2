@@ -20,10 +20,8 @@ from backend.utils.query_logger import log_query
 from backend.api.auth.auth_routes import router as auth_router
 from backend.api.watchlist.watchlist_routes import router as watchlist_router
 from backend.api.alerts.alerts_routes import router as alerts_router
-from backend.api.community.community_routes import router as community_router
+from backend.api.markets.markets_routes import router as markets_routes
 from backend.api.portfolio.portfolio_routes import router as portfolio_router
-
-from backend.services.sentiment_service import get_market_news
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -59,7 +57,7 @@ app.add_middleware(SlowAPIMiddleware)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(watchlist_router, prefix="/watchlist", tags=["Watchlist"])
 app.include_router(alerts_router, prefix="/alerts", tags=["Alerts"])
-app.include_router(community_router, prefix="/community", tags=["Community"])
+app.include_router(markets_routes, prefix="/markets", tags=["Markets"])
 app.include_router(portfolio_router, prefix="/portfolio", tags=["Portfolio"])
 
 
@@ -83,11 +81,6 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
-
-
-@app.get("/news/{company}")
-def get_news(company: str):
-    return get_market_news(company)
 
 
 @app.exception_handler(ValidationError)
