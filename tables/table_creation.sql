@@ -213,3 +213,44 @@ ADD CONSTRAINT unique_user_alert UNIQUE (user_id, alert_id);
 
 
 
+CREATE INDEX idx_symbol_id ON symbol(symbol_id);
+CREATE INDEX idx_symbol_name ON symbol(company_name);
+CREATE INDEX idx_symbol_symbol ON symbol(company_symbol);
+
+CREATE INDEX idx_fund_symbol ON fundamentals(symbol_id);
+CREATE INDEX idx_fund_pe ON fundamentals(pe);
+CREATE INDEX idx_fund_peg ON fundamentals(peg);
+CREATE INDEX idx_fund_promoter ON fundamentals(promoter_holding);
+CREATE INDEX idx_fund_ebitda ON fundamentals(ebitda);
+CREATE INDEX idx_fund_cash ON fundamentals(debt_free_cash);
+
+
+CREATE INDEX idx_hist_symbol ON historical_metrics(symbol_id);
+CREATE INDEX idx_hist_date ON historical_metrics(reported_date);
+CREATE INDEX idx_hist_symbol_date 
+ON historical_metrics(symbol_id, reported_date DESC);
+
+
+CREATE INDEX idx_hist_partition 
+ON historical_metrics(symbol_id, financial_year, quarter);
+
+
+CREATE INDEX idx_user_alerts_user 
+ON user_alerts(user_id);
+CREATE INDEX idx_user_alerts_alert 
+ON user_alerts(alert_id);
+CREATE INDEX idx_user_alerts_active 
+ON user_alerts(user_id, is_active);
+
+
+CREATE INDEX idx_alert_master_company 
+ON alert_master(company_id);
+
+
+CREATE INDEX idx_fund_symbol_pe 
+ON fundamentals(symbol_id, pe);
+CREATE INDEX idx_hist_symbol_metric 
+ON historical_metrics(symbol_id, revenue, net_profit);
+
+
+
