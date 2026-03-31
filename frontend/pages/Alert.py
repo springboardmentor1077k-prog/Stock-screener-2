@@ -46,7 +46,7 @@ if st.button("Create Alert"):
     else:
         try:
             res = requests.post(
-                "http://127.0.0.1:7000/add-alert",
+                "http://127.0.0.1:7000/alerts/add-alert",
                 json={"query": query},
                 headers=headers,
                 timeout=5
@@ -76,7 +76,7 @@ st.subheader("Your Alerts")
 try:
    
     res = requests.get(
-        "http://127.0.0.1:7000/get-alerts",
+        "http://127.0.0.1:7000/alerts/get-alerts",
         headers=headers,
         timeout=5
     )
@@ -93,7 +93,7 @@ try:
 
             try:
                 res_status = requests.get(
-                    "http://127.0.0.1:7000/check-alerts",
+                    "http://127.0.0.1:7000/alerts/check-alerts",
                     headers=headers,
                     timeout=5
                 )
@@ -145,7 +145,7 @@ try:
                     if st.button("Delete", key=f"del_{alert['id']}"):
                         try:
                             res = requests.delete(
-                                f"http://127.0.0.1:7000/delete-alert/{alert['id']}",
+                                f"http://127.0.0.1:7000/alerts/delete-alert/{alert['id']}",
                                 headers=headers
                             )
 

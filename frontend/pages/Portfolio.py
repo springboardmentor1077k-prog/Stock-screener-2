@@ -24,7 +24,7 @@ headers = {
 }
 
 response = requests.post(
-    "http://127.0.0.1:7000/get-portfolio",
+    "http://127.0.0.1:7000/portfolio/get-portfolio",
     headers=headers
 )
 
@@ -127,7 +127,7 @@ if data.get("status") == "success":
             }
 
             res = requests.post(
-                "http://127.0.0.1:7000/sell-stock",
+                "http://127.0.0.1:7000/trade/sell-stock",
                 json=payload,
                 headers=headers
             )
@@ -147,7 +147,7 @@ if data.get("status") == "success":
             }
 
             requests.post(
-                "http://127.0.0.1:7000/sell-stock",
+                "http://127.0.0.1:7000/trade/sell-stock",
                 json=payload,
                 headers=headers
             )
@@ -155,4 +155,5 @@ if data.get("status") == "success":
             st.success("All shares sold")
             st.rerun()      
 
+    
 logout_button()

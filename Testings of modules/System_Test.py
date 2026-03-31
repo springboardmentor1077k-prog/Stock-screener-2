@@ -2,8 +2,8 @@ import pytest
 import requests
 
 
-AUTH_URL = "http://127.0.0.1:8000"
-QUERY_URL = "http://127.0.0.1:9000"
+AUTH_URL = "http://127.0.0.1:7000"
+QUERY_URL = "http://127.0.0.1:7000"
 APP_URL = "http://127.0.0.1:7000"
 
 

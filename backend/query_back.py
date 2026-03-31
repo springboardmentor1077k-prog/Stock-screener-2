@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from llm_parser import generate_dsl
 from dsl_validator import validate_dsl
@@ -61,17 +61,108 @@ def serialize_results(results):
 
 
 
+
+def validate_dsl_rules(dsl: dict, nl_query: str = ""):
+
+    print("VALIDATING DSL:", dsl)
+    if not dsl:
+        query = nl_query.lower()
+
+        
+        if any(word in query for word in ["tcs", "infosys", "reliance", "hdfc"]):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "COMPANY_NOT_ALLOWED",
+                    "message": "Company-specific queries are not allowed.",
+                    "suggestion": "Use only financial filters like: pe less than 20"
+                }
+            )
+
+        
+        if "growth" in query and not any(op in query for op in [">", "<", "above", "below"]):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "GROWTH_DIRECTION_MISSING",
+                    "message": "Growth direction not specified.",
+                    "suggestion": "Example: revenue growth greater than 10%"
+                }
+            )
+
+        import re
+        match = re.search(r"\b(\d+)\s*quarter", query)
+        if match and int(match.group(1)) > 4:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "TIME_EXCEEDS_LIMIT",
+                    "message": "Maximum allowed time range is 4 quarters.",
+                    "suggestion": "Use up to last 4 quarters"
+                }
+            )
+
+       
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "QUERY_NOT_UNDERSTOOD",
+                "message": "We could not understand your query.",
+                "suggestion": "Try: pe less than 20 AND peg greater than 1"
+            }
+        )
+
+    
+
+    if "company" in dsl:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "COMPANY_NOT_ALLOWED",
+                "message": "Company-specific queries are not allowed.",
+                "suggestion": "Use only financial filters"
+            }
+        )
+
+    conditions = dsl.get("conditions", [])
+
+    if any("growth" in c.get("field", "") for c in conditions):
+        if not any(c.get("operator") in [">", "<", "="] for c in conditions):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "GROWTH_DIRECTION_MISSING",
+                    "message": "Growth direction not specified.",
+                    "suggestion": "Example: revenue_growth greater than 10"
+                }
+            )
+
+    time_filter = dsl.get("time_filter")
+
+    if time_filter and time_filter.get("value", 0) > 4:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "TIME_EXCEEDS_LIMIT",
+                "message": "Maximum allowed time range is 4 quarters.",
+                "suggestion": "Use up to last 4 quarters"
+            }
+        )
+
+    return True
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI()
+router = APIRouter()
 
 class QueryRequest(BaseModel):
     nl_query: str
 
 
-@app.post("/query")
+@router.post("/query")
 def query_endpoint(request: QueryRequest):
     
     # Step 1: Generate DSL
@@ -87,15 +178,20 @@ def query_endpoint(request: QueryRequest):
 
         dsl = generate_dsl(nl_query)
         
-        if not dsl:
-            raise HTTPException(
-            status_code=422,
-            detail={
-                "status": "error",
-                "code": "QUERY_NOT_UNDERSTOOD",
-                "message": "We could not understand your query. Please retype it clearly using supported financial metrics."
-            }
-        )
+        # if not dsl:
+        #     raise HTTPException(
+        #     status_code=422,
+        #     detail={
+        #         "status": "error",
+        #         "code": "QUERY_NOT_UNDERSTOOD",
+        #         "message": "We could not understand your query. Please retype it clearly using supported financial metrics."
+        #     }
+        # )
+        
+        
+        
+        
+        validate_dsl_rules(dsl, nl_query)
         print("DSL OUTPUT:", dsl)
         logger.info("Generated DSL:\n%s", json.dumps(dsl, indent=2))
 

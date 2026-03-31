@@ -155,26 +155,6 @@ def validate_dsl(dsl: dict):
             validation_error = validate_conditions(dsl, ALL_FIELDS, dsl)
             if validation_error:
                 return validation_error
-
-        # ensure time_filter exists for growth
-            # def has_growth_field(node):
-            #     for cond in node.get("conditions", []):
-            #         if "conditions" in cond:
-            #             if has_growth_field(cond):
-            #                 return True
-            #         else:
-            #             if cond.get("field", "").endswith("_growth"):
-            #                 return True
-            #     return False
-                
-                
-            # has_growth = has_growth_field(dsl)
-
-            # if has_growth and "time_filter" not in dsl:
-            #     return error(
-            #         "MISSING_TIME_FILTER",
-            #         "Growth queries require time_filter (e.g. last 4 quarters)"
-            #     )h
                 
         else:
                 analysis = dsl.get("analysis")
@@ -204,11 +184,7 @@ def validate_dsl(dsl: dict):
                     "INVALID_DIRECTION",
                     "Direction must be increase or decrease"
                     )
-
-            
-            
-            
-            
+      
             
             
             

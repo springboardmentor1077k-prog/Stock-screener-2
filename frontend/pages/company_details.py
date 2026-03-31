@@ -4,6 +4,7 @@ import random
 import requests
 import pandas as pd
 from ui_components.footer import header
+import yfinance as yf
 
 header()
 
@@ -19,7 +20,7 @@ if not company_name:
         }
 
         res = requests.post(
-            "http://127.0.0.1:7000/get-portfolio",
+            "http://127.0.0.1:7000/portfolio/get-portfolio",
             headers=headers,
             timeout=300
         )
@@ -48,7 +49,7 @@ if not company_name:
 # st.title(f"Company Details: {company_name}")
 
 response = requests.post(
-    "http://127.0.0.1:7000/company-details",
+    "http://127.0.0.1:7000/company/company-details",
     json={"symbol": company_name}
 )
 
@@ -70,7 +71,7 @@ if data:
 
     with col3:
         market_cap = data["market_cap"]
-        st.metric("Market Cap", f"₹ {market_cap/1e12:.2f} T")
+        st.metric("Market Cap", f"₹{market_cap/1e12:.2f} T")
 
 
     st.write(f"**Sector:** {data['sector']}")
@@ -113,13 +114,27 @@ st.dataframe(df_metrics, width="stretch")
 
 
 #prices
-current_price = round(random.uniform(1000, 3000), 2)
+def get_live_price(symbol):
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period="1d")
+    return float(data["Close"].iloc[-1])
 
+
+
+current_price = round(float(get_live_price(company_name)), 4)
+
+
+
+    
 st.subheader("Buy Stock")
 
-st.write(f"Current Price: ₹ {current_price}")
-
-
+if current_price:
+    current_price = round(float(current_price), 4)
+    
+else:
+     current_price = 1500.7200
+    
+st.write(f"Current Price: ₹ {current_price:.4f}")
 buy_qty = st.number_input(
     "Select Quantity",
     min_value=1,
@@ -146,7 +161,7 @@ if st.button("Buy Stock"):
     }
 
     res = requests.post(
-        "http://127.0.0.1:7000/buy-stock",
+        "http://127.0.0.1:7000/trade/buy-stock",
         json=payload,
         headers=headers
     )

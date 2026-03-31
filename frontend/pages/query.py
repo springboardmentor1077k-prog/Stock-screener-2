@@ -25,7 +25,7 @@ log.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-BACKEND_URL = "http://localhost:9000/query"
+BACKEND_URL = "http://127.0.0.1:7000/query/query"
 
 if "loading" not in st.session_state:
     st.session_state.loading = False
@@ -46,6 +46,8 @@ st.title("AI Powered Stock Screener")
 
 nl_query = st.text_input("Enter your prompt here")
 
+st.write("Only enter Financial Queries")
+
 st.markdown("""
 ### Some Frequently Asked Queries
 
@@ -57,8 +59,6 @@ submit_btn = st.button(
     "Submit",
     disabled=st.session_state.loading
 )
-
-
 
 
 if submit_btn:

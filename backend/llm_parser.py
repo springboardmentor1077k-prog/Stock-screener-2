@@ -236,6 +236,21 @@ show companies with pe < 50 and ebitda for the past 3 quarters
   }},
  "limit":6
   }}
+STRICT RESTRICTION:
+
+1. COMPANY NAMES ARE NOT ALLOWED.
+
+If the query contains:
+- any company name (e.g., tcs, infosys, reliance, etc.)
+- any stock symbol
+
+→ IMMEDIATELY RETURN:
+{{ "error":"COMPANY_NOT_ALLOWED" }}
+
+Invalid queries:
+- "pe of tcs"
+- "infosys pe > 10"
+- "show reliance fundamentals"
 
   Rules:
   Return JSON only.

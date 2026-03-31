@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta
 import psycopg2
@@ -7,11 +7,11 @@ import jwt
 # import os
 
 
-SECRET_KEY = "supersecretkey"   # Move to env variable in production
+SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_MINUTES = 100
+TOKEN_EXPIRE_MINUTES = 3000
 
-app = FastAPI()
+router = APIRouter()
 
 def get_connection():
     return psycopg2.connect(
@@ -60,7 +60,7 @@ def create_access_token(data: dict):
 # REGISTER ENDPOINT
 
 
-@app.post("/register")
+@router.post("/register")
 def register(user: RegisterUser):
     conn = get_connection()
     cursor = conn.cursor()
@@ -89,7 +89,7 @@ def register(user: RegisterUser):
 # LOGIN ENDPOINT
 
 
-@app.post("/login")
+@router.post("/login")
 def login(user: LoginUser):
     conn = get_connection()
     cursor = conn.cursor()
@@ -142,9 +142,9 @@ def verify_token(authorization: str = Header(...)):
 # PROTECTED ROUTE EXAMPLE
 
 
-@app.get("/protected")
+@router.get("/protected")
 def protected_route(user_data: dict = Depends(verify_token)):
     return {
-        "message": "You can now use the application",
+        "message": "You can now use the routerlication",
         "user": user_data
     }

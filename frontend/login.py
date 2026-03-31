@@ -11,7 +11,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "http://127.0.0.1:7000"
 
 if "mode" not in st.session_state:
     st.session_state.mode = "Login"
@@ -40,18 +40,19 @@ if st.session_state.mode == "Login":
 
     if st.button("Login"):
         response = requests.post(
-            f"{BACKEND_URL}/login",
+            f"{BACKEND_URL}/auth/login",
             json={"email": email, "password": password}
+           
         )
 
         if response.status_code == 200:
             
-            
+
             token = response.json()["access_token"]
 
             st.session_state["token"] = token
             st.query_params["token"] = token
-
+            print(response.json)
             st.success("Login Successful")
 
 
@@ -64,7 +65,7 @@ else:
 
     if st.button("Register"):
         response = requests.post(
-            f"{BACKEND_URL}/register",
+            f"{BACKEND_URL}/auth/register",
             json={
                 "email": email,
                 "name": name,

@@ -146,6 +146,7 @@ SELECT * FROM historical_metrics;
 SELECT * FROM users;
 SELECT * FROM portfolio;
 SELECT * FROM alerts;
+SELECT * FROM company_details;
 
 TRUNCATE Table portfolio;
 
@@ -253,3 +254,13 @@ CREATE INDEX idx_hist_symbol_metric
 ON historical_metrics(symbol_id, revenue, net_profit);
 
 
+INSERT INTO company_details 
+(symbol_id, description, founded_year, company_type, market_cap)
+VALUES
+
+(20,
+'Hindustan Unilever Limited (HUL) is one of India''s largest fast-moving consumer goods (FMCG) companies, offering a wide range of products including foods, beverages, cleaning agents, personal care products, and water purifiers. It is a subsidiary of Unilever and has a strong distribution network across urban and rural India.',
+1933,
+'Product-based',
+6000000000000
+);

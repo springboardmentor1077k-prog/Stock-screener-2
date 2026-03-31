@@ -101,8 +101,9 @@ def compile_conditions(node):
 
 
 
+
 def build_safe_query(dsl):
-    
+
     fields = set()
 
     def collect(node):
@@ -113,25 +114,39 @@ def build_safe_query(dsl):
                 fields.add(cond["field"])
 
     collect(dsl)
-    
+
     growth_fields = [f for f in fields if is_growth_field(f)]
-    
-    
+
+   
+    # GROWTH QUERY
+   
     if growth_fields:
-        fields = set()
-        
 
         base_metric = growth_fields[0].replace("_growth", "")
 
         where_sql, values, tables = compile_conditions(dsl)
-        
+
+       
+        select_fields = [
+            "s.company_symbol",
+            "s.company_name",
+            f"h.{base_metric}",
+            "h.growth"
+        ]
+
+        # include filter fields (like pe)
+        for cond in dsl["conditions"]:
+            field = cond.get("field")
+
+            if not is_growth_field(field) and field in FIELD_TABLE_MAP:
+                table, alias = FIELD_TABLE_MAP[field]
+                select_fields.append(f"{alias}.{field}")
+
+        select_fields = list(set(select_fields))
 
         query = f"""
         SELECT DISTINCT ON (s.company_symbol)
-            s.company_symbol,
-            s.company_name,
-            h.{base_metric},
-            h.growth
+            {", ".join(select_fields)}
         FROM symbol s
         JOIN (
             SELECT
@@ -162,116 +177,88 @@ def build_safe_query(dsl):
                         ), 0)
                     ) * 100
                 END AS growth
-
             FROM historical_metrics
         ) h ON s.symbol_id = h.symbol_id
         """
-        
-        
+
+        # joins
         for table_name, alias in tables:
             if alias != "h":
                 query += f" JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
 
-
         query += " WHERE " + where_sql
-
-        # 🔥 avoid NULL growth
         query += " AND h.growth IS NOT NULL"
 
-        # 🔥 time filter
+        # time filter
         if "time_filter" in dsl:
             quarters = dsl["time_filter"]["value"]
             query += f"""
-            AND h.reported_date >=
-            CURRENT_DATE - INTERVAL '{quarters * 3} months'
+            AND h.reported_date >= CURRENT_DATE - INTERVAL '{quarters * 3} months'
             """
 
         query += f" LIMIT {dsl.get('limit', 50)}"
 
         return query, values
 
+   
+    # FUNDAMENTALS
+   
     elif dsl["entity"] == "fundamentals":
 
         where_sql, values, tables = compile_conditions(dsl)
-        
-        
-        fields = set()
-        
-        for cond in dsl["conditions"]:
-            if "field" in cond:
-                fields.add(cond["field"])
-                
+
+        fields = set(cond["field"] for cond in dsl["conditions"] if "field" in cond)
+
         metrics = []
         for field in fields:
             table_name, alias = FIELD_TABLE_MAP[field]
             metrics.append(f"{alias}.{field}")
 
-        fundamental_metrics = ", ".join(metrics)
+        query = f"""
+        SELECT DISTINCT ON (s.company_symbol)
+            s.company_symbol, s.company_name, {", ".join(metrics)}
+        FROM symbol s
+        """
 
-        query = f"SELECT DISTINCT ON (s.company_symbol) s.company_symbol, s.company_name, {fundamental_metrics} FROM symbol s "
-
-        # Join tables depending on metrics used
         for table_name, alias in tables:
-            query += f"JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
+            query += f" JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
 
         query += " WHERE " + where_sql
-
-        # time filter
-        if "time_filter" in dsl and any(t[0] == "historical_metrics" for t in tables):
-
-            tf = dsl["time_filter"]
-
-            if tf["type"] == "last_n_quarters":
-
-                quarters = tf["value"]
-
-                query += f"""
-                AND h.reported_date >=
-                CURRENT_DATE - INTERVAL '{quarters * 3} months'
-                """
-
         query += f" LIMIT {dsl.get('limit', 50)}"
 
         return query, values
-    
+
+   
+    # SYMBOL (MIXED)
+   
     elif dsl["entity"] == "symbol":
 
         where_sql, values, tables = compile_conditions(dsl)
-        fields = set()
-        
-        for cond in dsl["conditions"]:
-            if "field" in cond:
-                fields.add(cond["field"])
-                
+
+        fields = set(cond["field"] for cond in dsl["conditions"] if "field" in cond)
+
         metrics = []
         for field in fields:
             table_name, alias = FIELD_TABLE_MAP[field]
             metrics.append(f"{alias}.{field}")
 
-        selected_metrics = ", ".join(metrics)
+        query = f"""
+        SELECT DISTINCT ON (s.company_symbol)
+            s.company_symbol, s.company_name, {", ".join(metrics)}
+        FROM symbol s
+        """
 
-        query = f"SELECT DISTINCT ON (s.company_symbol) s.company_symbol, s.company_name, {selected_metrics} FROM symbol s "
-
-    # join required tables
         for table_name, alias in tables:
-            query += f"JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
+            query += f" JOIN {table_name} {alias} ON s.symbol_id = {alias}.symbol_id "
 
         query += " WHERE " + where_sql
 
-    # time filter
         if "time_filter" in dsl and any(t[1] == "h" for t in tables):
+            quarters = dsl["time_filter"]["value"]
+            query += f"""
+            AND h.reported_date >= CURRENT_DATE - INTERVAL '{quarters * 3} months'
+            """
 
-            tf = dsl["time_filter"]
-
-            if tf["type"] == "last_n_quarters":
-
-                quarters = tf["value"]
-
-                query += f"""
-                AND h.reported_date >=
-                CURRENT_DATE - INTERVAL '{quarters*3} months'
-                """
-
-        query += f" LIMIT {dsl.get('limit',50)}"
+        query += f" LIMIT {dsl.get('limit', 50)}"
 
         return query, values
