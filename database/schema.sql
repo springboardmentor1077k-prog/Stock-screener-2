@@ -67,3 +67,39 @@ CREATE TABLE IF NOT EXISTS portfolio (
 -- Fast lookup indexes for portfolio
 CREATE INDEX idx_portfolio_user ON portfolio(user_id);
 CREATE INDEX idx_portfolio_symbol ON portfolio(symbol);
+
+-- ==========================================
+-- Task 1: PERFORMANCE INDEXES
+-- ==========================================
+
+-- Index on fundamentals.company_id for fast joins between symbols and fundamentals
+CREATE INDEX IF NOT EXISTS idx_fundamentals_company ON fundamentals(company_id);
+
+-- Index on fundamentals.pe_ratio since it is queried most often for filtering
+CREATE INDEX IF NOT EXISTS idx_fundamentals_pe ON fundamentals(pe_ratio);
+
+-- Index on historical_metrics.company_id for fast left join performance
+CREATE INDEX IF NOT EXISTS idx_historical_company ON historical_metrics(company_id);
+
+-- Index on historical_metrics.quarter since time filter queries use it heavily
+CREATE INDEX IF NOT EXISTS idx_historical_quarter ON historical_metrics(quarter);
+
+-- Index on portfolio.user_id so portfolio lookups are instant
+-- (Note: idx_portfolio_user already handles portfolio user_id lookup above, ensuring instant lookup)
+CREATE INDEX IF NOT EXISTS idx_portfolio_user_id ON portfolio(user_id);
+
+-- Index on symbols.symbol since every query looks up by symbol or uses it for linking
+CREATE INDEX IF NOT EXISTS idx_symbols_symbol ON symbols(symbol);
+
+-- Composite index on historical_metrics(company_id, quarter) since they are always used together in joins
+CREATE INDEX IF NOT EXISTS idx_historical_company_quarter ON historical_metrics(company_id, quarter);
+
+-- ==========================================
+-- Bottleneck 2: Hourly Pre-computed Query Cache
+-- ==========================================
+CREATE TABLE IF NOT EXISTS screener_cache (
+    id SERIAL PRIMARY KEY,
+    cache_key VARCHAR(100) UNIQUE NOT NULL,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

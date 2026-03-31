@@ -5,6 +5,29 @@ import time
 
 API_BASE = "http://127.0.0.1:8000"
 
+# Bottleneck 4: Persistent Requests Session
+@st.cache_resource
+def get_session():
+    return requests.Session()
+
+# Bottleneck 4: Fragment decorator to prevent whole page re-run
+@st.fragment
+def render_results_table(data_list):
+    if data_list and len(data_list) > 0:
+        df = pd.DataFrame(data_list)
+        styled_df = df.style.set_properties(**{'background-color': '#1E293B', 'color': '#E2E8F0', 'border-color': 'rgba(255,255,255,0.05)'})
+        st.dataframe(styled_df, width='stretch', hide_index=True)
+    else:
+        st.info("ℹ️ Your strict logic criteria evaluated to an empty local dataset.")
+
+# Bottleneck 4: Memoize heavy requests automatically 
+@st.cache_data(ttl=60)
+def fetch_screener_data(payload, token):
+    headers = {"Authorization": f"Bearer {token}"}
+    sess = get_session()
+    res = sess.post(f"{API_BASE}/ask_ai", json=payload, headers=headers)
+    return res.status_code, res.json()
+
 st.set_page_config(page_title="Vault Engine Pro", page_icon="🏦", layout="wide")
 
 # ==========================================
@@ -200,7 +223,26 @@ else:
         st.caption("• **Database:** PostgreSQL Encrypted")
         st.caption("• **Defense:** JWT + Anti-Injection Layer")
         
-        st.write("<br>", unsafe_allow_html=True)
+        st.write("---")
+        st.markdown("<p style='color: #3B82F6; font-weight: 600; margin-bottom: 5px;'>⚡ Cache Telemetry</p>", unsafe_allow_html=True)
+        try:
+            cache_res = requests.get(f"{API_BASE}/cache/stats")
+            if cache_res.status_code == 200:
+                cache_data = cache_res.json()
+                st.caption(f"• **LLM Cache:** {cache_data.get('llm', 0)} entries")
+                st.caption(f"• **Price Cache:** {cache_data.get('prices', 0)} entries ({cache_data.get('price_hits', 0)}H | {cache_data.get('price_misses', 0)}M)")
+                st.caption(f"• **SQL Cache:** {cache_data.get('sql', 0)} entries")
+                st.caption(f"• **Results Cache:** {cache_data.get('db', 0)} entries")
+                
+            if st.button("🧹 Clear All Caches", use_container_width=True):
+                requests.post(f"{API_BASE}/cache/clear_all")
+                st.success("Caches flushed successfully.")
+                time.sleep(0.5)
+                st.rerun()
+        except Exception:
+            st.caption("Cache telemetry unavailable")
+            
+        st.write("---")
         view_selection = st.radio("Navigation Menu", ["🔍 Market Screener", "📊 My Portfolio"])
         st.write("<br>", unsafe_allow_html=True)
 
@@ -265,28 +307,53 @@ else:
                     "page": page,
                     "time_filter": selected_time_filter
                 }
-                res = requests.post(f"{API_BASE}/ask_ai", json=payload, headers=headers)
+                status_code, data = fetch_screener_data(payload, st.session_state['token'])
                 
-                if res.status_code == 200:
-                    data = res.json()
+                if status_code == 200:
                     st.success("✅ Deterministic compilation complete. Results strictly parameterized & fetched.")
                     
-                    if "data" in data and len(data["data"]) > 0:
-                        df = pd.DataFrame(data["data"])
-                        # Apply some styling to dataframe
-                        styled_df = df.style.set_properties(**{'background-color': '#1E293B', 'color': '#E2E8F0', 'border-color': 'rgba(255,255,255,0.05)'})
-                        st.dataframe(styled_df, width='stretch', hide_index=True)
-                    else:
-                        st.info("ℹ️ Your strict logic criteria evaluated to an empty local dataset.")
+                    # Renders ONLY the dataframe natively without reloading entire sidebar/UI tree
+                    render_results_table(data.get("data", []))
                         
                     with st.expander("🛠️ Advanced Compiler Provenance Logs"):
                         st.write("### 📜 Intermediate Validated Node AST (JSON DSL)")
                         st.json(data.get("dsl", {}))
                         
-                elif res.status_code == 401:
+                elif status_code == 401:
                     st.error("Authentication expired. Terminate session and re-authenticate.")
                 else:
                     try:
-                        st.error(f"Execution Halt: Code {res.status_code} - {res.json().get('detail')}")
+                        st.error(f"Execution Halt: Code {status_code} - {data.get('detail')}")
                     except:
-                        st.error(f"Fatal Compiler Interruption Code {res.status_code}")
+                        st.error(f"Fatal Compiler Interruption Code {status_code}")
+
+# ==========================================
+# FINAL TASK: SECURE DEBUG PERFORMANCE SUMMARY
+# ==========================================
+# URL condition: ?debug=true
+# Since st.experimental_get_query_params is deprecated, using modern st.query_params
+if "debug" in st.query_params and st.query_params["debug"].lower() == "true":
+    st.write("---")
+    st.markdown("## ⚙️ Engineering Telemetry Dashboard")
+    st.caption("Active connection to `/performance/dashboard` background task runner")
+    
+    try:
+        sess = get_session()
+        p_res = sess.get(f"{API_BASE}/performance/dashboard?debug=true")
+        if p_res.status_code == 200:
+            p_data = p_res.json()
+            m_c1, m_c2, m_c3 = st.columns(3)
+            m_c1.metric("10-Query Avg Latency", f"{p_data.get('avg_response_time_ms', 0)} ms")
+            m_c2.metric("Cache Hit Rate", f"{p_data.get('cache_hit_rate_pct', 0)} %")
+            m_c3.metric("Live Postgres Connections", f"{p_data.get('active_db_connections', 0)}")
+            
+            st.write("### 🐢 Last 5 Detected Slow Queries")
+            slow_q = p_data.get("slow_queries", [])
+            if slow_q:
+                st.table(slow_q)
+            else:
+                st.success("No slow queries (> 1000ms) detected!")
+        else:
+            st.error(p_res.json().get("detail", "Not available"))
+    except Exception as e:
+        st.error("Dashboard backend unavailable.")

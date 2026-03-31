@@ -12,6 +12,17 @@ except ImportError:
 PRICE_CACHE = {}
 CACHE_EXPIRY_SECONDS = 60
 
+# Task 4: Cache hit/miss statistics
+PRICE_CACHE_HITS = 0
+PRICE_CACHE_MISSES = 0
+
+def get_price_cache_stats() -> dict:
+    return {
+        "entries": len(PRICE_CACHE),
+        "hits": PRICE_CACHE_HITS,
+        "misses": PRICE_CACHE_MISSES
+    }
+
 def clear_price_cache():
     """Clears all cached prices when user requests a refresh."""
     global PRICE_CACHE
@@ -40,11 +51,17 @@ def get_current_price(symbol: str) -> float:
     original_symbol = symbol.upper().strip()
     formatted_symbol = format_symbol_for_yfinance(original_symbol)
     
+    global PRICE_CACHE_HITS, PRICE_CACHE_MISSES
     now = time.time()
     if original_symbol in PRICE_CACHE:
         cache_entry = PRICE_CACHE[original_symbol]
         if now - cache_entry["timestamp"] < CACHE_EXPIRY_SECONDS:
+            PRICE_CACHE_HITS += 1
             return cache_entry["price"]
+        else:
+            PRICE_CACHE_MISSES += 1
+    else:
+        PRICE_CACHE_MISSES += 1
             
     try:
         ticker = yf.Ticker(formatted_symbol)
@@ -86,12 +103,15 @@ def get_multiple_prices(symbols: list) -> dict:
     results = {}
     symbols_to_fetch = []
     
+    global PRICE_CACHE_HITS, PRICE_CACHE_MISSES
     # 1. Check cache first
     for sym in symbols:
         sym_upper = sym.upper().strip()
         if sym_upper in PRICE_CACHE and (now - PRICE_CACHE[sym_upper]["timestamp"] < CACHE_EXPIRY_SECONDS):
+            PRICE_CACHE_HITS += 1
             results[sym_upper] = PRICE_CACHE[sym_upper]["price"]
         else:
+            PRICE_CACHE_MISSES += 1
             symbols_to_fetch.append(sym_upper)
             
     if not symbols_to_fetch:

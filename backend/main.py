@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import logging
 import asyncio
@@ -6,23 +7,50 @@ import redis
 import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from apscheduler.schedulers.background import BackgroundScheduler
 
-from backend.db import get_connection, release_connection
+from backend.db import get_connection, release_connection, fetch_cached_screener_results, get_results_cache_size, clear_results_cache, get_active_db_connections, get_recent_slow_queries
 from backend.auth import create_access_token, verify_token, get_password_hash, verify_password
-from backend.llm import parse_nl_to_dsl
-from backend.compiler import validate_dsl, compile_sql_from_dsl
+from backend.llm import parse_nl_to_dsl, get_llm_cache_size, clear_llm_cache, get_llm_cache_stats
+from backend.compiler import validate_dsl, compile_sql_from_dsl, get_sql_cache_size, clear_sql_cache
+from backend.portfolio_logic import get_price_cache_stats, clear_price_cache
 from backend.portfolio_routes import router as portfolio_router
 logging.basicConfig(level=logging.INFO)
+
+# Bottleneck 4 / Dashboard Tracking
+RESPONSE_TIMES_MS = []
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AI Stock Screener API")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Bottleneck 3: Compress API responses
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration_ms = (time.time() - start_time) * 1000
+    
+    # Bottleneck 3: Response time header
+    response.headers["X-Process-Time"] = f"{duration_ms:.2f}ms"
+    
+    # Dashboard Tracking (Last 10 average)
+    if not request.url.path.startswith("/cache"):
+        RESPONSE_TIMES_MS.insert(0, duration_ms)
+        if len(RESPONSE_TIMES_MS) > 10:
+            RESPONSE_TIMES_MS.pop()
+            
+    return response
+
 app.include_router(portfolio_router)
 # Setup Redis safely
 try:
@@ -49,7 +77,8 @@ class RegisterRequest(BaseModel):
 class QueryRequest(BaseModel):
     query: str
     page: int = 1
-    limit: int = 10
+    # Bottleneck 3: Default limit explicitly trimmed to 20 for Network bandwidth optimizations
+    limit: int = 20
     sort_by: str = "pe_ratio"
     sort_order: str = "asc"
     time_filter: Optional[int] = None
@@ -147,12 +176,19 @@ def ask_ai(request: Request, data: QueryRequest, username: str = Depends(verify_
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             # We strictly pass parameters separated from SQL securely
-            cursor.execute(sql_query, tuple(parameters))
-            results = cursor.fetchall()
+            results = fetch_cached_screener_results(cursor, sql_query, tuple(parameters))
             
             # Format results so any Decimals are handled nicely by json dumps natively
             clean_results = [{k: float(v) if not isinstance(v, str) and v is not None else v for k, v in row.items()} for row in results]
             
+            # Bottleneck 3: Strip unselected payload columns completely if specifically requested
+            if "select" in dsl_data and isinstance(dsl_data["select"], list) and len(dsl_data["select"]) > 0:
+                allowed_cols = set(dsl_data["select"] + ["company_name", "symbol", "sector"])
+                filtered_results = []
+                for row in clean_results:
+                    filtered_results.append({k: v for k, v in row.items() if k in allowed_cols})
+                clean_results = filtered_results
+
             # Security: Do NOT expose internal sql_query or parameters to client API responses
             response_data = {"dsl": dsl_data, "data": clean_results, "source": "Database"}
             
@@ -229,6 +265,96 @@ def get_fundamentals(request: Request, symbol: str, username: str = Depends(veri
     finally:
         release_connection(conn)
 
+# ==========================================
+# Task 5: Cache Endpoints
+# ==========================================
+@app.get("/cache/stats")
+def cache_stats():
+    price_stats = get_price_cache_stats()
+    llm_stats = get_llm_cache_stats()
+    
+    return {
+        "llm": get_llm_cache_size(),
+        "sql": get_sql_cache_size(),
+        "db": get_results_cache_size(),
+        "prices": price_stats["entries"],
+        "price_hits": price_stats["hits"],
+        "price_misses": price_stats["misses"],
+        "llm_hits": llm_stats["hits"],
+        "llm_misses": llm_stats["misses"]
+    }
+
+@app.post("/cache/clear_all")
+def clear_all_caches():
+    clear_llm_cache()
+    clear_sql_cache()
+    clear_results_cache()
+    clear_price_cache()
+    return {"message": "All caches cleared successfully"}
+
+# ==========================================
+# Bottleneck 4 / Dashboard: Performance Endpoint
+# ==========================================
+@app.get("/performance/dashboard")
+def get_performance_dashboard(debug: str = "false"):
+    if debug.lower() != "true":
+        raise HTTPException(status_code=403, detail="Debug mode not active.")
+        
+    avg_response = sum(RESPONSE_TIMES_MS) / len(RESPONSE_TIMES_MS) if len(RESPONSE_TIMES_MS) > 0 else 0
+    
+    price_stats = get_price_cache_stats()
+    llm_stats = get_llm_cache_stats()
+    
+    total_db_cache_hits = price_stats['hits'] + llm_stats['hits']
+    total_db_cache_misses = price_stats['misses'] + llm_stats['misses']
+    total_ops = total_db_cache_hits + total_db_cache_misses
+    
+    hit_rate = (total_db_cache_hits / total_ops * 100) if total_ops > 0 else 0.0
+    
+    return {
+        "avg_response_time_ms": round(avg_response, 2),
+        "cache_hit_rate_pct": round(hit_rate, 2),
+        "active_db_connections": get_active_db_connections(),
+        "slow_queries": get_recent_slow_queries()
+    }
+
+# ==========================================
+# Bottleneck 2: Pre-compute background logic
+# ==========================================
+def refresh_screener_summary():
+    """APScheduler Background job running every hour to pre-compute database aggregation."""
+    logging.info("APScheduler: Starting hour pre-compute refresh...")
+    conn = get_connection()
+    if not conn: return
+    try:
+        with conn.cursor() as cur:
+            query = """
+                SELECT s.sector, AVG(f.pe_ratio) as avg_pe, SUM(f.revenue) as total_revenue, COUNT(*) as comp_count
+                FROM symbols s 
+                JOIN fundamentals f ON s.id = f.company_id 
+                GROUP BY s.sector
+            """
+            cur.execute(query)
+            results = cur.fetchall()
+            
+            # We assume results exist and json serialization
+            clean = [{k: float(v) if not isinstance(v, str) and v is not None else v for k, v in row.items()} for row in results]
+            
+            cur.execute(
+                "INSERT INTO screener_cache (cache_key, data, updated_at) VALUES ('sector_summary', %s, CURRENT_TIMESTAMP) "
+                "ON CONFLICT(cache_key) DO UPDATE SET data=EXCLUDED.data, updated_at=EXCLUDED.updated_at;",
+                (json.dumps(clean, default=str),)
+            )
+            conn.commit()
+            logging.info("APScheduler: Refreshed screener_cache perfectly.")
+    except Exception as e:
+        logging.error(f"Background refresh failed: {str(e)}")
+    finally:
+        release_connection(conn)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(refresh_screener_summary, 'interval', minutes=60)
+scheduler.start()
 
 # External API Optimization Tasks
 async def fetch_external_data_task():

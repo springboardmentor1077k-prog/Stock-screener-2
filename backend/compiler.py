@@ -1,4 +1,16 @@
 import json
+import time
+import logging
+
+# Task 2: SQL Compilation Cache
+SQL_CACHE = {}
+SQL_CACHE_TIMEOUT = 120 # 2 minutes
+
+def get_sql_cache_size():
+    return len(SQL_CACHE)
+
+def clear_sql_cache():
+    SQL_CACHE.clear()
 
 # Master dictionary for safe SQL column translation
 # This completely prevents SQL injection via column names
@@ -139,10 +151,37 @@ def _compile_condition_tree(node, parameters):
     return f" {logic} ".join(clauses)
 
 
-def compile_sql_from_dsl(dsl_data, default_limit=10, default_page=1):
+def compile_sql_from_dsl(dsl_data, default_limit=100, default_page=1):
     """
     Given a validated DSL JSON, deterministicly returns safe SQL and param array.
+    
+    # =========================================================================
+    # PERFORMANCE OPTIMIZATION (Task 2: EXPLAIN ANALYZE)
+    # =========================================================================
+    # To test the performance characteristics of this dynamically generated query 
+    # directly inside PostgreSQL, simply prepend EXPLAIN ANALYZE to the output:
+    # 
+    # Example:
+    # EXPLAIN ANALYZE
+    # SELECT s.symbol, s.company_name, s.sector, f.pe_ratio, h.revenue_growth
+    # FROM symbols s 
+    # JOIN fundamentals f ON s.id = f.company_id 
+    # LEFT JOIN historical_metrics h ON s.id = h.company_id 
+    # WHERE f.pe_ratio < 15 AND (h.quarter >= current_date - interval '12 months' OR h.quarter IS NULL)
+    # ORDER BY f.pe_ratio ASC LIMIT 100 OFFSET 0;
+    # =========================================================================
     """
+    cache_key = json.dumps(dsl_data, sort_keys=True) # Ensure consistent keying
+    now = time.time()
+    
+    if cache_key in SQL_CACHE:
+        timestamp, cached_result = SQL_CACHE[cache_key]
+        if now - timestamp < SQL_CACHE_TIMEOUT:
+            logging.info("SQL Compiler cache hit")
+            return cached_result
+        else:
+            del SQL_CACHE[cache_key]
+
     parameters = []
     
     # 1. SELECT Construction
@@ -230,6 +269,11 @@ def compile_sql_from_dsl(dsl_data, default_limit=10, default_page=1):
             
     # 5. Pagination
     limit = int(dsl_data.get("limit", default_limit))
+    
+    # Task 2: Make sure all queries never return more than 100 rows by default
+    if limit > 100:
+        limit = 100
+        
     page = int(dsl_data.get("page", default_page))
     offset = (page - 1) * limit
     
@@ -242,5 +286,7 @@ def compile_sql_from_dsl(dsl_data, default_limit=10, default_page=1):
     # Fix extraneous spaces
     final_sql = " ".join(final_sql.split())
     
-    return final_sql, parameters
+    result = (final_sql, parameters)
+    SQL_CACHE[cache_key] = (time.time(), result)
+    return result
 
