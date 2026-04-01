@@ -1,104 +1,32 @@
 {
     "ticker": "ICICIBANK",
-    "snapshot_date": "2026-03-18T10:34:57.261694",
+    "snapshot_date": "2026-03-31T11:07:44.331999",
     "company_profile": {
         "name": "ICICI Bank Limited",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://www.icici.bank.in",
-        "market_cap": 9157142904832,
+        "market_cap": 8634047135744,
         "description": "ICICI Bank Limited, together with its subsidiaries, engages in the provision of various banking and financial services to retail and corporate customers in India and internationally. The company operates through Retail Banking, Wholesale Banking, Treasury, Other Banking, Life Insurance, General Insurance, and Others segments. It offers savings, salary, pension, current, trade, escrow, foreign currency, and vostro accounts, as well as time, fixed, recurring, and security deposits. The company also provides home, car, two-wheeler, personal, education, gold, and commercial business loans, as well as loans against securities, shares, mutual funds, and property; working capital finance, term loans, collateral free loans, loans without financials, finance for importers and exporters, and overdraft facilities, as well as loans for new entities and card swipes; and credit, debit, prepaid, travel, forex, and corporate cards. In addition, it offers pockets wallet; fixed income products; investment products, such as mutual funds, gold monetization schemes, initial public offerings, and other online investment services; and agri and rural business, farmer finance, tractor loans, and micro banking services. Further, the company provides portfolio management, trade, foreign exchange, locker, private and NRI banking, and cash management services; family wealth and demat accounts; commercial and investment banking, capital market, custodial, and institutional banking services; general, life health, personal accident, fire, travel, and motor insurance products; and internet, mobile, and phone banking services. Additionally, it offers securities investment, broking, trading, and underwriting services; and merchant banking, trusteeship, housing finance, pension fund management, asset management, investment advisory, points of presence, and private equity/venture capital fund management services. The company was founded in 1955 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 487.636,
         "Show Profile": false,
-        "Change From Previous Close": -0.7217639,
+        "Change From Previous Close": -2.2613084,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1279.4
+        "Last Traded Price": 1205.9
     },
     "fundamentals": {
-        "pe_ratio": 17.478144,
+        "pe_ratio": 16.474045,
         "eps": 73.2,
         "revenue": 1924702535680,
         "debt": 2154355490816,
-        "market_cap": 9157142904832,
+        "market_cap": 8634047135744,
         "revenue_growth": 3.0,
-        "price_change_1y": 1.5974720554351767
+        "price_change_1y": -7.830796691298344
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 1259.2833251953125,
-            "high": 1259.2833251953125,
-            "low": 1259.2833251953125,
-            "close": 1259.2833251953125,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 1295.6029599370165,
-            "high": 1308.2057883620175,
-            "low": 1292.1794251380722,
-            "close": 1303.0455322265625,
-            "volume": 11278014
-        },
-        {
-            "date": "2025-03-20",
-            "open": 1309.8927772461004,
-            "high": 1314.1102350516276,
-            "low": 1301.0113557334153,
-            "close": 1311.5797119140625,
-            "volume": 10886735
-        },
-        {
-            "date": "2025-03-21",
-            "open": 1305.923445707521,
-            "high": 1338.6707661545943,
-            "low": 1301.5571120874529,
-            "close": 1332.81591796875,
-            "volume": 60494318
-        },
-        {
-            "date": "2025-03-24",
-            "open": 1345.5675050388625,
-            "high": 1362.4870024308004,
-            "low": 1334.7510627437973,
-            "close": 1347.750732421875,
-            "volume": 9352280
-        },
-        {
-            "date": "2025-03-25",
-            "open": 1348.5941513991709,
-            "high": 1353.3574463042776,
-            "low": 1319.8658696966822,
-            "close": 1333.4112548828125,
-            "volume": 16419207
-        },
-        {
-            "date": "2025-03-26",
-            "open": 1333.7586400786652,
-            "high": 1347.6017762925185,
-            "low": 1321.304687138062,
-            "close": 1325.6710205078125,
-            "volume": 10859639
-        },
-        {
-            "date": "2025-03-27",
-            "open": 1322.9420827344788,
-            "high": 1341.1515523929718,
-            "low": 1322.9420827344788,
-            "close": 1326.415283203125,
-            "volume": 15109614
-        },
-        {
-            "date": "2025-03-28",
-            "open": 1325.7702231722565,
-            "high": 1347.5521031600986,
-            "low": 1317.0375564815454,
-            "close": 1338.025634765625,
-            "volume": 8266544
-        },
         {
             "date": "2025-04-01",
             "open": 1329.739654923708,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 1286.0,
-            "high": 1290.0999755859375,
+            "high": 1297.0999755859375,
             "low": 1270.800048828125,
-            "close": 1279.4000244140625,
-            "volume": 2838347
+            "close": 1289.300048828125,
+            "volume": 12961135
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1267.5999755859375,
+            "high": 1285.9000244140625,
+            "low": 1243.699951171875,
+            "close": 1250.0999755859375,
+            "volume": 14422899
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1258.4000244140625,
+            "high": 1274.0,
+            "low": 1241.699951171875,
+            "close": 1245.4000244140625,
+            "volume": 16421006
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1226.5999755859375,
+            "high": 1234.9000244140625,
+            "low": 1218.0999755859375,
+            "close": 1222.699951171875,
+            "volume": 17049534
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1237.0999755859375,
+            "high": 1253.9000244140625,
+            "low": 1223.699951171875,
+            "close": 1251.199951171875,
+            "volume": 20617782
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1258.9000244140625,
+            "high": 1272.9000244140625,
+            "low": 1254.4000244140625,
+            "close": 1259.699951171875,
+            "volume": 17290030
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1256.0,
+            "high": 1260.9000244140625,
+            "low": 1230.0999755859375,
+            "close": 1233.800048828125,
+            "volume": 23630905
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1216.5,
+            "high": 1222.5999755859375,
+            "low": 1200.4000244140625,
+            "close": 1205.9000244140625,
+            "volume": 23952775
         }
     ]
 }

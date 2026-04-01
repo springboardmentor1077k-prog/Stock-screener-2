@@ -1,104 +1,32 @@
 {
     "ticker": "RELIANCE",
-    "snapshot_date": "2026-03-18T10:34:52.176902",
+    "snapshot_date": "2026-03-31T11:07:38.583893",
     "company_profile": {
         "name": "Reliance Industries Limited",
         "sector": "Energy",
         "industry": "Oil & Gas Refining & Marketing",
         "website": "https://www.ril.com",
-        "market_cap": 19068606218240,
+        "market_cap": 18186290331648,
         "description": "Reliance Industries Limited engages in the hydrocarbon exploration and production, oil and chemicals, retail, and digital service businesses worldwide. It operates through Oil to Chemicals, Oil and Gas, Retail, Digital Services, and Others segments. The company offers refining and marketing products, including liquefied petroleum gas, propylene, naphtha, gasoline, jet/aviation turbine fuel, kerosine oil, diesel, sulphur, and petroleum coke. It also provides polymers, including high-density and low-density polyethylene (PE), linear low-density PE, homopolymer, random and impact copolymer, and polyvinyl chloride; fibre intermediates, such as purified terephthalic acid, and ethylene glycols and oxide; aromatics, such as paraxylene, ortho xylene, benzene, and linear alkyl benzene and paraffin; and textiles comprising fabrics, apparel, and auto furnishings. In addition, the company offers elastomers, such as polybutadiene rubber, styrene butadiene rubber, and butyl rubber; fibre and yarn polyesters; and bioenergy solutions, consisting of compressed biogas, and pellets and briquettes. Further, it engages in oil and gas exploration and production activities; and operates various stores comprising supermarket, hypermarket, wholesale cash and carry, specialty, and online stores, as well as stores that offer apparel, beauty and cosmetics, accessories, footwear, consumer electronics, and others. Additionally, the company operates media and entertainment platforms, and Network18 and television channels; publishes magazines; and offers highway hospitality and fleet management services. It also provides digital services, including connectivity, fibre, mobile devices, apps, business, and other digital solutions. The company was founded in 1957 and is based in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 648.12,
         "Show Profile": false,
-        "Change From Previous Close": 0.82289803,
+        "Change From Previous Close": -0.31154597,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1409.1
+        "Last Traded Price": 1343.9
     },
     "fundamentals": {
-        "pe_ratio": 22.91592,
-        "eps": 61.49,
+        "pe_ratio": 21.834282,
+        "eps": 61.55,
         "revenue": 10245479858176,
         "debt": 3745930018816,
-        "market_cap": 19068606218240,
+        "market_cap": 18186290331648,
         "revenue_growth": 10.4,
-        "price_change_1y": 14.18876412986691
+        "price_change_1y": 7.71734866829627
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 1233.9217529296875,
-            "high": 1233.9217529296875,
-            "low": 1233.9217529296875,
-            "close": 1233.9217529296875,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 1236.113132982547,
-            "high": 1248.2645525643281,
-            "low": 1233.8720835165427,
-            "close": 1242.1888427734375,
-            "volume": 16162399
-        },
-        {
-            "date": "2025-03-20",
-            "open": 1246.8700894970418,
-            "high": 1267.9359786597456,
-            "low": 1245.0773228865291,
-            "close": 1264.101318359375,
-            "volume": 15971477
-        },
-        {
-            "date": "2025-03-21",
-            "open": 1269.927977701306,
-            "high": 1275.9041093610767,
-            "low": 1265.0474458622177,
-            "close": 1271.2725830078125,
-            "volume": 21780769
-        },
-        {
-            "date": "2025-03-24",
-            "open": 1285.86434660882,
-            "high": 1300.8046759652354,
-            "low": 1279.141198398433,
-            "close": 1296.920166015625,
-            "volume": 20299319
-        },
-        {
-            "date": "2025-03-25",
-            "open": 1302.497915186312,
-            "high": 1302.497915186312,
-            "low": 1277.4977874103538,
-            "close": 1280.33642578125,
-            "volume": 13713899
-        },
-        {
-            "date": "2025-03-26",
-            "open": 1285.8643858858131,
-            "high": 1288.6532960847499,
-            "low": 1263.7028966635362,
-            "close": 1267.98583984375,
-            "volume": 12074747
-        },
-        {
-            "date": "2025-03-27",
-            "open": 1273.0655062272906,
-            "high": 1279.8882324099652,
-            "low": 1266.242780044616,
-            "close": 1273.115234375,
-            "volume": 15028056
-        },
-        {
-            "date": "2025-03-28",
-            "open": 1274.9081198538831,
-            "high": 1290.5954658598978,
-            "low": 1263.9518781988888,
-            "close": 1270.027587890625,
-            "volume": 18147129
-        },
         {
             "date": "2025-04-01",
             "open": 1259.5693287834792,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 1397.199951171875,
-            "high": 1412.0999755859375,
+            "high": 1412.9000244140625,
             "low": 1397.199951171875,
-            "close": 1409.0,
-            "volume": 2444780
+            "close": 1408.0999755859375,
+            "volume": 9559327
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1388.0,
+            "high": 1415.699951171875,
+            "low": 1376.0999755859375,
+            "close": 1384.800048828125,
+            "volume": 16498373
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1398.0,
+            "high": 1430.0,
+            "low": 1396.0999755859375,
+            "close": 1414.4000244140625,
+            "volume": 22994918
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1400.0,
+            "high": 1415.5999755859375,
+            "low": 1391.0,
+            "close": 1407.800048828125,
+            "volume": 18979554
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1420.0,
+            "high": 1422.4000244140625,
+            "low": 1406.5999755859375,
+            "close": 1411.800048828125,
+            "volume": 18620893
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1420.0,
+            "high": 1430.5,
+            "low": 1408.4000244140625,
+            "close": 1413.0999755859375,
+            "volume": 19041331
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1401.0,
+            "high": 1404.699951171875,
+            "low": 1345.0,
+            "close": 1348.0999755859375,
+            "volume": 23266517
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1335.0,
+            "high": 1365.0,
+            "low": 1334.0999755859375,
+            "close": 1343.9000244140625,
+            "volume": 24393861
         }
     ]
 }

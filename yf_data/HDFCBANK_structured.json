@@ -1,104 +1,32 @@
 {
     "ticker": "HDFCBANK",
-    "snapshot_date": "2026-03-18T10:34:54.844993",
+    "snapshot_date": "2026-03-31T11:07:41.431804",
     "company_profile": {
         "name": "HDFC Bank Limited",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://www.hdfc.bank.in",
-        "market_cap": 12882435637248,
+        "market_cap": 11260966993920,
         "description": "HDFC Bank Limited provides banking and financial products and services to individuals and businesses in India, Bahrain, Hong Kong, Singapore, and Dubai. The company operates through Treasury, Retail Banking, Wholesale Banking, Other Banking Business, Insurance Business, and Other segments. It offers savings, salary, current, rural, public provident fund, pension, and demat accounts; fixed and recurring deposits; and safe deposit lockers, as well as offshore accounts and deposits, and overdrafts against fixed deposits. The company also provides personal, home, car, two-wheeler, business, doctor, educational, gold, consumer, and rural loans; loans against properties, securities, mutual funds, rental receivables, and assets; loans for professionals; government sponsored programs; and loans on credit card, as well as working capital and commercial/construction equipment finance, healthcare/medical equipment, commercial vehicle finance, dealer finance, and term loans. In addition, it offers credit, debit, prepaid, forex, and kisan gold cards; payment and collection, export, import, remittance, bank guarantee, letter of credit, trade, hedging, and merchant and cash management services; and insurance and investment products. Further, the company provides short term finance, bill discounting, structured finance, export credit, loan repayment, custodial, and documents collection services; online, mobile, and phone banking services; unified payment interface, immediate payment, national electronic funds transfer, and real time gross settlement services; channel financing, vendor financing, reimbursement account, money market, derivatives, employee trusts, cash surplus corporates, tax payment, and bankers to rights/public issue services; and financial solutions for supply chain partners and agricultural customers. It operates branches and automated teller machines in various cities/towns. The company was incorporated in 1994 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 367.242,
         "Show Profile": false,
-        "Change From Previous Close": -0.98143405,
+        "Change From Previous Close": -3.259723,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 837.05
+        "Last Traded Price": 731.55
     },
     "fundamentals": {
-        "pe_ratio": 18.684153,
-        "eps": 44.8,
+        "pe_ratio": 16.314674,
+        "eps": 44.84,
         "revenue": 2845330898944,
         "debt": 6158335082496,
-        "market_cap": 12882435637248,
+        "market_cap": 11260966993920,
         "revenue_growth": 26.400000000000002,
-        "price_change_1y": -0.799299631790224
+        "price_change_1y": -16.119768925673462
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 843.79443359375,
-            "high": 843.79443359375,
-            "low": 843.79443359375,
-            "close": 843.79443359375,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 855.930432694155,
-            "high": 863.823739278078,
-            "low": 854.5490799535085,
-            "close": 860.4197387695312,
-            "volume": 15221406
-        },
-        {
-            "date": "2025-03-20",
-            "open": 865.3037412350927,
-            "high": 875.1703745445009,
-            "low": 862.985106495842,
-            "close": 872.5803833007812,
-            "volume": 17833978
-        },
-        {
-            "date": "2025-03-21",
-            "open": 866.0684175252852,
-            "high": 875.2196836615442,
-            "low": 866.0684175252852,
-            "close": 873.3696899414062,
-            "volume": 33508264
-        },
-        {
-            "date": "2025-03-24",
-            "open": 877.6369838460287,
-            "high": 890.1676194932312,
-            "low": 874.997671627427,
-            "close": 887.9969482421875,
-            "volume": 17393736
-        },
-        {
-            "date": "2025-03-25",
-            "open": 890.4143157035983,
-            "high": 909.5555477752322,
-            "low": 888.7369760332164,
-            "close": 898.5789184570312,
-            "volume": 39101416
-        },
-        {
-            "date": "2025-03-26",
-            "open": 900.3302775382388,
-            "high": 901.5636066855513,
-            "low": 888.9836493829623,
-            "close": 891.2283325195312,
-            "volume": 24478442
-        },
-        {
-            "date": "2025-03-27",
-            "open": 887.9969842041877,
-            "high": 908.2235821777275,
-            "low": 887.0596420099644,
-            "close": 900.5029296875,
-            "volume": 41658100
-        },
-        {
-            "date": "2025-03-28",
-            "open": 902.3036249715724,
-            "high": 905.7569466636451,
-            "low": 890.8829847599874,
-            "close": 901.908935546875,
-            "volume": 28773648
-        },
         {
             "date": "2025-04-01",
             "open": 888.9836405685396,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 845.3499755859375,
-            "high": 845.3499755859375,
+            "high": 846.7999877929688,
             "low": 831.5999755859375,
-            "close": 837.0499877929688,
-            "volume": 8530993
+            "close": 843.0499877929688,
+            "volume": 23507063
+        },
+        {
+            "date": "2026-03-19",
+            "open": 770.0,
+            "high": 815.6500244140625,
+            "low": 770.0,
+            "close": 798.2000122070312,
+            "volume": 171637393
+        },
+        {
+            "date": "2026-03-20",
+            "open": 785.0,
+            "high": 793.75,
+            "low": 778.2000122070312,
+            "close": 780.4500122070312,
+            "volume": 103129469
+        },
+        {
+            "date": "2026-03-23",
+            "open": 763.1500244140625,
+            "high": 768.7000122070312,
+            "low": 741.0499877929688,
+            "close": 744.1500244140625,
+            "volume": 72341738
+        },
+        {
+            "date": "2026-03-24",
+            "open": 755.0,
+            "high": 772.75,
+            "low": 747.7000122070312,
+            "close": 764.9000244140625,
+            "volume": 61269986
+        },
+        {
+            "date": "2026-03-25",
+            "open": 768.2000122070312,
+            "high": 794.7999877929688,
+            "low": 768.2000122070312,
+            "close": 782.2999877929688,
+            "volume": 59230640
+        },
+        {
+            "date": "2026-03-27",
+            "open": 773.2000122070312,
+            "high": 774.9000244140625,
+            "low": 754.5499877929688,
+            "close": 756.2000122070312,
+            "volume": 65485199
+        },
+        {
+            "date": "2026-03-30",
+            "open": 745.2000122070312,
+            "high": 751.0,
+            "low": 726.6500244140625,
+            "close": 731.5499877929688,
+            "volume": 103500135
         }
     ]
 }

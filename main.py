@@ -158,10 +158,10 @@ class RenameFolderRequest(BaseModel):
 class AlertCreate(BaseModel):
     stock_symbol: str = Field(..., min_length=1, max_length=5)
     metric: str
-    condition: Literal["<", ">"]
+    condition: Literal["<", ">", "<=", ">=", "="]
     threshold: float = Field(..., gt=0)
 class WatchlistCreate(BaseModel):
-    stock_symbol: str = Field(..., min_length=1, max_length=20)
+    stock_symbol: str
     
     
 # ============================================================
@@ -434,6 +434,8 @@ def company_details(symbol: str):
                 f.pe_ratio,
                 f.eps,
                 f.market_cap,
+                f.revenue,
+                f.debt,
                 f.revenue_growth,
                 f.price_change_1y
             FROM symbols s
@@ -454,8 +456,10 @@ def company_details(symbol: str):
         "pe_ratio": row[3],
         "eps": row[4],
         "market_cap": row[5],
-        "revenue_growth": row[6],
-        "price_change_1y": row[7]
+        "revenue": row[6],
+        "debt": row[7],
+        "revenue_growth": row[8],
+        "price_change_1y": row[9]
     })
     
     
@@ -466,29 +470,48 @@ def full_details(symbol: str):
     ticker = yf.Ticker(symbol)
     info = ticker.info
 
+    #  STEP 1: get sector from yfinance
+    sector = info.get("sector")
+
+    #  STEP 2: fallback from DB if missing
+    if not sector:
+        try:
+            with engine.connect() as conn:
+                row = conn.execute(text("""
+                    SELECT sector FROM symbols WHERE symbol = :symbol
+                """), {"symbol": symbol.upper()}).fetchone()
+
+                if row and row[0]:
+                    sector = row[0]
+        except:
+            sector = None
+
+    #  STEP 3: final fallback
+    sector = sector or "Unknown"
+
     return success_response(data={
-        "symbol": symbol.upper(),   
+        "symbol": symbol.upper(),
 
-        "company_name": info.get("longName"),
-        "sector": info.get("sector"),
+        "company_name": info.get("longName") or "N/A",
+        "sector": sector,
 
-        "pe_ratio": info.get("trailingPE"),
-        "eps": info.get("trailingEps"),
+        "pe_ratio": info.get("trailingPE") or 0,
+        "eps": info.get("trailingEps") or 0,
 
-        "revenue": info.get("totalRevenue"),
-        "profit": info.get("netIncomeToCommon"),
-        "ebitda": info.get("ebitda"),
+        "revenue": info.get("totalRevenue") or 0,
+        "profit": info.get("netIncomeToCommon") or 0,
+        "ebitda": info.get("ebitda") or 0,
 
-        "debt": info.get("totalDebt"),
-        "cash": info.get("totalCash"),
+        "debt": info.get("totalDebt") or 0,
+        "cash": info.get("totalCash") or 0,
 
-        "revenue_growth": info.get("revenueGrowth"),
-        "profit_margin": info.get("profitMargins"),
+        "revenue_growth": info.get("revenueGrowth") or 0,
+        "profit_margin": info.get("profitMargins") or 0,
 
-        "roe": info.get("returnOnEquity"),
-        "roa": info.get("returnOnAssets"),
+        "roe": info.get("returnOnEquity") or 0,
+        "roa": info.get("returnOnAssets") or 0,
 
-        "market_cap": info.get("marketCap")
+        "market_cap": info.get("marketCap") or 0
     })
 # ============================================================
 # COMPANY PRICE HISTORY ENDPOINT
@@ -1253,37 +1276,6 @@ def get_folders(current_user: dict = Depends(get_current_user)):
     }
 
 
-@app.put("/portfolio/rename-folder")
-async def rename_folder(
-    request: Request,
-    current_user: dict = Depends(get_current_user)
-):
-    body = await request.json()   #  FORCE READ JSON
-
-    print("DEBUG BODY:", body)
-
-    old_name = body.get("old_name")
-    new_name = body.get("new_name")
-
-    if not old_name or not new_name:
-        raise HTTPException(status_code=400, detail="Invalid input")
-
-    with engine.begin() as conn:
-        result = conn.execute(text("""
-            UPDATE portfolio
-            SET folder_name = :new_name
-            WHERE user_id = :user_id
-            AND folder_name = :old_name
-        """), {
-            "new_name": new_name,
-            "old_name": old_name,
-            "user_id": current_user["id"]
-        })
-
-        print("ROWS UPDATED:", result.rowcount)
-
-    return {"success": True}
-
 @app.delete("/folders/{folder_name}")
 def delete_folder(
     folder_name: str,
@@ -1319,8 +1311,6 @@ def delete_folder(
 # WATCHLIST CRUD 
 # ============================================================
 
-class WatchlistCreate(BaseModel):
-    stock_symbol: str = Field(..., min_length=1, max_length=5)
 
 
 @app.post("/watchlist")
@@ -1329,24 +1319,42 @@ def add_to_watchlist(
     current_user: dict = Depends(get_current_user)
 ):
 
+    symbol = request.stock_symbol.strip().upper()
+
     with engine.begin() as conn:
 
-        symbol = conn.execute(text("""
+        #  CHECK SYMBOL EXISTS
+        result = conn.execute(text("""
             SELECT id FROM symbols WHERE symbol = :symbol
-        """), {"symbol": request.stock_symbol}).fetchone()
+        """), {"symbol": symbol}).fetchone()
 
-        if not symbol:
-            raise HTTPException(status_code=404, detail="Symbol not found")
+        if not result:
+            raise HTTPException(status_code=400, detail="Invalid symbol")
 
-        conn.execute(text("""
-            INSERT INTO watchlist (user_id, symbol_id, added_at)
-            VALUES (:user_id, :symbol_id, NOW())
+        symbol_id = result[0]
+
+        #  CHECK DUPLICATE
+        existing = conn.execute(text("""
+            SELECT id FROM watchlist
+            WHERE user_id = :user_id AND symbol_id = :symbol_id
         """), {
             "user_id": current_user["id"],
-            "symbol_id": symbol[0]
+            "symbol_id": symbol_id
+        }).fetchone()
+
+        if existing:
+            raise HTTPException(status_code=400, detail="Already in watchlist")
+
+        #  INSERT (CORRECT WAY)
+        conn.execute(text("""
+            INSERT INTO watchlist (user_id, symbol_id)
+            VALUES (:user_id, :symbol_id)
+        """), {
+            "user_id": current_user["id"],
+            "symbol_id": symbol_id
         })
 
-    return success_response(message="Added to watchlist")
+    return {"success": True, "message": "Added"}
 
 
 @app.get("/watchlist")
@@ -1388,14 +1396,15 @@ def delete_watchlist(
 
     return success_response(message="Removed from watchlist")
 
-# ============================================================
-# ALERTS CRUD
-# ============================================================
 
-# ================= ALERT APIs =================
+# ==============================
+# ALERTS API
+# ==============================
+
+# ================= ALERTS =================
 
 @app.post("/alerts")
-def create_alert(request: AlertCreate, current_user: dict = Depends(get_current_user)):
+def create_alert(data: AlertCreate, current_user: dict = Depends(get_current_user)):
 
     with engine.begin() as conn:
         conn.execute(text("""
@@ -1403,10 +1412,10 @@ def create_alert(request: AlertCreate, current_user: dict = Depends(get_current_
             VALUES (:user_id, :symbol, :metric, :operator, :threshold)
         """), {
             "user_id": current_user["id"],
-            "symbol": request.stock_symbol.upper(),
-            "metric": request.metric,
-            "operator": request.condition,
-            "threshold": request.threshold
+            "symbol": data.stock_symbol.upper(),
+            "metric": data.metric,
+            "operator": data.condition,
+            "threshold": data.threshold
         })
 
     return success_response(message="Alert created")
@@ -1417,49 +1426,102 @@ def get_alerts(current_user: dict = Depends(get_current_user)):
 
     with engine.connect() as conn:
         rows = conn.execute(text("""
-            SELECT id, stock_symbol, metric, operator, threshold
+            SELECT id, stock_symbol, metric, operator, threshold, is_active, created_at
             FROM alerts
-            WHERE user_id = :uid
-        """), {"uid": current_user["id"]}).fetchall()
+            WHERE user_id = :user_id
+        """), {"user_id": current_user["id"]}).fetchall()
 
     return success_response(data=[
-        {
-            "id": r[0],
-            "symbol": r[1],
-            "metric": r[2],
-            "condition": r[3],
-            "threshold": r[4]
-        }
-        for r in rows
-    ])
+    {
+        "id": r[0],
+        "stock_symbol": r[1],
+        "metric": r[2],
+        "operator": r[3],
+        "threshold": r[4],
+        "is_active": r[5],
+        "created_at": r[6]
+    }
+    for r in rows
+        ])
 
 
-@app.delete("/alerts/{alert_id}")
-def delete_alert(alert_id: int, current_user: dict = Depends(get_current_user)):
-
-    with engine.begin() as conn:
-        conn.execute(text("""
-            DELETE FROM alerts
-            WHERE id = :id AND user_id = :uid
-        """), {
-            "id": alert_id,
-            "uid": current_user["id"]
-        })
-
-    return success_response(message="Deleted")
-
-
-# ============================================================
-# ALERT EVALUATION ENGINE
-# ============================================================
-def evaluate_alerts():
+@app.get("/alerts/check")
+def check_alerts(current_user: dict = Depends(get_current_user)):
 
     triggered = []
 
     with engine.connect() as conn:
 
         alerts = conn.execute(text("""
-            SELECT id, stock_symbol, metric, operator, threshold
+            SELECT stock_symbol, metric, operator, threshold
+            FROM alerts
+            WHERE user_id = :user_id AND is_active = TRUE
+        """), {"user_id": current_user["id"]}).fetchall()
+
+        for a in alerts:
+
+            symbol = a[0]
+            metric = a[1]
+            operator = a[2]
+            threshold = a[3]
+
+            #  get latest value
+            row = conn.execute(text(f"""
+                SELECT {metric}
+                FROM fundamentals f
+                JOIN symbols s ON f.symbol_id = s.id
+                WHERE s.symbol = :symbol
+                ORDER BY f.reported_date DESC
+                LIMIT 1
+            """), {"symbol": symbol}).fetchone()
+
+            if not row:
+                continue
+
+            current_value = row[0]
+
+            if (
+                (operator == "<" and current_value < threshold) or
+                (operator == ">" and current_value > threshold) or
+                (operator == "<=" and current_value <= threshold) or
+                (operator == ">=" and current_value >= threshold) or
+                (operator == "=" and current_value == threshold)
+            ):
+                triggered.append({
+                    "symbol": symbol,
+                    "metric": metric,
+                    "current_value": current_value,
+                    "condition": f"{operator} {threshold}"
+                })
+
+    return success_response(data=triggered)
+
+@app.delete("/alerts/{alert_id}")
+def delete_alert(alert_id: int, current_user=Depends(get_current_user)):
+
+    with engine.begin() as conn:
+        conn.execute(text("""
+            DELETE FROM alerts
+            WHERE id = :id AND user_id = :user_id
+        """), {
+            "id": alert_id,
+            "user_id": current_user["id"]
+        })
+
+    return success_response(message="Deleted")
+
+
+
+# ============================================================
+# ALERT EVALUATION ENGINE
+# ============================================================
+def evaluate_alerts():
+    triggered = []
+
+    with engine.connect() as conn:
+
+        alerts = conn.execute(text("""
+            SELECT id, user_id, stock_symbol, metric, operator, threshold
             FROM alerts
             WHERE is_active = TRUE
         """)).fetchall()
@@ -1472,18 +1534,9 @@ def evaluate_alerts():
                 operator = a[3]
                 threshold = a[4]
 
-                # validate metric exists in DB
-                valid_fields = [
-                    "pe_ratio", "eps", "revenue", "debt",
-                    "market_cap", "revenue_growth",
-                    "price_change_1y"
-                ]
+                print("CHECKING:", symbol, metric, operator, threshold)
 
-                if metric not in valid_fields:
-                    continue
-
-                # GET metric value
-                metric_row = conn.execute(text(f"""
+                row = conn.execute(text(f"""
                     SELECT f.{metric}
                     FROM fundamentals f
                     JOIN symbols s ON s.id = f.symbol_id
@@ -1492,12 +1545,12 @@ def evaluate_alerts():
                     LIMIT 1
                 """), {"symbol": symbol}).fetchone()
 
-                if not metric_row or metric_row[0] is None:
+                #  FIX 2 (keep this also)
+                if not row or row[0] is None:
                     continue
 
-                current = metric_row[0]
+                current = row[0]
 
-                #  CONDITION CHECK
                 triggered_flag = False
 
                 if operator == "<" and current < threshold:
@@ -1515,15 +1568,38 @@ def evaluate_alerts():
                     triggered.append({
                         "symbol": symbol,
                         "metric": metric,
-                        "current_value": current,
-                        "threshold": threshold
+                        "condition": operator,
+                        "threshold": threshold,
+                        "current_value": current
                     })
 
             except Exception as e:
-                print(" ALERT ERROR:", str(e))
+                print("ALERT ERROR:", str(e))
                 continue
+@app.get("/alerts/triggered")
+def get_triggered_alerts(current_user: dict = Depends(get_current_user)):
 
-    return triggered
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT stock_symbol, metric, condition, threshold, current_value, triggered_at
+            FROM triggered_alerts
+            WHERE user_id = :user_id
+            ORDER BY triggered_at DESC
+        """), {
+            "user_id": current_user["id"]
+        }).fetchall()
+
+    return success_response(data=[
+        {
+            "symbol": r[0],
+            "metric": r[1],
+            "condition": r[2],
+            "threshold": r[3],
+            "current_value": r[4],
+            "triggered_at": str(r[5])
+        }
+        for r in rows
+    ])
 
 @app.get("/alerts/check")
 def check_alerts(current_user: dict = Depends(get_current_user)):
@@ -1533,19 +1609,19 @@ def check_alerts(current_user: dict = Depends(get_current_user)):
     return success_response(data=triggered)
 
 @app.get("/alerts/metrics")
-def get_metrics():
+def get_alert_metrics():
 
     with engine.connect() as conn:
-
-        result = conn.execute(text("""
+        columns = conn.execute(text("""
             SELECT column_name
             FROM information_schema.columns
             WHERE table_name = 'fundamentals'
         """)).fetchall()
 
-    exclude = ["id", "symbol_id", "reported_date"]
+    # remove unwanted columns
+    ignore = ["id", "symbol_id", "reported_date"]
 
-    metrics = [row[0] for row in result if row[0] not in exclude]
+    metrics = [c[0] for c in columns if c[0] not in ignore]
 
     return success_response(data=metrics)
 

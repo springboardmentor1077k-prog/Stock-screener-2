@@ -1,104 +1,32 @@
 {
     "ticker": "NESTLEIND",
-    "snapshot_date": "2026-03-18T10:35:18.727962",
+    "snapshot_date": "2026-03-31T11:08:10.881201",
     "company_profile": {
         "name": "Nestl\u00e9 India Limited",
         "sector": "Consumer Defensive",
         "industry": "Packaged Foods",
         "website": "https://www.nestle.in",
-        "market_cap": 2326511222784,
+        "market_cap": 2265383698432,
         "description": "Nestl\u00e9 India Limited engages in the manufacture and sale of food products in India and internationally. The company provides milk products and nutrition, including dairy whitener, condensed milk, UHT milk, yogurt, maternal and infant formula, baby foods, health care nutrition; prepared dishes and cooking aids, such as noodles, sauces, seasonings, pasta, cereals, and pet foods; powdered and liquid beverages comprising instant coffee and tea, as well as ready to drink beverages; and confectionery products consisting of bar countlines, tablets, and sugar confectionery products. The company was incorporated in 1959 and is headquartered in Gurugram, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 22.996,
         "Show Profile": false,
-        "Change From Previous Close": -0.033158522,
+        "Change From Previous Close": -1.5420636,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1206.5
+        "Last Traded Price": 1174.8
     },
     "fundamentals": {
-        "pe_ratio": 71.39053,
-        "eps": 16.9,
+        "pe_ratio": 69.432625,
+        "eps": 16.92,
         "revenue": 218577698816,
         "debt": 4768500224,
-        "market_cap": 2326511222784,
+        "market_cap": 2265383698432,
         "revenue_growth": 18.6,
-        "price_change_1y": 12.043977580430466
+        "price_change_1y": 6.187029816561844
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 1076.809326171875,
-            "high": 1076.809326171875,
-            "low": 1076.809326171875,
-            "close": 1076.809326171875,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 1092.7309929983955,
-            "high": 1096.1480503923126,
-            "low": 1079.681562507791,
-            "close": 1081.5882568359375,
-            "volume": 845086
-        },
-        {
-            "date": "2025-03-20",
-            "open": 1091.4929673368854,
-            "high": 1103.7499777459543,
-            "low": 1080.1768507784652,
-            "close": 1100.184326171875,
-            "volume": 953748
-        },
-        {
-            "date": "2025-03-21",
-            "open": 1109.7669138980498,
-            "high": 1126.6543974041263,
-            "low": 1105.3346053950409,
-            "close": 1123.6087646484375,
-            "volume": 1585274
-        },
-        {
-            "date": "2025-03-24",
-            "open": 1125.7135052828667,
-            "high": 1133.3896121775324,
-            "low": 1119.2506943289768,
-            "close": 1120.9840087890625,
-            "volume": 861902
-        },
-        {
-            "date": "2025-03-25",
-            "open": 1119.2259372320905,
-            "high": 1129.130591543879,
-            "low": 1104.467978126241,
-            "close": 1116.675537109375,
-            "volume": 1484284
-        },
-        {
-            "date": "2025-03-26",
-            "open": 1116.7001754334624,
-            "high": 1124.1040010803927,
-            "low": 1109.370828142377,
-            "close": 1111.02978515625,
-            "volume": 1066938
-        },
-        {
-            "date": "2025-03-27",
-            "open": 1109.4203189538612,
-            "high": 1123.1878127981931,
-            "low": 1102.0166139458463,
-            "close": 1110.3365478515625,
-            "volume": 1731172
-        },
-        {
-            "date": "2025-03-28",
-            "open": 1110.8317518540916,
-            "high": 1133.067652120625,
-            "low": 1110.8317518540916,
-            "close": 1114.64501953125,
-            "volume": 1432302
-        },
         {
             "date": "2025-04-01",
             "open": 1120.1667975044827,
@@ -2015,9 +1943,65 @@
             "date": "2026-03-18",
             "open": 1206.0,
             "high": 1213.300048828125,
-            "low": 1202.5999755859375,
-            "close": 1206.5,
-            "volume": 149683
+            "low": 1199.9000244140625,
+            "close": 1204.800048828125,
+            "volume": 1144239
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1193.0,
+            "high": 1203.0,
+            "low": 1177.699951171875,
+            "close": 1186.300048828125,
+            "volume": 826831
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1204.0,
+            "high": 1204.0,
+            "low": 1177.5999755859375,
+            "close": 1193.5999755859375,
+            "volume": 1395157
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1189.0,
+            "high": 1189.0,
+            "low": 1164.800048828125,
+            "close": 1166.800048828125,
+            "volume": 944890
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1180.0,
+            "high": 1195.0999755859375,
+            "low": 1163.199951171875,
+            "close": 1183.199951171875,
+            "volume": 1001494
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1183.199951171875,
+            "high": 1217.800048828125,
+            "low": 1180.0,
+            "close": 1204.0999755859375,
+            "volume": 1003662
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1204.0999755859375,
+            "high": 1215.699951171875,
+            "low": 1188.300048828125,
+            "close": 1193.199951171875,
+            "volume": 2005121
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1185.0,
+            "high": 1194.4000244140625,
+            "low": 1169.5999755859375,
+            "close": 1174.800048828125,
+            "volume": 1814954
         }
     ]
 }

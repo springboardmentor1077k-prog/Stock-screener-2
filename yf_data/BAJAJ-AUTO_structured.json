@@ -1,104 +1,32 @@
 {
     "ticker": "BAJAJ-AUTO",
-    "snapshot_date": "2026-03-18T10:35:25.922366",
+    "snapshot_date": "2026-03-31T11:08:19.528308",
     "company_profile": {
         "name": "Bajaj Auto Limited",
         "sector": "Consumer Cyclical",
         "industry": "Auto Manufacturers",
         "website": "https://www.bajajauto.com",
-        "market_cap": 2584342691840,
+        "market_cap": 2452256194560,
         "description": "Bajaj Auto Limited, together with its subsidiaries, engages in the development, manufacture, and distribution of automobiles in India and internationally. The company offers motorcycles, bikes, commercial vehicles, electric two-wheelers, and three-wheeler, as well as related parts and accessories. It also exports its products. The company was founded in 1945 and is based in Pune, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 1223.784,
         "Show Profile": false,
-        "Change From Previous Close": 1.5862561,
+        "Change From Previous Close": -1.3425459,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 9254.5
+        "Last Traded Price": 8781.5
     },
     "fundamentals": {
-        "pe_ratio": 29.107693,
-        "eps": 317.94,
+        "pe_ratio": 27.624334,
+        "eps": 317.89,
         "revenue": 590238384128,
         "debt": 195646095360,
-        "market_cap": 2584342691840,
+        "market_cap": 2452256194560,
         "revenue_growth": 23.1,
-        "price_change_1y": 26.75637979665574
+        "price_change_1y": 12.648590874145466
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 7301.01318359375,
-            "high": 7301.01318359375,
-            "low": 7301.01318359375,
-            "close": 7301.01318359375,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 7484.3179881764345,
-            "high": 7575.653100074049,
-            "low": 7430.921270708013,
-            "close": 7530.9853515625,
-            "volume": 409356
-        },
-        {
-            "date": "2025-03-20",
-            "open": 7543.761470774328,
-            "high": 7755.397770662862,
-            "low": 7531.131372070313,
-            "close": 7724.2373046875,
-            "volume": 606109
-        },
-        {
-            "date": "2025-03-21",
-            "open": 7772.026333966735,
-            "high": 7949.527751055698,
-            "low": 7741.792576110923,
-            "close": 7868.43310546875,
-            "volume": 703280
-        },
-        {
-            "date": "2025-03-24",
-            "open": 7917.148103578892,
-            "high": 8010.921897107962,
-            "low": 7870.529790472111,
-            "close": 7924.70654296875,
-            "volume": 453508
-        },
-        {
-            "date": "2025-03-25",
-            "open": 7958.305323741569,
-            "high": 7966.059010221992,
-            "low": 7755.446560587372,
-            "close": 7808.11181640625,
-            "volume": 824076
-        },
-        {
-            "date": "2025-03-26",
-            "open": 7816.255543326521,
-            "high": 7848.537489914551,
-            "low": 7714.484717331428,
-            "close": 7779.92626953125,
-            "volume": 391366
-        },
-        {
-            "date": "2025-03-27",
-            "open": 7705.706809522241,
-            "high": 7840.393414117286,
-            "low": 7658.161789023037,
-            "close": 7777.19482421875,
-            "volume": 651971
-        },
-        {
-            "date": "2025-03-28",
-            "open": 7773.391413088225,
-            "high": 7826.544308451572,
-            "low": 7617.687659802979,
-            "close": 7684.1044921875,
-            "volume": 392400
-        },
         {
             "date": "2025-04-01",
             "open": 7442.380613504189,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 9150.0,
-            "high": 9254.5,
+            "high": 9288.0,
             "low": 9136.5,
-            "close": 9254.5,
-            "volume": 71733
+            "close": 9271.0,
+            "volume": 247437
+        },
+        {
+            "date": "2026-03-19",
+            "open": 9113.5,
+            "high": 9150.0,
+            "low": 8811.0,
+            "close": 8868.5,
+            "volume": 288162
+        },
+        {
+            "date": "2026-03-20",
+            "open": 8957.5,
+            "high": 9110.0,
+            "low": 8931.5,
+            "close": 9051.0,
+            "volume": 356410
+        },
+        {
+            "date": "2026-03-23",
+            "open": 8989.5,
+            "high": 8989.5,
+            "low": 8752.0,
+            "close": 8776.0,
+            "volume": 375189
+        },
+        {
+            "date": "2026-03-24",
+            "open": 8900.0,
+            "high": 9022.5,
+            "low": 8792.0,
+            "close": 8898.0,
+            "volume": 438132
+        },
+        {
+            "date": "2026-03-25",
+            "open": 9020.0,
+            "high": 9149.5,
+            "low": 8981.0,
+            "close": 9048.5,
+            "volume": 438761
+        },
+        {
+            "date": "2026-03-27",
+            "open": 8971.5,
+            "high": 9004.0,
+            "low": 8840.0,
+            "close": 8901.0,
+            "volume": 326675
+        },
+        {
+            "date": "2026-03-30",
+            "open": 8810.0,
+            "high": 8889.0,
+            "low": 8745.0,
+            "close": 8781.5,
+            "volume": 325094
         }
     ]
 }

@@ -1,104 +1,32 @@
 {
     "ticker": "ADANIENT",
-    "snapshot_date": "2026-03-18T10:35:53.000607",
+    "snapshot_date": "2026-03-31T11:08:54.145806",
     "company_profile": {
         "name": "Adani Enterprises Limited",
         "sector": "Energy",
         "industry": "Thermal Coal",
         "website": "https://www.adanienterprises.com",
-        "market_cap": 2733127761920,
+        "market_cap": 2395368325120,
         "description": "Adani Enterprises Limited, together with its subsidiaries, operates in the new energy ecosystem, data center, airports, roads, copper, digital space, ropeway system, and other sectors in India and internationally. It operates through the Integrated Resources Management (IRM), Mining Services, Commercial Mining, New Energy Ecosystem, Airport, Road, and Others segments. The company engages in the integrated ecosystem for manufacturing green hydrogen, including solar cells, modules, and wind manufacturing; construction, operation, and maintenance of airports and road assets; commercial mining activities; supply of bunker to fuels to shipping vessels; manufacture and supply of defense equipment; and copper smelting and refinery, as well metals manufacturing. It also provides airport-focused services, including duty-free shopping, food and beverages, car parking, meet-and-greet, flight tracking, and airport maps services; and procurement and logistics services for minerals, as well as mining services. In addition, the company is involved in the sourcing, storage, and marketing of apples, grapes, pomegranates, and frozen peas; wastewater treatment, recycling, reuse projects; an operation of a news network; and Infrastructure Development and Water Resource Management. Further, it holds a portfolio of small arms, ammunition, unmanned aerial vehicles, counter-drone systems, missiles, and aircraft services. It also provides education, training and skill development. The company was founded in 1988 and is headquartered in Ahmedabad, India. Adani Enterprises Limited operates as a subsidiary of S.B. Adani Family Trust.",
         "logo_url": null,
         "Category": null,
         "Book Value": 445.61,
         "Show Profile": false,
-        "Change From Previous Close": 1.5897137,
+        "Change From Previous Close": -3.5216649,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 2006.8
+        "Last Traded Price": 1758.8
     },
     "fundamentals": {
-        "pe_ratio": 18.141384,
-        "eps": 110.62,
+        "pe_ratio": 15.89804,
+        "eps": 110.63,
         "revenue": 949951594496,
         "debt": 1094649315328,
-        "market_cap": 2733127761920,
+        "market_cap": 2395368325120,
         "revenue_growth": 8.6,
-        "price_change_1y": -10.849416214953731
+        "price_change_1y": -24.647388275336557
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 2251.583740234375,
-            "high": 2251.583740234375,
-            "low": 2251.583740234375,
-            "close": 2251.583740234375,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 2318.8003811969443,
-            "high": 2340.8395038953627,
-            "low": 2309.9048888882076,
-            "close": 2317.5009765625,
-            "volume": 1030345
-        },
-        {
-            "date": "2025-03-20",
-            "open": 2346.836509276519,
-            "high": 2346.836509276519,
-            "low": 2297.8607899602716,
-            "close": 2338.140869140625,
-            "volume": 2587050
-        },
-        {
-            "date": "2025-03-21",
-            "open": 2342.6388081215587,
-            "high": 2388.366141187,
-            "low": 2336.84163293993,
-            "close": 2361.62939453125,
-            "volume": 1101418
-        },
-        {
-            "date": "2025-03-24",
-            "open": 2368.82577190007,
-            "high": 2393.813385527708,
-            "low": 2359.9302790564966,
-            "close": 2367.5263671875,
-            "volume": 1010184
-        },
-        {
-            "date": "2025-03-25",
-            "open": 2383.8183098674535,
-            "high": 2386.466899270553,
-            "low": 2313.953040657819,
-            "close": 2319.200439453125,
-            "volume": 763065
-        },
-        {
-            "date": "2025-03-26",
-            "open": 2323.7478111503156,
-            "high": 2358.6806870882533,
-            "low": 2306.9063074857213,
-            "close": 2311.4541015625,
-            "volume": 1078870
-        },
-        {
-            "date": "2025-03-27",
-            "open": 2308.855294711456,
-            "high": 2372.723531879383,
-            "low": 2290.464510318148,
-            "close": 2362.178955078125,
-            "volume": 1696042
-        },
-        {
-            "date": "2025-03-28",
-            "open": 2374.8227104542643,
-            "high": 2385.767236010381,
-            "low": 2292.5634406611134,
-            "close": 2314.652587890625,
-            "volume": 1838836
-        },
         {
             "date": "2025-04-01",
             "open": 2310.8545366194735,
@@ -2016,8 +1944,64 @@
             "open": 1988.9000244140625,
             "high": 2027.0,
             "low": 1982.199951171875,
-            "close": 2007.300048828125,
-            "volume": 455166
+            "close": 2007.199951171875,
+            "volume": 1041095
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1984.0,
+            "high": 1988.5999755859375,
+            "low": 1930.0,
+            "close": 1936.800048828125,
+            "volume": 1510588
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1951.0,
+            "high": 1974.4000244140625,
+            "low": 1919.9000244140625,
+            "close": 1927.0999755859375,
+            "volume": 1175662
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1910.0,
+            "high": 1910.0999755859375,
+            "low": 1820.5,
+            "close": 1833.0,
+            "volume": 2370668
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1892.699951171875,
+            "high": 1893.0,
+            "low": 1813.699951171875,
+            "close": 1817.9000244140625,
+            "volume": 11211381
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1847.9000244140625,
+            "high": 1911.0,
+            "low": 1839.199951171875,
+            "close": 1886.5999755859375,
+            "volume": 2537690
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1880.0,
+            "high": 1883.199951171875,
+            "low": 1816.5,
+            "close": 1823.0,
+            "volume": 2585257
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1810.0,
+            "high": 1837.800048828125,
+            "low": 1753.0,
+            "close": 1758.800048828125,
+            "volume": 2825299
         }
     ]
 }

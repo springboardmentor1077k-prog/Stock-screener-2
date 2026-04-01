@@ -1,104 +1,32 @@
 {
     "ticker": "ADANIPORTS",
-    "snapshot_date": "2026-03-18T10:35:50.759046",
+    "snapshot_date": "2026-03-31T11:08:51.453441",
     "company_profile": {
         "name": "Adani Ports and Special Economic Zone Limited",
         "sector": "Industrials",
         "industry": "Marine Shipping",
         "website": "https://www.adaniports.com",
-        "market_cap": 3173703483392,
+        "market_cap": 3024176545792,
         "description": "Adani Ports and Special Economic Zone Limited, together with its subsidiaries, develops, operates, and maintains port infrastructure in India. The company is involved in the operation of ports and terminals, including bulk and break bulk, container, liquid, LPG, LNG, and crude cargo; ports related infrastructure development activities; and development of infrastructure at contiguous Special Economic Zone at Mundra. It also offers logistic services, which include logistic parks, container rail and bulk cargo logistic solutions, and warehousing, as well as auto, road, and agriculture logistic services. In addition, the company operates a fleet of dredging and reclamation service equipment comprising cutter suction, trailing suction hopper, grab, inland cutter suction, water injection, and specialized dredgers; split hopper, flat top, and jack up barges; and multi utility craft, survey vessels, floating crane, drag flow unit, and floating booster, as well as dozers, excavotors, loaders, and other equipment. Further, it provides non-scheduled passenger airline services; hospital and related services; and marine services, such as pilotage, laying, mooring of vessels at berth and mid-stream, and maintenance of buoys. Additionally, the company engages in the development, construction, operation, and maintenance of railway corridors; land development activities; integrated textile park and container freight station businesses; owns and operates harbour tugs, barges, other port crafts, ocean towage and offshore support vessels; and provision of cargo storage-cum logistics services. The company was incorporated in 1998 and is headquartered in Ahmedabad, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 310.464,
         "Show Profile": false,
-        "Change From Previous Close": 0.87879896,
+        "Change From Previous Close": -1.8836951,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1377.5
+        "Last Traded Price": 1312.6
     },
     "fundamentals": {
-        "pe_ratio": 23.848684,
-        "eps": 57.76,
+        "pe_ratio": 22.729004,
+        "eps": 57.75,
         "revenue": 364866306048,
         "debt": 568506974208,
-        "market_cap": 3173703483392,
+        "market_cap": 3024176545792,
         "revenue_growth": 21.9,
-        "price_change_1y": 21.725516321733046
+        "price_change_1y": 12.27802189379968
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 1131.6444091796875,
-            "high": 1131.6444091796875,
-            "low": 1131.6444091796875,
-            "close": 1131.6444091796875,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 1154.3837212398807,
-            "high": 1178.7651015591712,
-            "low": 1153.1895797751433,
-            "close": 1167.818359375,
-            "volume": 2416781
-        },
-        {
-            "date": "2025-03-20",
-            "open": 1179.2626396092755,
-            "high": 1181.2031497916,
-            "low": 1155.5778223908076,
-            "close": 1171.7491455078125,
-            "volume": 1919013
-        },
-        {
-            "date": "2025-03-21",
-            "open": 1176.2771860576158,
-            "high": 1196.7277390262227,
-            "low": 1166.3754089291353,
-            "close": 1183.0443115234375,
-            "volume": 3127446
-        },
-        {
-            "date": "2025-03-24",
-            "open": 1190.2093973398676,
-            "high": 1204.9874746748596,
-            "low": 1180.3076202597351,
-            "close": 1194.9862060546875,
-            "volume": 2135192
-        },
-        {
-            "date": "2025-03-25",
-            "open": 1199.1658456036826,
-            "high": 1203.2459706580105,
-            "low": 1168.8633215824275,
-            "close": 1176.7249755859375,
-            "volume": 2090037
-        },
-        {
-            "date": "2025-03-26",
-            "open": 1177.2723964574402,
-            "high": 1196.3793892959686,
-            "low": 1167.3706188912965,
-            "close": 1175.879150390625,
-            "volume": 1676081
-        },
-        {
-            "date": "2025-03-27",
-            "open": 1176.2772242042251,
-            "high": 1206.131976087581,
-            "low": 1169.311115431442,
-            "close": 1190.955810546875,
-            "volume": 2004036
-        },
-        {
-            "date": "2025-03-28",
-            "open": 1191.90111999978,
-            "high": 1199.1658246244915,
-            "low": 1169.5100568843848,
-            "close": 1177.2225341796875,
-            "volume": 1670913
-        },
         {
             "date": "2025-04-01",
             "open": 1173.2916787897027,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 1367.0999755859375,
-            "high": 1391.9000244140625,
+            "high": 1411.0999755859375,
             "low": 1367.0999755859375,
-            "close": 1377.5,
-            "volume": 442630
+            "close": 1401.9000244140625,
+            "volume": 1956685
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1377.0,
+            "high": 1379.5999755859375,
+            "low": 1350.5,
+            "close": 1356.0,
+            "volume": 2160622
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1364.9000244140625,
+            "high": 1393.5,
+            "low": 1358.0,
+            "close": 1365.4000244140625,
+            "volume": 4213342
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1350.0,
+            "high": 1350.0,
+            "low": 1293.5,
+            "close": 1303.5999755859375,
+            "volume": 3361416
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1343.0,
+            "high": 1361.0,
+            "low": 1313.5999755859375,
+            "close": 1344.199951171875,
+            "volume": 3132212
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1359.699951171875,
+            "high": 1392.699951171875,
+            "low": 1354.800048828125,
+            "close": 1375.9000244140625,
+            "volume": 1856531
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1375.0,
+            "high": 1375.0,
+            "low": 1330.0999755859375,
+            "close": 1337.800048828125,
+            "volume": 2667313
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1325.0,
+            "high": 1337.300048828125,
+            "low": 1307.0999755859375,
+            "close": 1312.5999755859375,
+            "volume": 2856500
         }
     ]
 }

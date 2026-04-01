@@ -1,104 +1,32 @@
 {
     "ticker": "WIPRO",
-    "snapshot_date": "2026-03-18T10:34:47.360543",
+    "snapshot_date": "2026-03-31T11:07:32.728736",
     "company_profile": {
         "name": "Wipro Limited",
         "sector": "Technology",
         "industry": "Information Technology Services",
         "website": "https://www.wipro.com",
-        "market_cap": 2056757444608,
+        "market_cap": 1967433449472,
         "description": "Wipro Limited operates as an information technology (IT), consulting, and business process services company worldwide. It operates through IT Services and IT Products segments. The IT Services segment offers AI-powered IT and IT-enabled services, including digital strategy advisory, customer-centric design, technology and IT consulting, custom application design, development, re-engineering and maintenance, systems integration, package implementation, cloud and infrastructure, business process, cloud, mobility and analytics, research and development, and hardware and software design services to enterprises. It serves customers in various industry sectors, such as communications, media and information services, software and gaming, new age technology, consumer goods, healthcare, medical devices and life sciences, and technology products and services, as well as banking and financial services, energy, manufacturing and resources, capital markets and insurance, and hi-tech. The IT Products segment provides a range of third-party IT products, including enterprise platforms, networking solutions, software and data storage products, contact center infrastructure, enterprise security, IT optimization technologies, video solutions, and end-user computing solutions. It serves enterprises in various industries primarily in the Indian market, such as government, defense, IT and IT-enabled services, telecommunications, manufacturing, utilities, education, and financial services sectors. The company has a strategic alliance with the Indian Institute of Science and the Foundation for Science Innovation and Development to collaborate on research and innovation across frontier technologies. The company was incorporated in 1945 and is based in Bengaluru, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 85.612,
         "Show Profile": false,
-        "Change From Previous Close": 2.6024225,
+        "Change From Previous Close": -2.0668094,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 196.3
+        "Last Traded Price": 187.64
     },
     "fundamentals": {
-        "pe_ratio": 15.542359,
+        "pe_ratio": 14.85669,
         "eps": 12.63,
         "revenue": 908918980608,
         "debt": 198046007296,
-        "market_cap": 2056757444608,
+        "market_cap": 1967433449472,
         "revenue_growth": 5.5,
-        "price_change_1y": -20.981794394589915
+        "price_change_1y": -25.25876739804291
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 248.42376708984375,
-            "high": 248.42376708984375,
-            "low": 248.42376708984375,
-            "close": 248.42376708984375,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 250.4792267992334,
-            "high": 254.78135092364772,
-            "low": 244.98206819581512,
-            "close": 254.01654052734375,
-            "volume": 14044300
-        },
-        {
-            "date": "2025-03-20",
-            "open": 257.3626378399473,
-            "high": 261.9037688737735,
-            "low": 255.7373792733719,
-            "close": 256.21539306640625,
-            "volume": 17038774
-        },
-        {
-            "date": "2025-03-21",
-            "open": 252.391273473307,
-            "high": 257.69721471129446,
-            "low": 248.7583804496312,
-            "close": 252.67807006835938,
-            "volume": 22659168
-        },
-        {
-            "date": "2025-03-24",
-            "open": 255.30713203162898,
-            "high": 259.7048643637758,
-            "low": 253.72969249282735,
-            "close": 257.5538024902344,
-            "volume": 9269617
-        },
-        {
-            "date": "2025-03-25",
-            "open": 260.0394931244234,
-            "high": 262.62077917496083,
-            "low": 257.5060259566859,
-            "close": 259.0834655761719,
-            "volume": 12563930
-        },
-        {
-            "date": "2025-03-26",
-            "open": 260.0395176396513,
-            "high": 260.2785245492466,
-            "low": 255.02037253815067,
-            "close": 255.64178466796875,
-            "volume": 7308412
-        },
-        {
-            "date": "2025-03-27",
-            "open": 258.1274405933101,
-            "high": 261.521326753075,
-            "low": 257.74503540533806,
-            "close": 260.230712890625,
-            "volume": 14783522
-        },
-        {
-            "date": "2025-03-28",
-            "open": 259.08347247099175,
-            "high": 259.8961017437606,
-            "low": 250.09681911340022,
-            "close": 250.71823120117188,
-            "volume": 14283389
-        },
         {
             "date": "2025-04-01",
             "open": 248.90179432089164,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 193.0,
-            "high": 197.13999938964844,
+            "high": 198.0,
             "low": 192.69000244140625,
-            "close": 196.3000030517578,
-            "volume": 8406604
+            "close": 194.3000030517578,
+            "volume": 24529164
+        },
+        {
+            "date": "2026-03-19",
+            "open": 191.97999572753906,
+            "high": 192.7899932861328,
+            "low": 187.67999267578125,
+            "close": 188.41000366210938,
+            "volume": 13685195
+        },
+        {
+            "date": "2026-03-20",
+            "open": 191.19000244140625,
+            "high": 192.3000030517578,
+            "low": 188.41000366210938,
+            "close": 190.89999389648438,
+            "volume": 24395304
+        },
+        {
+            "date": "2026-03-23",
+            "open": 189.41000366210938,
+            "high": 190.6199951171875,
+            "low": 187.0,
+            "close": 187.5399932861328,
+            "volume": 12014988
+        },
+        {
+            "date": "2026-03-24",
+            "open": 191.5,
+            "high": 191.5,
+            "low": 187.8000030517578,
+            "close": 188.74000549316406,
+            "volume": 11843191
+        },
+        {
+            "date": "2026-03-25",
+            "open": 189.0,
+            "high": 190.6199951171875,
+            "low": 187.89999389648438,
+            "close": 189.0500030517578,
+            "volume": 13862888
+        },
+        {
+            "date": "2026-03-27",
+            "open": 189.0500030517578,
+            "high": 192.2899932861328,
+            "low": 187.89999389648438,
+            "close": 191.60000610351562,
+            "volume": 26269256
+        },
+        {
+            "date": "2026-03-30",
+            "open": 189.99000549316406,
+            "high": 191.6300048828125,
+            "low": 186.5,
+            "close": 187.63999938964844,
+            "volume": 27946986
         }
     ]
 }

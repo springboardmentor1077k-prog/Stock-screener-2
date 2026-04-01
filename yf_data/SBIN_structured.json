@@ -1,104 +1,32 @@
 {
     "ticker": "SBIN",
-    "snapshot_date": "2026-03-18T10:35:02.101754",
+    "snapshot_date": "2026-03-31T11:07:50.154014",
     "company_profile": {
         "name": "State Bank of India",
         "sector": "Financial Services",
         "industry": "Banks - Regional",
         "website": "https://sbi.bank.in",
-        "market_cap": 9836146196480,
+        "market_cap": 9040466804736,
         "description": "State Bank of India provides banking products and services in India and internationally. It operates through the Treasury, Corporate/Wholesale Banking, Retail Banking, and Other Banking Business segments. The company offers personal banking products and services, including current, savings, salary, and deposit accounts; home, personal, pension, auto, education, and gold loans, as well as loans against insurance policies, property, and securities; debit, business debit, prepaid, and green remit cards; overdrafts; mutual funds, insurance, equity trading, portfolio investment schemes, remittance services; digital lending; and mobile, internet, and digital banking services. It also provides corporate banking products and services comprising corporate accounts, working capital and project finance, deferred payment guarantees, corporate term loans, structured finance, dealer and channel financing, equipment leasing, loan syndication, construction equipment loans, financing Indian firms' overseas subsidiaries or JVs, and cash management, as well as trade and service products. In addition, the company offers NRI services, including accounts, investments, loans, and remittances; agricultural banking services; and international banking services. Further, it provides life and general insurance; estate planning services; merchant banking and advisory; securities broking; trusteeship service; factoring; payment solution; asset management; portfolio and investment management; credit cards; and custody and fund accounting services. State Bank of India was founded in 1806 and is headquartered in Mumbai, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 641.361,
         "Show Profile": false,
-        "Change From Previous Close": 0.08453315,
+        "Change From Previous Close": -3.933298,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 1065.6
+        "Last Traded Price": 979.4
     },
     "fundamentals": {
-        "pe_ratio": 11.597736,
-        "eps": 91.88,
+        "pe_ratio": 10.660716,
+        "eps": 91.87,
         "revenue": 3700534018048,
         "debt": 6853875990528,
-        "market_cap": 9836146196480,
+        "market_cap": 9040466804736,
         "revenue_growth": 14.499999999999998,
-        "price_change_1y": 50.31414907168984
+        "price_change_1y": 29.46299267409966
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 708.915283203125,
-            "high": 708.915283203125,
-            "low": 708.915283203125,
-            "close": 708.915283203125,
-            "volume": 0
-        },
-        {
-            "date": "2025-03-19",
-            "open": 725.0414304316936,
-            "high": 734.5505041985215,
-            "low": 724.551272606947,
-            "close": 730.4331665039062,
-            "volume": 7604850
-        },
-        {
-            "date": "2025-03-20",
-            "open": 733.2761159507572,
-            "high": 737.8836115337692,
-            "low": 729.5509283979652,
-            "close": 734.7955932617188,
-            "volume": 6963197
-        },
-        {
-            "date": "2025-03-21",
-            "open": 735.1877533491547,
-            "high": 740.7265010195747,
-            "low": 732.2958101375568,
-            "close": 738.373779296875,
-            "volume": 9577327
-        },
-        {
-            "date": "2025-03-24",
-            "open": 743.0792951283579,
-            "high": 767.5381836299999,
-            "low": 740.236355685803,
-            "close": 765.4304809570312,
-            "volume": 12095064
-        },
-        {
-            "date": "2025-03-25",
-            "open": 768.4694992151382,
-            "high": 770.52813824643,
-            "low": 754.05884649493,
-            "close": 757.636962890625,
-            "volume": 15190143
-        },
-        {
-            "date": "2025-03-26",
-            "open": 756.8037071028305,
-            "high": 760.7739736513279,
-            "low": 746.4613886162912,
-            "close": 748.961181640625,
-            "volume": 7711852
-        },
-        {
-            "date": "2025-03-27",
-            "open": 748.765095143516,
-            "high": 760.528883157817,
-            "low": 745.5300654063271,
-            "close": 757.0977783203125,
-            "volume": 15648616
-        },
-        {
-            "date": "2025-03-28",
-            "open": 756.9017030647627,
-            "high": 763.2737549045355,
-            "low": 751.9021170931981,
-            "close": 756.3135375976562,
-            "volume": 7628185
-        },
         {
             "date": "2025-04-01",
             "open": 751.7060726537488,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 1067.5,
-            "high": 1072.699951171875,
+            "high": 1075.4000244140625,
             "low": 1061.300048828125,
-            "close": 1065.5999755859375,
-            "volume": 1675138
+            "close": 1069.800048828125,
+            "volume": 10749915
+        },
+        {
+            "date": "2026-03-19",
+            "open": 1049.5,
+            "high": 1059.699951171875,
+            "low": 1041.0,
+            "close": 1048.9000244140625,
+            "volume": 13431191
+        },
+        {
+            "date": "2026-03-20",
+            "open": 1058.4000244140625,
+            "high": 1085.0,
+            "low": 1054.0,
+            "close": 1058.0,
+            "volume": 17748625
+        },
+        {
+            "date": "2026-03-23",
+            "open": 1039.0,
+            "high": 1045.5999755859375,
+            "low": 1014.2000122070312,
+            "close": 1031.9000244140625,
+            "volume": 16039603
+        },
+        {
+            "date": "2026-03-24",
+            "open": 1055.199951171875,
+            "high": 1059.0,
+            "low": 1020.0,
+            "close": 1030.800048828125,
+            "volume": 30416734
+        },
+        {
+            "date": "2026-03-25",
+            "open": 1043.0,
+            "high": 1065.5,
+            "low": 1043.0,
+            "close": 1060.5999755859375,
+            "volume": 16205333
+        },
+        {
+            "date": "2026-03-27",
+            "open": 1051.300048828125,
+            "high": 1055.300048828125,
+            "low": 1013.0,
+            "close": 1019.5,
+            "volume": 20445349
+        },
+        {
+            "date": "2026-03-30",
+            "open": 1005.0,
+            "high": 1009.4000244140625,
+            "low": 975.7999877929688,
+            "close": 979.4000244140625,
+            "volume": 21438137
         }
     ]
 }

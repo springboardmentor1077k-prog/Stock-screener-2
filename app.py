@@ -31,7 +31,7 @@ if "show_account_popup" not in st.session_state:
 API_URL = "http://127.0.0.1:8000"
 
 st.set_page_config(
-    page_title="AI Stock Intelligence",
+    page_title="StockX AI",
     page_icon="📈",
     layout="wide"
 )
@@ -64,6 +64,29 @@ div[data-testid="stSidebar"] button[data-key^="history_"]:hover {
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+
+/*  RED ACTIVE BUTTON */
+div.stButton > button[kind="primary"] {
+    background-color: #ff4b4b !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: none !important;
+    font-weight: 600;
+}
+
+/*  NORMAL BUTTON */
+div.stButton > button[kind="secondary"] {
+    background-color: #f5f5f5 !important;
+    color: black !important;
+    border-radius: 10px !important;
+    border: 1px solid #ddd !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 query_params = st.query_params
 
 # EDIT CLICK
@@ -81,33 +104,33 @@ def format_query(q, max_len=20):
 # SAFE REQUEST HANDLER
 
 
-def safe_request(method, url, **kwargs):
+def safe_request(method, url, json=None, data=None, headers=None):
+
     try:
-        res = requests.request(method, url, timeout=20, **kwargs)
+        if headers is None:
+            headers = {}
+
+        #  HANDLE BOTH CASES
+        if json is not None:
+            headers["Content-Type"] = "application/json"
+
+        response = requests.request(
+            method,
+            url,
+            json=json,
+            data=data,  
+            headers=headers
+        )
 
         try:
-            data = res.json()
+            response_data = response.json()
         except:
-            return res.status_code, {
-                "success": False,
-                "error": {
-                    "message": res.text
-                }
-            }
+            response_data = response.text
 
-        # If backend uses new structured error
-        if not data.get("success", True) and "error" in data:
-            return res.status_code, data
+        return response.status_code, response_data
 
-        return res.status_code, data
-
-    except requests.exceptions.RequestException as e:
-        return 500, {
-            "success": False,
-            "error": {
-                "message": f"Connection error: {str(e)}"
-            }
-        }
+    except Exception as e:
+        return 500, {"error": str(e)}
 
 
 def show_error(data, default_msg="Something went wrong"):
@@ -272,14 +295,19 @@ if st.session_state.show_login:
     
 
     with left:
-        st.image("images/login.jpg", use_container_width=True)
+        st.image("images/login.jpg", width='stretch')
 
     #  RIGHT SIDE → LOGIN FORM
     with right:
         st.markdown("###  Welcome Back")
         st.caption("Login to access your AI stock dashboard")
 
-        mode = st.radio("", ["Login", "Register"], horizontal=True)
+        mode = st.radio(
+            "Mode",
+            ["Login", "Register"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
 
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
@@ -290,7 +318,7 @@ if st.session_state.show_login:
         col1, col2 = st.columns(2)
 
         with col1:
-            if st.button(mode, use_container_width=True, type="primary"):
+            if st.button(mode,width='stretch', type="primary"):
 
                 if username == "" or password == "":
                     st.warning("Fill required fields")
@@ -324,7 +352,7 @@ if st.session_state.show_login:
                                 show_error(data)
 
         with col2:
-            if st.button("Cancel", use_container_width=True):
+            if st.button("Cancel", width='stretch'):
                 st.session_state.show_login = False
                 st.rerun()
 
@@ -334,34 +362,114 @@ if st.session_state.show_login:
 # MAIN APP
 
 
-
 headers = {}
 
 if st.session_state.token:
     headers = {
         "Authorization": f"Bearer {st.session_state.token}"
     }
+
 st.sidebar.title(" AI Stock Platform")
 
-
-
+# -------------------------
+# PAGE STATE
+# -------------------------
 if "page" not in st.session_state:
     st.session_state.page = "AI Screener"
-#  HANDLE REDIRECT BEFORE SIDEBAR
-if "go_to_company" in st.session_state:
 
+params = st.query_params  
+
+if "page" in params and "page" not in st.session_state:
+    st.session_state.page = params["page"]
+
+# HANDLE REDIRECT
+if "go_to_company" in st.session_state:
     st.session_state.page = "Company Explorer"
     st.session_state.selected_company = st.session_state.go_to_company
-
     del st.session_state["go_to_company"]
-
     st.rerun()
 
-st.sidebar.radio(
-    "Navigation",
-    ["AI Screener", "Portfolio", "Watchlist", "Alerts", "Company Explorer"],
-    key="page"
-)
+# =========================
+#  NAVIGATION (UPGRADED)
+# =========================
+
+
+st.markdown("""
+<style>
+
+/* remove sidebar spacing */
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* nav item */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    color: black !important;
+}
+
+/* hover */
+.nav-item:hover {
+    background-color: #f1f3f5;
+    color: black !important;
+}
+
+/* active */
+.nav-active {
+    background-color: #e8f0fe;
+    font-weight: 600;
+    color: black !important;
+}
+
+/* remove link style COMPLETELY */
+.nav-link {
+    text-decoration: none !important;
+    color: black !important;
+}
+
+.nav-link:visited,
+.nav-link:hover,
+.nav-link:active {
+    color: black !important;
+    text-decoration: none !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+pages = [
+    ("AI Screener", "🔍"),
+    ("Portfolio", "📂"),
+    ("Watchlist", "⭐"),
+    ("Alerts", "🚨"),
+    ("Company Explorer", "🏢"),
+]
+
+for page_name, icon in pages:
+
+    is_active = st.session_state.page == page_name
+
+    btn_type = "primary" if is_active else "secondary"
+
+    if st.sidebar.button(
+        f"{icon}  {page_name}",
+        key=f"nav_{page_name}",
+        use_container_width=True,
+        type=btn_type
+    ):
+        st.session_state.page = page_name
+        st.rerun()
+# =========================
+# HISTORY (UNCHANGED)
+# =========================
 
 st.sidebar.markdown("# History")
 
@@ -386,7 +494,6 @@ if st.session_state.token:
 
             title = q.lower()
 
-            #  detect main meaning
             if "pe" in title:
                 title = "Low PE Stocks"
             elif "eps" in title:
@@ -400,11 +507,8 @@ if st.session_state.token:
             else:
                 title = title.capitalize()
 
-            #  trim long text
             if len(title) > 15:
                 title = title[:15] + "..."
-
-            
 
             if st.sidebar.button(title, key=f"history_{i}", use_container_width=True):
                 st.session_state.last_query = q
@@ -412,11 +516,15 @@ if st.session_state.token:
 else:
     st.sidebar.caption("Login to see history")
 
+# =========================
+# HEADER (UNCHANGED)
+# =========================
 
 header_left, header_right = st.columns([9,1])
+
 with header_left:
     if st.session_state.page == "AI Screener":
-        st.title("AI Stock Intelligence")
+        st.title("StockX AI")
     elif st.session_state.page == "Portfolio":
         st.title("📂 Portfolio")
     elif st.session_state.page == "Watchlist":
@@ -428,28 +536,16 @@ with header_left:
 
 with header_right:
 
-    #  NOT LOGGED IN
     if st.session_state.token is None:
-
         if st.button("Login / Signup"):
             st.session_state.show_login = True
             st.rerun()
-
-    #  LOGGED IN → ONLY LOGOUT BUTTON
     else:
         if st.button("Logout"):
             st.session_state.token = None
             st.session_state.username = None
             st.query_params.clear()
             st.rerun()
-
-   
-
-
-    
-   
-
-    
 
 if st.session_state.username:
     st.caption(f"Welcome, {st.session_state.username}")
@@ -573,7 +669,26 @@ div.stButton > button:hover {
             top = clean_df.sort_values(by="market_cap", ascending=False).head(3)
 
             for _, row in top.iterrows():
-                st.write(f"{row['symbol']} — Market Cap: {round(row['market_cap']/1_000_000,2)}M")
+                st.markdown(f"""
+                <div style="
+                    padding:10px;
+                    border-radius:10px;
+                    background-color:#e6f9ec;
+                    margin-bottom:8px;
+                ">
+                    <span style="
+                        color:#16a34a;
+                        font-weight:700;
+                        font-size:16px;
+                    ">
+                        {row['symbol']}
+                    </span>
+                    <br>
+                    <span style="color:#333;">
+                        Market Cap: ₹{round(row['market_cap']/1_000_000_000,2)}B
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
 
             st.subheader(" Screening Results")
 
@@ -593,65 +708,69 @@ div.stButton > button:hover {
 
            # ========= FORMAT FUNCTIONS =========
 
+            # =========================
+            #  FORMAT FUNCTION (ONLY K / M / B / T)
+            # =========================
+
             def format_number(x):
-                try:
-                    if isinstance(x, str) and any(s in x for s in ["B", "M", "K"]):
-                        return x
+                if pd.isna(x):
+                    return ""
 
-                    x = float(x)
+                x = float(x)
 
-                    if x >= 1_000_000_000:
-                        return f"{x/1_000_000_000:.1f}B"
-                    elif x >= 1_000_000:
-                        return f"{x/1_000_000:.1f}M"
-                    elif x >= 1_000:
-                        return f"{x/1_000:.1f}K"
-                    else:
-                        return round(x, 2)
-
-                except:
-                    return x
+                if x >= 1_000_000_000_000:
+                    return f"{x/1_000_000_000_000:.2f}T"
+                elif x >= 1_000_000_000:
+                    return f"{x/1_000_000_000:.2f}B"
+                elif x >= 1_000_000:
+                    return f"{x/1_000_000:.2f}M"
+                elif x >= 1_000:
+                    return f"{x/1_000:.2f}K"
+                else:
+                    return f"{x:.2f}"
 
 
-            def format_percent(x):
-                try:
-                    x = float(x)
+            # =========================
+            # 🔥 FORCE NUMERIC (IMPORTANT)
+            # =========================
 
-                    #  FIX huge backend values
-                    if abs(x) > 1000:
-                        x = x / 1_000_000_000
-
-                    return f"{round(x,2)}%"
-                except:
-                    return x
+            for col in ["market_cap", "revenue", "debt", "price_change_1y", "revenue_growth", "eps", "pe_ratio", "score"]:
+                if col in paginated_df.columns:
+                    paginated_df[col] = pd.to_numeric(paginated_df[col], errors="coerce")
 
 
-            # ========= APPLY FORMATTING =========
+            # =========================
+            #  APPLY FORMATTING
+            # =========================
 
-            # BIG NUMBERS
+            # 💰 BIG MONEY VALUES
             for col in ["market_cap", "revenue", "debt"]:
+                if col in paginated_df.columns:
+                    paginated_df[col] = paginated_df[col].apply(lambda x: f"₹{format_number(x)}")
+
+            # 📈 REMOVE % → convert to readable numbers
+            for col in ["price_change_1y", "revenue_growth"]:
                 if col in paginated_df.columns:
                     paginated_df[col] = paginated_df[col].apply(format_number)
 
-            # PERCENT
-            for col in ["price_change_1y", "revenue_growth"]:
-                if col in paginated_df.columns:
-                    paginated_df[col] = paginated_df[col].apply(format_percent)
-
-            # SMALL NUMBERS
+            # 🔢 SMALL NUMBERS
             for col in ["eps", "pe_ratio"]:
                 if col in paginated_df.columns:
-                    paginated_df[col] = paginated_df[col].apply(
-                        lambda x: round(float(x), 2) if x not in [None, ""] else x
-                    )
+                    paginated_df[col] = paginated_df[col].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "")
 
-            # SCORE FIX
+            # ⭐ SCORE (already big → convert to M)
             if "score" in paginated_df.columns:
                 paginated_df["score"] = paginated_df["score"].apply(
-                    lambda x: f"{float(x)/1_000_000:.2f}M" if x not in [None, ""] else ""
+                    lambda x: format_number(x) if pd.notna(x) else ""
                 )
-                    
-            st.data_editor(paginated_df, use_container_width=True, disabled=True)
+
+
+            # =========================
+            #  DISPLAY
+            # =========================
+
+            st.data_editor(paginated_df, width='stretch', disabled=True)
+            
 
             
             
@@ -690,12 +809,24 @@ div.stButton > button:hover {
                     if next_col.button("▶", key="next_page"):
                         if st.session_state.page_number < total_pages:
                             st.session_state.page_number += 1
+                            
+                            
+            #  EPS COMPARISON (AFTER RESULTS)
+            st.markdown("### 📊 EPS Comparison")
+
+            if "eps" in df.columns:
+                clean_eps_df = df.dropna(subset=["eps"])
+
+                if not clean_eps_df.empty:
+                    st.bar_chart(clean_eps_df.set_index("symbol")["eps"])
+                else:
+                    st.info("No EPS data available for comparison")
 
             
 
             
             # ================= SAVE COMPANY =================
-            st.markdown("### Save Company")
+            st.markdown("### Add to WatchList")
 
             col1, col2 = st.columns([4,1], gap="small")
 
@@ -709,16 +840,22 @@ div.stButton > button:hover {
             with col2:
                 st.markdown("<br>", unsafe_allow_html=True)  # align vertically
 
-                if st.button(" Add", use_container_width=True):
+                if st.button(" Add", width='stretch'):
 
                     if st.session_state.token is None:
                         st.session_state.show_login = True
                         st.rerun()
 
+                    if not save_symbol or save_symbol.strip() == "":
+                        st.warning("Select a valid company")
+                        st.stop()
+
+                    clean_symbol = save_symbol.strip().upper()
+
                     status, data = safe_request(
                         "POST",
                         f"{API_URL}/watchlist",
-                        json={"stock_symbol": save_symbol},
+                        json={"stock_symbol": clean_symbol},
                         headers=headers
                     )
 
@@ -728,6 +865,7 @@ div.stButton > button:hover {
                         show_error(data)
 
 
+           
             # ================= ADD TO PORTFOLIO =================
             st.markdown("### 📂 Add to Portfolio")
 
@@ -748,13 +886,6 @@ div.stButton > button:hover {
                 symbols,
                 key="portfolio_symbol"
             )
-            col1, col2 = st.columns(2)
-
-            with col1:
-                quantity = st.number_input("Quantity", min_value=1, value=1)
-
-            with col2:
-                buy_price = st.number_input("Buy Price", min_value=0.0, value=0.0)
 
             #  CURRENT PRICE
             current_price = 0
@@ -766,7 +897,8 @@ div.stButton > button:hover {
                 else:
                     st.warning("Price not available")
 
-            #  LOAD FOLDERS
+
+            #  LOAD FOLDERS (FIXED CLEAN LOGIC)
             folder_options = []
 
             if st.session_state.token:
@@ -777,19 +909,40 @@ div.stButton > button:hover {
                 )
 
                 if status == 200:
-                    df_port = pd.DataFrame(data.get("data", []))
-                    if not df_port.empty and "folder_name" in df_port.columns:
-                        folder_options = sorted(
-                            df_port["folder_name"].dropna().unique().tolist()
-                        )
+                    portfolio_data = data.get("data", [])
 
+                    folder_set = set()
+
+                    for item in portfolio_data:
+                        if "folder_name" in item and item["folder_name"]:
+                            folder_set.add(item["folder_name"])
+
+                    folder_options = sorted(list(folder_set))
+
+            # fallback
             if not folder_options:
                 folder_options = ["My Stocks"]
 
-            selected_folder = st.selectbox("Select Folder", folder_options)
 
-            #  ADD BUTTON
-            if st.button("➕ Add to Portfolio", use_container_width=True):
+            #  INLINE INPUTS (MAIN CHANGE)
+            col1, col2, col3, col4 = st.columns([1,1,1,1], gap="small")
+
+            with col1:
+                quantity = st.number_input("Qty", min_value=1, value=1)
+
+            with col2:
+                buy_price = st.number_input("Buy ₹", min_value=0.0, value=0.0)
+
+            with col3:
+                selected_folder = st.selectbox("Folder", folder_options)
+
+            with col4:
+                st.markdown("<br>", unsafe_allow_html=True)  # 🔥 pushes button down
+                add_clicked = st.button("➕ Add", use_container_width=True)
+
+
+            #  ADD BUTTON LOGIC
+            if add_clicked:
 
                 if st.session_state.token is None:
                     st.session_state.show_login = True
@@ -808,26 +961,34 @@ div.stButton > button:hover {
                 )
 
                 if status == 200:
-                    st.success(f"{portfolio_symbol} added to Portfolio ")
+                    st.success(f"{portfolio_symbol} added to Portfolio ✅")
                 else:
                     show_error(data)
+
+
             #  REMOVE DUPLICATES + CLEAN LIST
             symbols = list(dict.fromkeys(df["symbol"].tolist()))
 
-            selected_symbol = st.selectbox(
-                "Open company details",
-                symbols,
-                key="view_company_symbol"
-            )
+            #  INLINE VIEW COMPANY (LIKE SEARCH BAR)
+            col1, col2 = st.columns([3,1], gap="small")
 
-            if st.button("🔍 View Company", use_container_width=True):
+            with col1:
+                selected_symbol = st.selectbox(
+                    "Select Company",
+                    symbols,
+                    key="view_company_symbol",
+                    label_visibility="collapsed"
+                )
 
+            with col2:
+                view_clicked = st.button("🔍 View company", use_container_width=True)
+
+            if view_clicked:
                 st.session_state["go_to_company"] = selected_symbol
                 st.rerun()
-            st.markdown("### EPS Comparison")
 
-            st.bar_chart(df.set_index("symbol")["eps"])
             
+
             st.markdown("### AI Insight")
 
             st.info(
@@ -839,8 +1000,6 @@ div.stButton > button:hover {
 #  PORTFOLIO
 elif st.session_state.page == "Portfolio":
 
-    if st.session_state.selected_folder is None:
-        pass
 
     # ---------- SESSION STATE ----------
     
@@ -929,6 +1088,7 @@ elif st.session_state.page == "Portfolio":
 
 
     # ---------- SHOW FOLDERS ----------
+    # ---------- SHOW FOLDERS ----------
     if st.session_state.selected_folder is None:
 
         folders = []
@@ -939,108 +1099,136 @@ elif st.session_state.page == "Portfolio":
         else:
             status, data = safe_request(
                 "GET",
-                f"{API_URL}/folders",   #  IMPORTANT CHANGE
+                f"{API_URL}/folders",
                 headers=headers
             )
 
             if status == 200:
-                folders = data.get("data", [])
-                folders = list(reversed(folders))
+                folders = list(reversed(data.get("data", [])))
+
+        #  GET FULL PORTFOLIO DATA ONCE
+        portfolio_data = []
+        status_p, data_p = safe_request(
+            "GET",
+            f"{API_URL}/portfolio",
+            headers=headers
+        )
+
+        if status_p == 200:
+            portfolio_data = data_p.get("data", [])
+
+        df_all = pd.DataFrame(portfolio_data) if portfolio_data else pd.DataFrame()
 
         if len(folders) == 0:
             st.info("No folders yet")
 
         else:
+
+            #  HEADER
+            h1, h2, h3, h4 = st.columns([2,1,1,1])
+            h1.markdown("**Folder Name**")
+            h2.markdown("**Value**")
+            h3.markdown("**Change**")
+            h4.markdown("**Change %**")
+
+            st.markdown(
+                "<hr style='margin:4px 0; border:0.5px solid #ddd;'>",
+                unsafe_allow_html=True
+            )
+
+            #  GLOBAL STYLES (CLEAN + COMPACT)
+            st.markdown("""
+            <style>
+
+            /*  compact button (folder name) */
+            div.stButton > button {
+                background: none !important;
+                border: none !important;
+                padding: 2px 4px !important;
+                margin: 0 !important;
+                font-size: 15px !important;
+                font-weight: 600 !important;
+                text-align: left !important;
+            }
+
+            /* hover effect on folder name */
+            div.stButton > button:hover {
+                color: #4a90e2 !important;
+                cursor: pointer;
+            }
+
+            /* remove extra space below buttons */
+            div.stButton {
+                margin-bottom: 0px !important;
+            }
+
+            /* reduce vertical spacing between rows */
+            .block-container {
+                padding-top: 1rem !important;
+                padding-bottom: 0rem !important;
+            }
+
+            </style>
+            """, unsafe_allow_html=True)
+
+            #  LOOP FOLDERS
             for i, folder in enumerate(folders):
 
-                col1, col2, col3 = st.columns([8,1,1])
+                folder_value = 0
+                folder_invested = 0
+                stock_count = 0
 
-                with col1:
-                    token = st.session_state.token
-                    username = st.session_state.username
+                if not df_all.empty and "folder_name" in df_all.columns:
+                    f_df = df_all[df_all["folder_name"] == folder]
+                    if not f_df.empty:
+                        folder_value = f_df["current_value"].sum()
+                        folder_invested = f_df["invested"].sum()
+                        stock_count = len(f_df)
+
+                folder_change = folder_value - folder_invested
+                folder_percent = (folder_change / folder_invested * 100) if folder_invested > 0 else 0
+
+                color = "green" if folder_change >= 0 else "red"
+                arrow = "▲" if folder_change >= 0 else "▼"
+
+                #  ROW (NO EXTRA SPACE)
+                c1, c2, c3, c4 = st.columns([2,1,1,1])
+
+                # 📁 FOLDER NAME (CLICKABLE)
+                with c1:
+                    if st.button(f"📁 {folder}", key=f"folder_{i}"):
+                        st.session_state.selected_folder = folder
+                        st.rerun()
 
                     st.markdown(
-                        f"""
-                        <a href="?folder={folder}&token={token}&username={username}" 
-                        style="text-decoration:none; font-size:16px;">
-                        📁 {folder}
-                        </a>
-                        """,
+                        f"<span style='font-size:11px; color:gray;'>{stock_count} Stocks</span>",
                         unsafe_allow_html=True
                     )
 
-                with col2:
-                    if st.button("✏️", key=f"edit_folder_{folder}_{i}"):
-                        st.session_state.rename_folder = folder
-                        st.rerun()
+                #  VALUE
+                with c2:
+                    st.write(f"₹{round(folder_value,2)}")
 
-                with col3:
-                    if st.button("🗑️", key=f"delete_folder_{folder}_{i}"):
+                #  CHANGE
+                with c3:
+                    st.markdown(
+                        f"<span style='color:{color}; font-weight:500;'>{arrow} {round(folder_change,2)}</span>",
+                        unsafe_allow_html=True
+                    )
 
-                        status, data = safe_request(
-                            "DELETE",
-                            f"{API_URL}/folders/{folder}",
-                            headers={
-                                "Authorization": f"Bearer {st.session_state.token}"
-                            }
-                        )
+                #  PERCENT
+                with c4:
+                    st.markdown(
+                        f"<span style='color:{color}; font-weight:500;'>{round(folder_percent,2)}%</span>",
+                        unsafe_allow_html=True
+                    )
 
-                        if status == 200:
-                            st.success(f"{folder} deleted ")
-                            st.rerun()
-                        else:
-                            show_error(data)
+                #  THIN DIVIDER (NO BIG GAP)
+                st.markdown(
+                    "<hr style='margin:2px 0; border:0.3px solid #eee;'>",
+                    unsafe_allow_html=True
+                )
 
-                st.divider()
-
-                
-                # -------- RENAME FOLDER --------
-                if "rename_folder" in st.session_state:
-
-                    st.markdown(f"### ✏️ Rename Folder: {st.session_state.rename_folder}")
-
-                    new_name = st.text_input("New Folder Name")
-
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-                        if st.button("Save Rename"):
-
-                            if new_name.strip() == "":
-                                st.warning("Enter folder name")
-                                st.stop()
-                            
-                            if st.session_state.token is None:
-                                st.session_state.show_login = True
-                                st.rerun()
-                            st.write("SENDING:", {
-                                "old_name": st.session_state.rename_folder,
-                                "new_name": new_name.strip()
-                            })
-                            status, data = safe_request(
-                                "PUT",
-                                f"{API_URL}/portfolio/rename-folder",
-                                json={
-                                    "old_name": st.session_state.rename_folder,
-                                    "new_name": new_name.strip()
-                                },
-                                headers={
-                                    "Authorization": f"Bearer {st.session_state.token}",
-                                    "Content-Type": "application/json"
-                                }
-                            )
-
-                            if status == 200:
-                                st.success("Renamed ")
-                                del st.session_state.rename_folder
-                                st.rerun()
-                            else:
-                                show_error(data)
-
-                    with col2:
-                        if st.button("Cancel Rename"):
-                            del st.session_state.rename_folder
-                            st.rerun()
                     
                 
                 
@@ -1161,8 +1349,6 @@ elif st.session_state.page == "Portfolio":
                 else:
 
                     st.markdown("### Your Stocks")
-
-                    
                     folder_df["current_price"] = folder_df["symbol"].apply(get_current_price)
                     folder_df["current_value"] = folder_df["current_price"] * folder_df["quantity"]
                     folder_df["invested"] = folder_df["buy_price"] * folder_df["quantity"]
@@ -1170,7 +1356,8 @@ elif st.session_state.page == "Portfolio":
                     folder_df["profit_percent"] = (folder_df["profit"] / folder_df["invested"]) * 100
 
                     # fallback company name
-                    folder_df["sector"] = folder_df["symbol"].apply(get_sector)
+                    folder_df["sector"] = folder_df["symbol"].apply(
+    lambda x: get_sector(x) or "Unknown")
 
                     display_df = pd.DataFrame({
                         "Symbol": folder_df["symbol"],
@@ -1188,7 +1375,7 @@ elif st.session_state.page == "Portfolio":
                     display_df = pd.DataFrame({
                         "Symbol": folder_df["symbol"],
                         "Company": folder_df["company_name"],
-                        "Quantity": folder_df["quantity"],
+                        "Quantity": folder_df['quantity'],
                         "Buy Price": folder_df["buy_price"],
                         "Current Price": folder_df["current_price"].round(2),
                         "Value": folder_df["current_value"].round(2),
@@ -1211,9 +1398,6 @@ elif st.session_state.page == "Portfolio":
     "<hr style='margin:1px 0 4px 0; border:0.5px solid #ddd;'>",
     unsafe_allow_html=True
 )
-
-                    
-
                     # ROWS
                     for _, row in folder_df.iterrows():
 
@@ -1239,16 +1423,16 @@ elif st.session_state.page == "Portfolio":
                             st.write(row["sector"])
 
                         with cols[2]:
-                            st.write(row["quantity"])
+                            st.markdown(f"{row['quantity']}")
 
                         with cols[3]:
-                            st.write(round(row["buy_price"], 1))
+                            st.markdown(f"₹{round(row['buy_price'], 2)}")
 
                         with cols[4]:
-                            st.write(round(row["current_price"], 2))
+                            st.markdown(f"₹{round(row['current_price'], 2)}")
 
                         with cols[5]:
-                            st.write(round(row["current_value"], 2))
+                            st.markdown(f"₹{round(row['current_value'], 2)}")
 
                         with cols[6]:
 
@@ -1286,7 +1470,7 @@ elif st.session_state.page == "Portfolio":
                     # -------- DELETE CONFIRMATION --------
                     if "delete_id" in st.session_state:
 
-                        st.warning(f"⚠️ Are you sure you want to delete {st.session_state.delete_symbol}?")
+                        st.warning(f" Are you sure you want to delete {st.session_state.delete_symbol}?")
 
                         col1, col2 = st.columns(2)
 
@@ -1319,13 +1503,13 @@ elif st.session_state.page == "Portfolio":
 
                         st.markdown("### ✏️ Update Stock")
 
-                        # 🔥 ACTION SELECT
+                        #  ACTION SELECT
                         action = st.radio(
                             "Action",
                             ["Buy ➕", "Sell ➖"]
                         )
 
-                        # 🔥 INPUT
+                        #  INPUT
                         qty = st.number_input("Quantity", min_value=1)
 
                         price = 0
@@ -1395,208 +1579,313 @@ elif st.session_state.page == "Portfolio":
         
 
 
-                
-            
-
-#  WATCHLIST
-
-
+#WATCHLIST  
+              
 elif st.session_state.page == "Watchlist":
-    
 
-    st.title(" Watchlist")
-    
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # ---------- MINI GRAPH ----------
+    def get_mini_chart(symbol, headers):
+
+        status, data = safe_request(
+            "GET",
+            f"{API_URL}/company/{symbol}/price-history?period=1M",
+            headers=headers
+        )
+
+        if status != 200:
+            return None
+
+        prices = data.get("data", [])
+        if not prices:
+            return None
+
+        y = np.array([p["close"] for p in prices])
+
+        color = "#00C853" if y[-1] >= y[0] else "#FF3D00"
+
+        fig, ax = plt.subplots(figsize=(1.8, 0.5))
+        ax.plot(y, color=color, linewidth=1.5)
+        ax.fill_between(range(len(y)), y, y.min(), color=color, alpha=0.1)
+        ax.axis("off")
+
+        return fig
+
 
     # ---------------- ADD STOCK ----------------
-
     st.subheader("Add Stock")
 
-    stock_symbol = st.text_input("Stock Symbol (example: AAPL)").upper()
+    # keep input (no red lines), but not used
+    user_input = st.text_input("Enter company symbol")
 
-    if st.button("Add to Watchlist"):
+
+    # ================= ADD TO WATCHLIST =================
+
+    if st.button("➕ Add to Watchlist"):
 
         if st.session_state.token is None:
             st.session_state.show_login = True
             st.rerun()
 
-        status, data = safe_request(
-            "GET",
-            f"{API_URL}/watchlist",
-            headers=headers
-        )
+        stock_symbol = user_input.strip().upper()
 
+        if not stock_symbol:
+            st.warning("Enter a stock symbol")
+            st.stop()
+
+        #  LOADING SPINNER
+        with st.spinner("Adding to watchlist..."):
+            status, data = safe_request(
+                "POST",
+                f"{API_URL}/watchlist",
+                json={"stock_symbol": stock_symbol},
+                headers=headers
+            )
+
+        #  STORE MESSAGE (IMPORTANT)
         if status == 200:
+            st.session_state.added_msg = f"{stock_symbol} added ✅"
 
-            df_watch = pd.DataFrame(data.get("data", []))
+        elif status == 400:
 
-            if not df_watch.empty and stock_symbol in df_watch["symbol"].values:
-                st.warning("Stock already in watchlist")
+            msg = ""
+
+            if isinstance(data, dict):
+                msg = (
+                    data.get("error", {}).get("message")
+                    or data.get("detail")
+                    or str(data)
+                )
+            else:
+                msg = str(data)
+
+            if "Invalid symbol" in msg:
+                st.session_state.added_msg = "Enter correct symbol ❌"
+
+            elif "Already" in msg:
+                st.session_state.added_msg = "Already exists in watchlist ⚠️"
 
             else:
-                status, data = safe_request(
-                    "POST",
-                    f"{API_URL}/watchlist",
-                    json={"stock_symbol": stock_symbol},
-                    headers=headers
-                )
-
-                if status == 200:
-                    st.success("Stock added to watchlist")
-                    st.rerun()
-                else:
-                    show_error(data)
+                st.session_state.added_msg = msg
 
         else:
-            show_error(data)
+            st.session_state.added_msg = "Something went wrong ❌"
 
 
-    st.divider() 
+    # ================= SHOW MESSAGE =================
 
-    # ---------------- LOAD WATCHLIST ----------------
+    if "added_msg" in st.session_state:
 
+        msg = st.session_state.added_msg
+
+        if "added" in msg:
+            st.success(msg)
+
+        elif "Already" in msg:
+            st.warning(msg)
+
+        else:
+            st.error(msg)
+
+        import time
+        time.sleep(1.5)   #  makes it visible
+
+        del st.session_state["added_msg"]
+        st.rerun()
+
+
+    st.divider()
+
+    # ---------------- WATCHLIST ----------------
     st.subheader("Your Watchlist")
-    #  NOT LOGGED IN → NO API CALL
+
     if st.session_state.token is None:
         st.info("Login to view your watchlist")
-        df = pd.DataFrame()
+        st.stop()
 
-    #  LOGGED IN → LOAD DATA
-    else:
-        status, data = safe_request(
+    status, data = safe_request(
+        "GET",
+        f"{API_URL}/watchlist",
+        headers=headers
+    )
+
+    if status != 200:
+        show_error(data)
+        st.stop()
+
+    df = pd.DataFrame(data.get("data", []))
+
+    if df.empty:
+        st.info("No stocks in watchlist")
+        st.stop()
+
+    # ---------------- FETCH DATA ----------------
+    rows = []
+    def format_number(x):
+        if x is None:
+            return ""
+
+        x = float(x)
+
+        if x >= 1_000_000_000_000:
+            return f"{x/1_000_000_000_000:.2f}T"
+        elif x >= 1_000_000_000:
+            return f"{x/1_000_000_000:.2f}B"
+        elif x >= 1_000_000:
+            return f"{x/1_000_000:.2f}M"
+        elif x >= 1_000:
+            return f"{x/1_000:.2f}K"
+        else:
+            return f"{x:.2f}"
+
+    for _, row in df.iterrows():
+
+        symbol = row["symbol"]
+        watch_id = row["id"]
+
+        status, details = safe_request(
             "GET",
-            f"{API_URL}/watchlist",
+            f"{API_URL}/company/{symbol}/details",
             headers=headers
         )
 
-        if status == 200:
-            df = pd.DataFrame(data.get("data", []))
-        else:
-            show_error(data)
-            df = pd.DataFrame()
-        
+        if status != 200:
+            continue
 
-        if df.empty:
-            st.info("No stocks in watchlist")
+        d = details["data"]
 
-        else:
+        rows.append({
+            "id": watch_id,
+            "Symbol": d["symbol"],
+            "Company": d["company_name"],
+            "PE": f"{round(d.get('pe_ratio') or 0, 2)}",
+            "EPS": f"{round(d.get('eps') or 0, 2)}",
+            "Revenue": f"₹{format_number(d.get('revenue'))}",
+            "Debt": f"₹{format_number(d.get('debt'))}",
+            "Market Cap": f"₹{format_number(d.get('market_cap'))}",
+        })
 
-            # -------- GET LIVE PRICE --------
+    df_full = pd.DataFrame(rows)
 
-            df["current_price"] = df["symbol"].apply(get_current_price)
+    if df_full.empty:
+        st.warning("No data available")
+        st.stop()
 
-            # -------- TEMP PREVIOUS CLOSE --------
+    # ---------------- HEADER ----------------
+    h1, h2, h3, h4, h5, h6, h7, h8 = st.columns([3,1.5,2,2,2,2,2,1])
 
-            df["previous_close"] = df["current_price"] * 0.98
+    h1.markdown("**Company**")
+    h2.markdown("**Trend**")
+    h3.markdown("**PE**")
+    h4.markdown("**EPS**")
+    h5.markdown("**Revenue**")
+    h6.markdown("**Debt**")
+    h7.markdown("**Market Cap**")
+    h8.markdown("**Delete**")
 
-            # -------- CALCULATIONS --------
+    st.divider()
 
-            df["change"] = df["current_price"] - df["previous_close"]
+    # ---------------- ROWS ----------------
+    for i, row in df_full.iterrows():
 
-            df["change_percent"] = (df["change"] / df["previous_close"]) * 100
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([3,1.5,2,2,2,2,2,1])
 
-            # -------- TABLE HEADER --------
+        symbol = row["Symbol"]
+        watch_id = row["id"]
 
-            h1, h2, h3, h4, h5 = st.columns(5)
+        token = st.session_state.token
+        username = st.session_state.username
 
-            h1.markdown("**Symbol**")
-            h2.markdown("**Price**")
-            h3.markdown("**Change**")
-            h4.markdown("**Change %**")
-            h5.markdown("**Delete**")
+        c1.markdown(
+            f"<a href='?symbol={symbol}&token={token}&username={username}' "
+            f"style='text-decoration:none;color:inherit;font-weight:600'>"
+            f"{row['Company']}</a>",
+            unsafe_allow_html=True
+        )
 
-            st.divider()
+        fig = get_mini_chart(symbol, headers)
+        if fig:
+            c2.pyplot(fig)
 
-            # -------- ROWS --------
+        c3.write(row["PE"])
+        c4.write(row["EPS"])
+        c5.write(row["Revenue"])
+        c6.write(row["Debt"])
+        c7.write(row["Market Cap"])
 
-            for _, row in df.iterrows():
+        # DELETE BUTTON
+        if c8.button("🗑️", key=f"delete_{watch_id}_{i}"):
 
-                c1, c2, c3, c4, c5 = st.columns(5)
+            status, data = safe_request(
+                "DELETE",
+                f"{API_URL}/watchlist/{watch_id}",
+                headers=headers
+            )
 
-                symbol = row["symbol"]
+            if status == 200:
+                st.success("Removed")
+                st.rerun()
+            else:
+                show_error(data)
 
-                price = round(row["current_price"], 2)
-
-                change = round(row["change"], 2)
-
-                percent = round(row["change_percent"], 2)
-
-                if percent >= 0:
-                    change_text = f"▲ {percent}%"
-                    color = "green"
-                else:
-                    change_text = f"▼ {percent}%"
-                    color = "red"
-
-                # clickable symbol → company explorer
-                token = st.session_state.token
-                username = st.session_state.username
-
-                c1.markdown(
-                    f"<a href='?symbol={symbol}&token={token}&username={username}'>{symbol}</a>",
-                    unsafe_allow_html=True
-                )
-
-                c2.write(price)
-
-                c3.write(change)
-
-                c4.markdown(
-                    f"<span style='color:{color};font-weight:600'>{change_text}</span>",
-                    unsafe_allow_html=True
-                )
-
-                # delete button
-                if c5.button("Delete", key=f"watch_delete_{row['id']}"):
-
-                    if st.session_state.token is None:
-                        st.session_state.show_login = True
-                        
-                        st.rerun()
-
-                    status, data = safe_request(
-                        "DELETE",
-                        f"{API_URL}/watchlist/{row['id']}",
-                        headers=headers
-                    )
-
-                    if status == 200:
-                        st.success("Stock removed")
-                        st.rerun()
-                    else:
-                        show_error(data)
-
+        st.markdown(
+            "<hr style='margin:4px 0; border:0.5px solid #ddd;'>",
+            unsafe_allow_html=True
+        )
 
 #  ALERTS
 
 
 elif st.session_state.page == "Alerts":
     
-
-    st.title("🔔 Alerts")
     
-    view = st.radio(
-        "Select View",
-        ["Your Alerts", "Triggered Alerts"]
-    )
+    # DEFAULT VIEW
+    if "alert_view" not in st.session_state:
+        st.session_state.alert_view = "alerts"
 
+    col_left, col_mid, col_right = st.columns([2,2,1])
+
+    # Alerts button
+    with col_left:
+        if st.button(
+            "Alerts",
+            key="alerts_tab",
+        ):
+            st.session_state.alert_view = "alerts"
+
+    # Triggered button
+    with col_mid:
+        if st.button(
+            "Triggered Alerts",
+            key="triggered_tab",
+            type="primary" if st.session_state.alert_view == "triggered" else "secondary"
+        ):
+            st.session_state.alert_view = "triggered"
+
+    # Create button (right side)
+    with col_right:
+        if st.session_state.alert_view == "alerts":
+            if st.button("➕ Create", width='stretch'):
+                if st.session_state.token is None:
+                    st.session_state.show_login = True
+                    st.rerun()
+                st.session_state.show_alert_modal = True
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    
     # ---------------- CREATE ALERT ----------------
     if "show_alert_modal" not in st.session_state:
         st.session_state.show_alert_modal = False
 
-    if st.button("➕ Create Alert"):
-        if st.session_state.token is None:
-            st.session_state.show_login = True
-            st.rerun()
-        st.session_state.show_alert_modal = True
 
     if st.session_state.show_alert_modal:
 
         st.markdown("### Create Alert")
 
         symbol = st.text_input("Symbol").upper()
-        
 
-        # fetch metrics
         status, data = safe_request(
             "GET",
             f"{API_URL}/alerts/metrics",
@@ -1609,6 +1898,16 @@ elif st.session_state.page == "Alerts":
             metrics = data.get("data", [])
         else:
             st.warning("Failed to load metrics")
+
+        metrics = [
+            "pe_ratio",
+            "eps",
+            "revenue",
+            "debt",
+            "market_cap",
+            "revenue_growth",
+            "price_change_1y"
+        ]
 
         metric = st.selectbox("Metric", metrics)
 
@@ -1653,16 +1952,16 @@ elif st.session_state.page == "Alerts":
                 st.session_state.show_alert_modal = False
                 st.rerun()
 
+            
     # ---------------- SHOW ALERTS ----------------
-    if view == "Your Alerts":
 
-        st.subheader("Your Alerts")
-        #  NOT LOGGED IN → NO API CALL
+    if st.session_state.alert_view == "alerts":
+
+        
+
         if st.session_state.token is None:
-            st.info("Login to view your alerts")
-            alerts = []
+            st.info("Login to view alerts")
 
-        #  LOGGED IN → LOAD DATA
         else:
             status, data = safe_request(
                 "GET",
@@ -1671,44 +1970,40 @@ elif st.session_state.page == "Alerts":
             )
 
             if status == 200:
+
                 alerts = data.get("data", [])
+
+                if not alerts:
+                    st.info("No alerts created")
+
+                else:
+                    import pandas as pd
+
+                    df = pd.DataFrame(alerts)
+
+                    df_display = pd.DataFrame({
+                    "Symbol": df["stock_symbol"],
+                    "Metric": df["metric"],
+                    "Condition": df["operator"] + " " + df["threshold"].astype(str),
+                    "Active": df["is_active"].apply(
+                        lambda x: "✅" if x else "❌"
+                    ),
+                    "Created At": pd.to_datetime(df["created_at"]).dt.strftime("%d-%m-%Y  %H:%M")
+                })
+
+                    st.dataframe(df_display, width='stretch')
+
             else:
                 show_error(data)
-                alerts = []
 
-            if not alerts:
-                st.info("No alerts created yet")
 
-            else:
-                for alert in alerts:
+    elif st.session_state.alert_view == "triggered":
 
-                    col1, col2 = st.columns([8,1])
 
-                    col1.write(
-                        f"{alert['symbol']} | {alert['metric']} {alert['condition']} {alert['threshold']}"
-                    )
+        if st.session_state.token is None:
+            st.info("Login to view alerts")
 
-                    if col2.button("🗑️", key=f"del_{alert['id']}"):
-                        require_login()
-
-                        safe_request(
-                            "DELETE",
-                            f"{API_URL}/alerts/{alert['id']}",
-                            headers=headers
-                        )
-
-                        st.rerun()
-
-        
-
-    # ---------------- CHECK ALERTS ----------------
-    if view == "Triggered Alerts":
-
-        st.subheader("Triggered Alerts")
-
-        if st.button("Check Alerts"):
-            require_login()
-
+        else:
             status, data = safe_request(
                 "GET",
                 f"{API_URL}/alerts/check",
@@ -1723,54 +2018,91 @@ elif st.session_state.page == "Alerts":
                     st.info("No alerts triggered")
 
                 else:
-
-                    st.success(f"{len(alerts)} Alerts Triggered 🚀")
-
                     import pandas as pd
 
                     df = pd.DataFrame(alerts)
 
-                    df = df.rename(columns={
-                        "symbol": "Symbol",
-                        "metric": "Metric",
-                        "current_value": "Current Value",
-                        "threshold": "Threshold"
+                    df_display = pd.DataFrame({
+                        "Symbol": df["symbol"],
+                        "Metric": df["metric"],
+                        "Current Value": df["current_value"],
+                        "Condition": df["condition"]
                     })
 
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df_display, width='stretch')
 
             else:
                 show_error(data)
 
-        
-
+    
 # ================================
 #  COMPANY EXPLORER 
 # ================================
 elif st.session_state.page == "Company Explorer":
+    st.markdown("""
+<style>
 
-    st.title("📊 Company Explorer")
+/* Container */
+div[role="radiogroup"] {
+    display: flex;
+    gap: 0px;
+    background-color: #f1f3f5;
+    padding: 5px;
+    border-radius: 10px;
+    width: fit-content;
+}
 
-    #  SEARCH
-    symbol_input = st.text_input(
-            "Enter Company Symbol (e.g., INFY, AAPL)",
+/* Each tab */
+div[role="radio"] {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #555;
+    background: transparent;
+    border: none;
+}
+
+/* Selected tab */
+div[role="radio"][aria-checked="true"] {
+    background-color: white;
+    color: black;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+    # SEARCH
+    col1, col2 = st.columns([4,1])
+
+    with col1:
+        symbol_input = st.text_input(
+            "",
+            placeholder="Enter Company Symbol (e.g., INFY, AAPL)",
             value=st.session_state.get("selected_company", ""),
-            key="company_search_box"
+            key="company_search_box",
+            label_visibility="collapsed"
         )
 
-    if st.button("Search Company", use_container_width=True):
+    with col2:
+        search_clicked = st.button("Search", use_container_width=True)
 
+    # LOGIC
+    if search_clicked:
         if symbol_input.strip() != "":
             st.session_state["selected_company"] = symbol_input.upper()
             st.rerun()
 
     symbol = st.session_state.get("selected_company")
 
+    # PERIOD STATE
+    if "chart_period" not in st.session_state:
+        st.session_state.chart_period = "1Y"
+
     if symbol:
 
-        # =========================
-        #  FETCH DATA
-        # =========================
+        # FETCH DATA
         detail_status, detail_data = safe_request(
             "GET",
             f"{API_URL}/company/{symbol}/full-details",
@@ -1779,14 +2111,14 @@ elif st.session_state.page == "Company Explorer":
 
         price_status, price_data = safe_request(
             "GET",
-            f"{API_URL}/company/{symbol}/price-history?period=1Y",
+            f"{API_URL}/company/{symbol}/price-history?period={st.session_state.chart_period}",
             headers=headers
         )
 
         left, right = st.columns([2,1])
 
         # =========================
-        #  LEFT SIDE → GRAPH
+        # LEFT SIDE
         # =========================
         with left:
 
@@ -1797,28 +2129,61 @@ elif st.session_state.page == "Company Explorer":
                 if not df.empty:
 
                     df["date"] = pd.to_datetime(df["date"])
+                    df = df.sort_values("date")
 
                     import plotly.graph_objects as go
 
-                    #  PRICE
+                    # CALCULATIONS
                     first_price = df["close"].iloc[0]
                     last_price = df["close"].iloc[-1]
+
+                    high = df["high"].max()
+                    low = df["low"].min()
+
+                    latest = df.iloc[-1]
 
                     change = last_price - first_price
                     percent = (change / first_price) * 100
 
-                    st.metric(
-                        label=f"{symbol} Price",
-                        value=round(last_price, 2),
-                        delta=f"{round(percent,2)}%"
+                    volume = df["close"].sum()
+
+                    color = "green" if change >= 0 else "red"
+                    arrow = "▲" if change >= 0 else "▼"
+
+                    # TOP PRICE UI
+                    st.markdown(f"""
+                    <div style="font-size:34px; font-weight:700;">
+                        ₹{round(last_price,2)}
+                    </div>
+
+                    <div style="color:{color}; font-size:18px; font-weight:600;">
+                        {arrow} {round(change,2)} ({round(percent,2)}%)
+                    </div>
+
+                    <div style="color:gray; font-size:14px;">
+                        Volume: {round(volume,2)}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # BUTTONS (ABOVE GRAPH)
+                    options = ["1D", "1W", "1M", "1Y", "5Y"]
+
+                    period = st.radio(
+                        "",
+                        options,
+                        horizontal=True,
+                        index=options.index(st.session_state.chart_period)
                     )
 
-                    # =========================
-                    #  GRAPH
-                    # =========================
+                    if period != st.session_state.chart_period:
+                        st.session_state.chart_period = period
+                        st.rerun()
+
+                    # GRAPH
                     fig = go.Figure()
 
-                    # Candlestick
                     fig.add_trace(go.Candlestick(
                         x=df["date"],
                         open=df["open"],
@@ -1826,11 +2191,9 @@ elif st.session_state.page == "Company Explorer":
                         low=df["low"],
                         close=df["close"],
                         increasing_line_color="green",
-                        decreasing_line_color="red",
-                        visible=True
+                        decreasing_line_color="red"
                     ))
 
-                    # Line
                     fig.add_trace(go.Scatter(
                         x=df["date"],
                         y=df["close"],
@@ -1839,7 +2202,6 @@ elif st.session_state.page == "Company Explorer":
                         visible=False
                     ))
 
-                    # Area
                     fig.add_trace(go.Scatter(
                         x=df["date"],
                         y=df["close"],
@@ -1850,9 +2212,6 @@ elif st.session_state.page == "Company Explorer":
                         visible=False
                     ))
 
-                    # =========================
-                    #  SMALL BUTTONS (TOP RIGHT)
-                    # =========================
                     fig.update_layout(
                         updatemenus=[
                             dict(
@@ -1862,11 +2221,6 @@ elif st.session_state.page == "Company Explorer":
                                 y=0.98,
                                 xanchor="right",
                                 yanchor="top",
-                                bgcolor="rgba(255,255,255,0.5)",
-                                bordercolor="gray",
-                                borderwidth=1,
-                                pad={"r": 2, "t": 2},
-                                font=dict(size=10),
                                 buttons=[
                                     dict(label="🕯️", method="update", args=[{"visible": [True, False, False]}]),
                                     dict(label="📈", method="update", args=[{"visible": [False, True, False]}]),
@@ -1876,47 +2230,34 @@ elif st.session_state.page == "Company Explorer":
                         ]
                     )
 
-                    #  STYLE
                     fig.update_layout(
                         template="plotly_white",
                         height=450,
-                        margin=dict(l=10, r=10, t=20, b=10),
+                        margin=dict(l=10, r=10, t=10, b=10),
                         xaxis=dict(showgrid=False),
                         yaxis=dict(showgrid=False),
                     )
 
                     fig.update_layout(xaxis_rangeslider_visible=False)
 
-                    #  TIME FILTER BUTTONS
-                    fig.update_layout(
-                        xaxis=dict(
-                            rangeselector=dict(
-                                buttons=list([
-                                    dict(count=1, label="1D", step="day", stepmode="backward"),
-                                    dict(count=7, label="1W", step="day", stepmode="backward"),
-                                    dict(count=1, label="1M", step="month", stepmode="backward"),
-                                    dict(count=6, label="6M", step="month", stepmode="backward"),
-                                    dict(count=1, label="1Y", step="year", stepmode="backward"),
-                                    dict(count=5, label="5Y", step="year", stepmode="backward"),
-                                    dict(step="all", label="ALL")
-                                ])
-                            )
-                        )
-                    )
-
-                    #  ONLY ONE GRAPH (FIXED)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                     # =========================
-                    #  OHLC
+                    #  OPEN / HIGH / LOW / CLOSE
                     # =========================
-                    latest = df.iloc[-1]
+                    c1, c2, c3, c4 = st.columns(4)
 
-                    col1, col2, col3, col4 = st.columns(4)
-                    col1.metric("Open", round(latest["open"],2))
-                    col2.metric("High", round(latest["high"],2))
-                    col3.metric("Low", round(latest["low"],2))
-                    col4.metric("Close", round(latest["close"],2))
+                    def box(title, value):
+                        return f"""
+                        <div style="padding:10px; background:#f5f7fb; border-radius:10px;">
+                        <b>{title}</b><br>{round(value,2)}
+                        </div>
+                        """
+
+                    c1.markdown(box("Open", latest["open"]), unsafe_allow_html=True)
+                    c2.markdown(box("High", high), unsafe_allow_html=True)
+                    c3.markdown(box("Low", low), unsafe_allow_html=True)
+                    c4.markdown(box("Close", latest["close"]), unsafe_allow_html=True)
 
                 else:
                     st.warning("No price data")
@@ -1925,7 +2266,7 @@ elif st.session_state.page == "Company Explorer":
                 st.error("Price API failed")
 
         # =========================
-        #  RIGHT SIDE → DETAILS
+        # RIGHT SIDE
         # =========================
         with right:
 
@@ -1933,34 +2274,32 @@ elif st.session_state.page == "Company Explorer":
 
                 d = detail_data["data"]
 
-                st.subheader(d["company_name"])
-                st.caption(f"{d['symbol']} • {d['sector']}")
+                st.markdown(f"""
+                <div style="padding:15px; border-radius:12px; border:1px solid #eee;">
 
-                st.divider()
+                <h4>{d["company_name"]}</h4>
+                <div style="color:gray;">{d["symbol"]} • {d["sector"]}</div>
 
-                table_data = {
-                    "Metric": [
-                        "PE Ratio","EPS","Revenue","Profit","EBITDA",
-                        "Debt","Cash","Revenue Growth","Profit Margin",
-                        "ROE","ROA","Market Cap"
-                    ],
-                    "Value": [
-                        d.get("pe_ratio"), d.get("eps"), d.get("revenue"),
-                        d.get("profit"), d.get("ebitda"), d.get("debt"),
-                        d.get("cash"), d.get("revenue_growth"),
-                        d.get("profit_margin"), d.get("roe"),
-                        d.get("roa"), d.get("market_cap")
-                    ]
-                }
+                <hr>
 
-                df_table = pd.DataFrame(table_data)
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
 
-                st.dataframe(
-                    df_table,
-                    use_container_width=True,
-                    hide_index=True,
-                    height=min(500, 40 * len(df_table) + 40)
-                )
+                <div><b>PE</b><br>{round(d.get("pe_ratio",0),2)}</div>
+                <div><b>EPS</b><br>{round(d.get("eps",0),2)}</div>
+
+                <div><b>Market Cap</b><br>₹{d.get("market_cap")}</div>
+                <div><b>Revenue</b><br>₹{d.get("revenue")}</div>
+
+                <div><b>Profit</b><br>₹{d.get("profit")}</div>
+                <div><b>EBITDA</b><br>₹{d.get("ebitda")}</div>
+
+                <div><b>ROE</b><br>{round(d.get("roe",0),2)}%</div>
+                <div><b>ROA</b><br>{round(d.get("roa",0),2)}%</div>
+
+                </div>
+
+                </div>
+                """, unsafe_allow_html=True)
 
             else:
                 st.error("Company details failed")

@@ -1,104 +1,32 @@
 {
     "ticker": "ITC",
-    "snapshot_date": "2026-03-18T10:35:09.466054",
+    "snapshot_date": "2026-03-31T11:07:59.055638",
     "company_profile": {
         "name": "ITC Limited",
         "sector": "Consumer Defensive",
         "industry": "Tobacco",
         "website": "https://www.itcportal.com",
-        "market_cap": 3812644356096,
+        "market_cap": 3604728250368,
         "description": "ITC Limited engages in the fast-moving consumer goods, paperboards, paper and packaging, and agri businesses in India and internationally. The company offers cigarettes and cigars; foods, including staples, spices, biscuits, confectionery and gums, snacks, noodles and pasta, beverages, dairy products, ready-to-eat meals, chocolates, coffee, and frozen foods; personal care products; education and stationery, such as balls, gels and roller pens, mechanical pencils, geometry boxes, erasers, sharpeners and rulers, wax crayons, plastic crayons, and sketch pens and oil pastels; safety matches; and agarbattis and dhoops under various brands, as well as operates a hotel under the ITC Grand Central name in Mumbai. It also provides virgin, recycled, coated barrier, cupstock base, liner, liquid packaging, antifungal, solid, and graphic boards, as well as specialty papers; surfacing, print base, barrier, overlay, and liner papers; plastic substitution products; and packaging products, including cartons, flexible, tobacco, and green packaging products. In addition, the company exports feed ingredients, food grains, marine products, processed fruits, coffee products, leaf tobacco products, and spices; and offers information technology services for the banking and financial services, healthcare, manufacturing, consumer goods, travel, and hospitality industries, as well as produces and commercializes seed potato technology products. Further, it provides property infrastructure maintenance; engineering, procurement and construction management and project management consultancy services; business consulting; and agro-forestry and other related services, as well as engages in the fabrication and assembly of machinery for tube filling, cartoning, wrapping, and conveyor solutions and engineering activities. ITC Limited was incorporated in 1910 and is headquartered in Kolkata, India.",
         "logo_url": null,
         "Category": null,
         "Book Value": 56.707,
         "Show Profile": false,
-        "Change From Previous Close": -0.18039301,
+        "Change From Previous Close": -2.3752968,
         "Profit after Tax": 0,
         "change percent": 0,
-        "Last Traded Price": 304.3
+        "Last Traded Price": 287.7
     },
     "fundamentals": {
-        "pe_ratio": 18.726152,
-        "eps": 16.25,
+        "pe_ratio": 17.693727,
+        "eps": 16.26,
         "revenue": 798087184384,
         "debt": 3629700096,
-        "market_cap": 3812644356096,
+        "market_cap": 3604728250368,
         "revenue_growth": 6.7,
-        "price_change_1y": -22.659096883242817
+        "price_change_1y": -26.43759474403203
     },
     "historical_prices": [
-        {
-            "date": "2025-03-18",
-            "open": 394.31842149451984,
-            "high": 396.1938501173774,
-            "low": 392.1544789375377,
-            "close": 393.4528503417969,
-            "volume": 13861897
-        },
-        {
-            "date": "2025-03-19",
-            "open": 394.3184059049263,
-            "high": 395.0397200620695,
-            "low": 387.20144542451675,
-            "close": 387.63421630859375,
-            "volume": 12830387
-        },
-        {
-            "date": "2025-03-20",
-            "open": 389.50964497469676,
-            "high": 391.0965302508203,
-            "low": 386.5282072542035,
-            "close": 388.49981689453125,
-            "volume": 16994037
-        },
-        {
-            "date": "2025-03-21",
-            "open": 390.4233291082126,
-            "high": 391.9140333230442,
-            "low": 386.3358821349048,
-            "close": 390.0386047363281,
-            "volume": 25302035
-        },
-        {
-            "date": "2025-03-24",
-            "open": 391.4331323758087,
-            "high": 397.05938842867533,
-            "low": 390.08668521067875,
-            "close": 395.1839599609375,
-            "volume": 14362572
-        },
-        {
-            "date": "2025-03-25",
-            "open": 396.2419041658655,
-            "high": 399.36759879824183,
-            "low": 393.06813366389935,
-            "close": 394.12603759765625,
-            "volume": 20338110
-        },
-        {
-            "date": "2025-03-26",
-            "open": 394.60692684899476,
-            "high": 395.47252733324694,
-            "low": 390.71184207125464,
-            "close": 391.769775390625,
-            "volume": 13891436
-        },
-        {
-            "date": "2025-03-27",
-            "open": 392.3948763562974,
-            "high": 394.99161889585264,
-            "low": 390.1347529385877,
-            "close": 393.7894287109375,
-            "volume": 18642328
-        },
-        {
-            "date": "2025-03-28",
-            "open": 395.18398159578936,
-            "high": 399.7042287729926,
-            "low": 392.5391629889967,
-            "close": 394.0779724121094,
-            "volume": 12981873
-        },
         {
             "date": "2025-04-01",
             "open": 394.1260406660441,
@@ -2014,10 +1942,66 @@
         {
             "date": "2026-03-18",
             "open": 305.8999938964844,
-            "high": 306.3500061035156,
-            "low": 303.79998779296875,
-            "close": 304.29998779296875,
-            "volume": 3719750
+            "high": 306.95001220703125,
+            "low": 303.5,
+            "close": 304.04998779296875,
+            "volume": 16702554
+        },
+        {
+            "date": "2026-03-19",
+            "open": 301.5,
+            "high": 305.5,
+            "low": 297.1000061035156,
+            "close": 298.0,
+            "volume": 17851126
+        },
+        {
+            "date": "2026-03-20",
+            "open": 301.04998779296875,
+            "high": 308.75,
+            "low": 298.1499938964844,
+            "close": 299.95001220703125,
+            "volume": 58679529
+        },
+        {
+            "date": "2026-03-23",
+            "open": 298.8999938964844,
+            "high": 299.0,
+            "low": 289.54998779296875,
+            "close": 290.45001220703125,
+            "volume": 31788160
+        },
+        {
+            "date": "2026-03-24",
+            "open": 295.95001220703125,
+            "high": 296.0,
+            "low": 288.75,
+            "close": 291.25,
+            "volume": 33335721
+        },
+        {
+            "date": "2026-03-25",
+            "open": 292.70001220703125,
+            "high": 298.5,
+            "low": 292.25,
+            "close": 295.70001220703125,
+            "volume": 26184716
+        },
+        {
+            "date": "2026-03-27",
+            "open": 294.70001220703125,
+            "high": 296.8500061035156,
+            "low": 291.54998779296875,
+            "close": 294.70001220703125,
+            "volume": 22179022
+        },
+        {
+            "date": "2026-03-30",
+            "open": 293.6000061035156,
+            "high": 294.45001220703125,
+            "low": 287.0,
+            "close": 287.70001220703125,
+            "volume": 24586921
         }
     ]
 }
