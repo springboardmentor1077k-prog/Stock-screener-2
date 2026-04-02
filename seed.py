@@ -48,8 +48,35 @@ def seed_database():
         )
         cursor = conn.cursor()
 
-        print("Injecting companies into 'symbols' and 'fundamentals' tables...")
+        # Step 0: Run Schema Creation (Layer 3 Ensure tables exist)
+        print("Ensuring all database tables and indexes exist (Running schema.sql)...")
+        schema_path = os.path.join(os.path.dirname(__file__), 'database', 'schema.sql')
+        if os.path.exists(schema_path):
+            with open(schema_path, 'r') as f:
+                cursor.execute(f.read())
+                conn.commit()
+        else:
+            print("⚠️ schema.sql not found. Table creation skipped.")
+
+        print("Creating default user 'admin'...")
+        cursor.execute("SELECT id FROM users WHERE username='admin'")
+        admin_row = cursor.fetchone()
+        if not admin_row:
+            from backend.auth import get_password_hash
+            password_hash = get_password_hash("admin123")
+            cursor.execute("""
+                INSERT INTO users (username, email, password_hash)
+                VALUES (%s, %s, %s) RETURNING id
+            """, ('admin', 'admin@stock.com', password_hash))
+            admin_id = cursor.fetchone()[0]
+        else:
+            admin_id = admin_row[0]
+
+        print("Injecting companies into 'symbols', 'fundamentals' and 'historical_metrics' tables...")
         # Clear existing data so we don't accidentally double-insert
+        cursor.execute("TRUNCATE TABLE screener_cache CASCADE")
+        cursor.execute("TRUNCATE TABLE alerts CASCADE")
+        cursor.execute("TRUNCATE TABLE historical_metrics CASCADE")
         cursor.execute("TRUNCATE TABLE fundamentals CASCADE")
         cursor.execute("TRUNCATE TABLE symbols CASCADE")
         
@@ -61,31 +88,34 @@ def seed_database():
                 "INSERT INTO symbols (symbol, company_name, sector) VALUES (%s, %s, %s) RETURNING id",
                 (symbol, name, sector)
             )
-            
-            # We need the new record's assigned ID for the foreign key
             company_id = cursor.fetchone()[0]
             
             # 2. Insert into fundamentals
             cursor.execute(
-                """INSERT INTO fundamentals 
-                   (company_id, pe_ratio, revenue, ebitda, debt_to_equity) 
-                   VALUES (%s, %s, %s, %s, %s)""",
+                """INSERT INTO fundamentals (company_id, pe_ratio, revenue, ebitda, debt_to_equity) VALUES (%s, %s, %s, %s, %s)""",
                 (company_id, pe, rev, ebitda, dte)
             )
+            
+            # 3. Insert historical data (Task: Performance testing with time filters)
+            # Create two quarters of historical metrics for each company
+            cursor.execute(
+                "INSERT INTO historical_metrics (company_id, revenue_growth, eps_growth, quarter) VALUES (%s, %s, %s, %s)",
+                (company_id, 0.12, 0.08, '2025-12-31')
+            )
+            cursor.execute(
+                "INSERT INTO historical_metrics (company_id, revenue_growth, eps_growth, quarter) VALUES (%s, %s, %s, %s)",
+                (company_id, 0.15, 0.10, '2026-03-31')
+            )
 
-        # Add a default admin user
-        from backend.auth import get_password_hash
-        password_hash = get_password_hash("admin123")
-        
-        print("Creating default user 'admin'...")
-        cursor.execute("""
-            INSERT INTO users (username, email, password_hash)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (username) DO NOTHING
-        """, ('admin', 'admin@stock.com', password_hash))
+        # Add sample alerts for admin
+        print("Provisioning sample alerts for 'admin'...")
+        cursor.execute(
+            "INSERT INTO alerts (user_id, symbol, threshold_price, alert_type) VALUES (%s, 'AAPL', 200.0, 'PRICE_ABOVE')" ,
+            (admin_id,)
+        )
             
         conn.commit()
-        print(f"✅ Successfully injected {len(COMPANIES)} fake companies and 1 admin user into your PostgreSQL database!")
+        print(f"✅ Successfully initialized {len(COMPANIES)} companies with historical metrics and alerts!")
         
     except Exception as err:
         print(f"❌ Database error: {err}")

@@ -18,13 +18,25 @@ CREATE TABLE IF NOT EXISTS fundamentals (
     FOREIGN KEY (company_id) REFERENCES symbols(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS historical_data (
+CREATE TABLE IF NOT EXISTS historical_metrics (
     id SERIAL PRIMARY KEY,
     company_id INT NOT NULL,
-    metric_name VARCHAR(50) NOT NULL,
-    metric_value DECIMAL(15, 2) NOT NULL,
-    record_date DATE NOT NULL,
+    revenue_growth DECIMAL(10, 4), -- e.g. 0.15 for 15%
+    eps_growth DECIMAL(10, 4),
+    quarter DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES symbols(id) ON DELETE CASCADE
+);
+
+-- Task: Required Alerts table
+CREATE TABLE IF NOT EXISTS alerts (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(20) NOT NULL,
+    threshold_price DECIMAL(15, 2) NOT NULL,
+    alert_type VARCHAR(20) NOT NULL, -- e.g. 'PRICE_ABOVE', 'PRICE_BELOW'
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- We also need a simple 'users' table to support the Authentication (JWT) requirement
@@ -49,8 +61,8 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- Fast lookup indexes for transactions
-CREATE INDEX idx_transactions_user ON transactions(user_id);
-CREATE INDEX idx_transactions_symbol ON transactions(symbol);
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_symbol ON transactions(symbol);
 
 -- The current snapshot of holdings (Authoritative State)
 CREATE TABLE IF NOT EXISTS portfolio (
@@ -65,8 +77,8 @@ CREATE TABLE IF NOT EXISTS portfolio (
 );
 
 -- Fast lookup indexes for portfolio
-CREATE INDEX idx_portfolio_user ON portfolio(user_id);
-CREATE INDEX idx_portfolio_symbol ON portfolio(symbol);
+CREATE INDEX IF NOT EXISTS idx_portfolio_user ON portfolio(user_id);
+CREATE INDEX IF NOT EXISTS idx_portfolio_symbol ON portfolio(symbol);
 
 -- ==========================================
 -- Task 1: PERFORMANCE INDEXES

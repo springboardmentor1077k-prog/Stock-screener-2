@@ -3,12 +3,39 @@ import time
 import logging
 import psycopg2
 from psycopg2 import pool
+from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Task 4 & 5: Ensure logs directory exists and setup centralized logging
+LOG_DIR = "logs"
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+# Configure logging with rotation (5MB, 3 files)
+logger = logging.getLogger("ai_stock_screener")
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(os.path.join(LOG_DIR, "app.log"), maxBytes=5*1024*1024, backupCount=3)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+# Task 5: Sanitization function
+def sanitize_log_data(data):
+    """Redact sensitive fields from logging data."""
+    if not isinstance(data, dict):
+        return data
+    sensitive_keys = {"password", "token", "access_token", "jwt", "api_key", "secret"}
+    sanitized = data.copy()
+    for key in sanitized:
+        if any(sk in key.lower() for sk in sensitive_keys):
+            sanitized[key] = "[REDACTED]"
+        elif isinstance(sanitized[key], dict):
+            sanitized[key] = sanitize_log_data(sanitized[key])
+    return sanitized
+
 # We use connection pooling to make our secure DB scalable
-# Task 4: Use psycopg2.pool.SimpleConnectionPool with minimum 2 and maximum 10 connections
 try:
     db_pool = psycopg2.pool.SimpleConnectionPool(
         2, 10,
@@ -19,14 +46,13 @@ try:
         dbname=os.getenv("DB_NAME", "ai_stock_screener")
     )
 except Exception as e:
-    print("WARNING: Could not connect to PostgreSQL Database. It may not be set up yet.", e)
+    logger.error(f"FATAL: Could not connect to PostgreSQL Database: {str(e)}")
     db_pool = None
 
 # Bottleneck 4 / Dashboard: Track slow queries
 SLOW_QUERIES = []
 
 def get_active_db_connections():
-    """Return an approximation of used connections from the pool."""
     if db_pool and hasattr(db_pool, '_used'):
         return len(db_pool._used)
     return 0
@@ -45,15 +71,16 @@ class TimerCursorWrapper:
             return self._cursor.execute(query, vars)
         finally:
             duration_ms = (time.time() - start) * 1000
-            logging.info(f"Query Executed in {duration_ms:.2f} ms")
+            # Task 4: Structured logging
+            logger.info(f"SQL Query Executed - Duration: {duration_ms:.2f}ms")
             if duration_ms > 1000:
-                print(f"SLOW QUERY DETECTED: {duration_ms:.2f} ms")
-                logging.warning(f"SLOW QUERY DETECTED: {duration_ms:.2f} ms")
-                q_str = ""
+                logger.warning(f"SLOW QUERY DETECTED: {duration_ms:.2f}ms")
+                q_str = "Unknown Query"
                 try: 
-                    q_str = self._cursor.query.decode('utf-8')[:150] + "..." if self._cursor.query else "Unknown Query"
+                    if hasattr(self._cursor, 'query') and self._cursor.query:
+                         q_str = self._cursor.query.decode('utf-8')[:150]
                 except:
-                    q_str = "Unknown Query Format"
+                    pass
                 SLOW_QUERIES.insert(0, {"query": q_str, "duration_ms": round(duration_ms, 2)})
                 if len(SLOW_QUERIES) > 5:
                     SLOW_QUERIES.pop()
@@ -87,22 +114,17 @@ class TimerConnectionWrapper:
 
 def get_connection():
     if db_pool:
-        # Return the transparent connection wrapper so timers run seamlessly
         return TimerConnectionWrapper(db_pool.getconn())
     return None
 
 def release_connection(wrapper):
     if db_pool and wrapper:
-        # Ensure we place the unwrapped raw connection back in the pool
         raw_conn = getattr(wrapper, "_conn", wrapper)
         db_pool.putconn(raw_conn)
 
-# Task 3: Cache database query results
 RESULTS_CACHE = {}
 RESULTS_CACHE_TIMEOUT = 60
-
-# Bottleneck 2: Database Query Speed
-DB_QUERY_TIMEOUT_MS = 5000 # 5 seconds
+DB_QUERY_TIMEOUT_MS = 5000
 
 def clear_results_cache():
     RESULTS_CACHE.clear()
@@ -111,24 +133,26 @@ def get_results_cache_size():
     return len(RESULTS_CACHE)
 
 def fetch_cached_screener_results(cursor, query, params=None):
-    # Only cache read-only SELECT queries explicitly for the screener
     cache_key = f"{query}_{str(params)}"
     now = time.time()
     
     if cache_key in RESULTS_CACHE:
         timestamp, cached_results = RESULTS_CACHE[cache_key]
         if now - timestamp < RESULTS_CACHE_TIMEOUT:
-            logging.info("Database Results cache hit")
+            logger.info("Database Results cache hit")
             return cached_results
         else:
             del RESULTS_CACHE[cache_key]
             
-    # Bottleneck 2: Enforce 5s query timeout directly at the Postgres instance level
-    cursor.execute(f"SET statement_timeout = {DB_QUERY_TIMEOUT_MS};")
+    # Task 1: SAFE: parameterized query - no injection risk (No f-strings used for SQL)
+    cursor.execute("SELECT set_config('statement_timeout', %s, false)", (str(DB_QUERY_TIMEOUT_MS),))
+    
+    # Task 1: SAFE: parameterized query - no injection risk
     cursor.execute(query, params)
     
-    # Reset immediately after completion to avoid bleeding timeout to pooled connections
     results = cursor.fetchall()
+    
+    # Task 1: SAFE: literal SQL - no injection risk
     cursor.execute("SET statement_timeout = 0;")
     
     RESULTS_CACHE[cache_key] = (time.time(), results)

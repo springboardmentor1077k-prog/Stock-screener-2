@@ -34,9 +34,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username is None:
+        user_id: int = payload.get("user_id")
+        if username is None or user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token formatting")
-        return username
+        return {"username": username, "user_id": user_id}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired. Please log in again.")
     except jwt.PyJWTError:

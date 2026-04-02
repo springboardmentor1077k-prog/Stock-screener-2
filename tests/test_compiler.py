@@ -1,80 +1,87 @@
 import pytest
-import sys
-import os
+from backend.compiler import compile_sql_from_dsl
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from backend.compiler import validate_dsl, compile_sql_from_dsl
-
-def test_compiler_select_defaults():
+def test_compile_sql_simple_condition():
+    """Test 1: Simple single condition compiles to correct parameterized SQL."""
     dsl = {
         "where": {
-            "logic": "AND",
-            "conditions": [
-                {"field": "pe_ratio", "operator": "<", "value": 20}
-            ]
+            "conditions": [{"field": "pe_ratio", "operator": "<", "value": 15}],
+            "logic": "AND"
         }
     }
-    
-    is_valid, _ = validate_dsl(dsl)
-    assert is_valid
-
     sql, params = compile_sql_from_dsl(dsl)
-    assert "SELECT s.symbol, s.company_name, s.sector, f.pe_ratio, f.revenue, f.ebitda, f.debt_to_equity" in sql
-    assert "WHERE f.pe_ratio < %s" in sql
-    assert params[0] == 20
-    assert "LIMIT %s OFFSET %s" in sql
+    
+    assert "(f.pe_ratio < %s)" in sql, f"Incorrect SQL structure: {sql}"
+    assert 15 in params, f"Value 15 should be in parameters, got: {params}"
+    assert "15" not in sql, "Literal value 15 should NOT be directly in the SQL string"
 
-def test_compiler_nested_conditions():
+def test_compile_sql_multiple_conditions():
+    """Test 2: Multiple conditions compile with correct AND joining."""
     dsl = {
-        "select": ["symbol", "pe_ratio"],
         "where": {
-            "logic": "OR",
             "conditions": [
                 {"field": "pe_ratio", "operator": "<", "value": 15},
-                {
-                    "logic": "AND",
-                    "conditions": [
-                        {"field": "sector", "operator": "IN", "value": ["Technology", "Healthcare"]},
-                        {"field": "revenue", "operator": ">", "value": 100000}
-                    ]
-                }
-            ]
-        },
-        "order_by": [
-            {"field": "pe_ratio", "direction": "DESC"}
-        ]
-    }
-    
-    is_valid, _ = validate_dsl(dsl)
-    assert is_valid
-    
-    sql, params = compile_sql_from_dsl(dsl, default_limit=50)
-    
-    assert "SELECT s.symbol, f.pe_ratio" in sql
-    assert "FROM symbols s JOIN fundamentals f ON s.id = f.company_id" in sql
-    assert "(s.sector IN %s AND f.revenue > %s)" in sql
-    
-    assert params[0] == 15
-    assert params[1] == ("Technology", "Healthcare")
-    assert params[2] == 100000
-    assert params[3] == 50 # limit
-    assert params[4] == 0  # offset
-    
-    assert "ORDER BY f.pe_ratio DESC" in sql
-
-def test_compiler_validation_fails_on_bad_fields():
-    dsl = {
-        "where": {
-            "logic": "AND",
-            "conditions": [
-                {"field": "hacker_column", "operator": "=", "value": 1}
-            ]
+                {"field": "revenue", "operator": ">", "value": 1000000}
+            ],
+            "logic": "AND"
         }
     }
-    is_valid, err = validate_dsl(dsl)
-    assert not is_valid
-    assert "Unknown field" in err
+    sql, params = compile_sql_from_dsl(dsl)
+    
+    assert "f.pe_ratio < %s AND f.revenue > %s" in sql, "SQL should join conditions with AND"
+    assert params == [15, 1000000, 100, 0], f"Parameters should match provided values (plus limit/offset): {params}"
 
-if __name__ == "__main__":
-    pytest.main(["-v", __file__])
+def test_compile_sql_time_filter():
+    """Test 3: Time filter compiles to correct SQL date condition."""
+    dsl = {
+        "where": {"conditions": [{"field": "pe_ratio", "operator": "<", "value": 50}], "logic": "AND"},
+        "time_filter": {"type": "last_m_quarters", "value": 4}
+    }
+    sql, params = compile_sql_from_dsl(dsl)
+    
+    # Check for historical_metrics JOIN
+    assert "JOIN historical_metrics h" in sql or "LEFT JOIN historical_metrics h" in sql, "Must join historical metrics"
+    # Check for quarter interval condition with parameter
+    assert "(h.quarter >= current_date - (interval '1 month' * %s) OR h.quarter IS NULL)" in sql, "Missing parameterized time filter"
+    assert 12 in params, "Interval value 12 should be in parameters"
+
+def test_compile_sql_no_literals():
+    """Test 4: No value is ever concatenated directly into SQL string."""
+    dsl = {
+        "where": {
+            "conditions": [
+                {"field": "pe_ratio", "operator": "<", "value": 15},
+                {"field": "sector", "operator": "IN", "value": ["Healthcare"]}
+            ],
+            "logic": "AND"
+        },
+        "time_filter": {"type": "last_m_quarters", "value": 4}
+    }
+    sql, params = compile_sql_from_dsl(dsl)
+    
+    # Check that 15, Healthcare, and 12 are not in SQL as strings
+    assert "15" not in sql, "Numeric literal 15 found in SQL"
+    assert "Healthcare" not in sql, "String literal Healthcare found in SQL"
+    assert "12" not in sql, "Interval literal 12 found in SQL"
+    assert 15 in params, "15 missing from params"
+    assert ("Healthcare",) in params, "Healthcare tuple missing from params"
+    assert 12 in params, "12 missing from params"
+
+def test_compile_sql_joins():
+    """Test 5: Correct table joins are generated."""
+    # pe_ratio is from Fundamentals, revenue_growth is from Historical
+    dsl = {
+        "where": {
+            "conditions": [
+                {"field": "pe_ratio", "operator": "<", "value": 15},
+                {"field": "revenue_growth", "operator": ">", "value": 5}
+            ],
+            "logic": "AND"
+        }
+    }
+    sql, params = compile_sql_from_dsl(dsl)
+    
+    # Needs both fundamentals and historical joins
+    assert "JOIN fundamentals f" in sql or "JOIN fundamentals f" in sql
+    assert "JOIN historical_metrics h" in sql or "LEFT JOIN historical_metrics h" in sql
+    assert "JOIN symbols s" in sql or "FROM symbols s" in sql

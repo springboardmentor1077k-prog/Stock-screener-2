@@ -1,0 +1,178 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\nneha\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 45 items
+
+tests/test_alerts.py::test_placeholder PASSED                            [  2%]
+tests/test_api.py::test_query_valid PASSED                               [  4%]
+tests/test_api.py::test_query_empty PASSED                               [  6%]
+tests/test_api.py::test_query_gibberish PASSED                           [  8%]
+tests/test_api.py::test_get_portfolio_structure PASSED                   [ 11%]
+tests/test_api.py::test_portfolio_add_and_get PASSED                     [ 13%]
+tests/test_api.py::test_portfolio_remove PASSED                          [ 15%]
+tests/test_api.py::test_content_type_json PASSED                         [ 17%]
+tests/test_api.py::test_sql_injection_attempt FAILED                     [ 20%]
+tests/test_api.py::test_empty_database_results FAILED                    [ 22%]
+tests/test_api.py::test_large_query_input PASSED                         [ 24%]
+tests/test_api.py::test_database_connection_failure FAILED               [ 26%]
+tests/test_api.py::test_concurrent_requests PASSED                       [ 28%]
+tests/test_compiler.py::test_compile_sql_simple_condition PASSED         [ 31%]
+tests/test_compiler.py::test_compile_sql_multiple_conditions PASSED      [ 33%]
+tests/test_compiler.py::test_compile_sql_time_filter PASSED              [ 35%]
+tests/test_compiler.py::test_compile_sql_no_literals PASSED              [ 37%]
+tests/test_compiler.py::test_compile_sql_joins PASSED                    [ 40%]
+tests/test_dsl.py::test_dsl_simple_condition PASSED                      [ 42%]
+tests/test_dsl.py::test_dsl_multiple_conditions PASSED                   [ 44%]
+tests/test_dsl.py::test_dsl_time_filter PASSED                           [ 46%]
+tests/test_dsl.py::test_validate_dsl_invalid_field PASSED                [ 48%]
+tests/test_dsl.py::test_validate_dsl_invalid_operator PASSED             [ 51%]
+tests/test_dsl.py::test_validate_dsl_empty_conditions PASSED             [ 53%]
+tests/test_dsl.py::test_validate_dsl_invalid_time_filter_value PASSED    [ 55%]
+tests/test_instructor_dsl.py::test_generate_sql_simple_condition FAILED  [ 57%]
+tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_and FAILED [ 60%]
+tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_or FAILED [ 62%]
+tests/test_instructor_dsl.py::test_generate_sql_sqlite_placeholder FAILED [ 64%]
+tests/test_instructor_dsl.py::test_generate_sql_no_values_in_sql FAILED  [ 66%]
+tests/test_instructor_dsl.py::test_generate_sql_different_case FAILED    [ 68%]
+tests/test_integration.py::test_full_query_pipeline_integration FAILED   [ 71%]
+tests/test_integration.py::test_portfolio_add_and_fetch_integration PASSED [ 73%]
+tests/test_integration.py::test_quarter_filter_integration FAILED        [ 75%]
+tests/test_portfolio.py::test_unrealized_pnl_profit PASSED               [ 77%]
+tests/test_portfolio.py::test_unrealized_pnl_loss PASSED                 [ 80%]
+tests/test_portfolio.py::test_average_buy_price PASSED                   [ 82%]
+tests/test_portfolio.py::test_realized_pnl_profit PASSED                 [ 84%]
+tests/test_portfolio.py::test_realized_pnl_loss PASSED                   [ 86%]
+tests/test_portfolio.py::test_handle_partial_sell PASSED                 [ 88%]
+tests/test_portfolio.py::test_handle_full_sell PASSED                    [ 91%]
+tests/test_portfolio.py::test_handle_sell_more_than_owned PASSED         [ 93%]
+tests/test_portfolio.py::test_portfolio_summary_aggregation PASSED       [ 95%]
+tests/test_portfolio.py::test_unrealized_pnl_zero_buy_price PASSED       [ 97%]
+tests/test_portfolio.py::test_get_current_price_unknown_symbol PASSED    [100%]
+
+================================== FAILURES ===================================
+_________________________ test_sql_injection_attempt __________________________
+tests\test_api.py:132: in test_sql_injection_attempt
+    assert "dsl" in data
+E   AssertionError: assert 'dsl' in {'message': 'Processing error: Could not understand the query. Try something like: Show me stocks with PE ratio less than 20', 'status': 'error'}
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+_________________________ test_empty_database_results _________________________
+tests\test_api.py:142: in test_empty_database_results
+    assert data["status"] == "success"
+E   AssertionError: assert 'error' == 'success'
+E     
+E     - success
+E     + error
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+______________________ test_database_connection_failure _______________________
+tests\test_api.py:160: in test_database_connection_failure
+    assert response.status_code == 500 or response.status_code == 503
+E   assert (200 == 500 or 200 == 503)
+E    +  where 200 = <Response [200 OK]>.status_code
+E    +  and   200 = <Response [200 OK]>.status_code
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+_____________________ test_generate_sql_simple_condition ______________________
+tests\test_instructor_dsl.py:12: in test_generate_sql_simple_condition
+    assert sql == "SELECT * FROM fundamentals WHERE pe_ratio < %s"
+E   AssertionError: assert 'SELECT s.sym...pe_ratio < %s' == 'SELECT * FRO...pe_ratio < %s'
+E     
+E     - SELECT * FROM fundamentals WHERE pe_ratio < %s
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE f.pe_ratio < %s
+__________________ test_generate_sql_multiple_conditions_and __________________
+tests\test_instructor_dsl.py:17: in test_generate_sql_multiple_conditions_and
+    assert sql == "SELECT * FROM fundamentals WHERE pe_ratio < %s AND revenue > %s"
+E   AssertionError: assert 'SELECT s.sym....revenue > %s' == 'SELECT * FRO... revenue > %s'
+E     
+E     - SELECT * FROM fundamentals WHERE pe_ratio < %s AND revenue > %s
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE f.pe_ratio < %s AND f.revenue > %s
+__________________ test_generate_sql_multiple_conditions_or ___________________
+tests\test_instructor_dsl.py:22: in test_generate_sql_multiple_conditions_or
+    assert sql == "SELECT * FROM fundamentals WHERE sector = %s OR price <= %s"
+E   AssertionError: assert 'SELECT s.sym...s.price <= %s' == 'SELECT * FRO...R price <= %s'
+E     
+E     - SELECT * FROM fundamentals WHERE sector = %s OR price <= %s
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE s.sector = %s OR s.price <= %s
+____________________ test_generate_sql_sqlite_placeholder _____________________
+tests\test_instructor_dsl.py:27: in test_generate_sql_sqlite_placeholder
+    assert sql == "SELECT * FROM fundamentals WHERE pe_ratio < ? AND revenue > ?"
+E   AssertionError: assert 'SELECT s.sym...f.revenue > ?' == 'SELECT * FRO...D revenue > ?'
+E     
+E     - SELECT * FROM fundamentals WHERE pe_ratio < ? AND revenue > ?
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE f.pe_ratio < ? AND f.revenue > ?
+_____________________ test_generate_sql_no_values_in_sql ______________________
+tests\test_instructor_dsl.py:34: in test_generate_sql_no_values_in_sql
+    assert sql == "SELECT * FROM fundamentals WHERE company_name = %s"
+E   AssertionError: assert 'SELECT s.sym...any_name = %s' == 'SELECT * FRO...any_name = %s'
+E     
+E     - SELECT * FROM fundamentals WHERE company_name = %s
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE s.company_name = %s
+______________________ test_generate_sql_different_case _______________________
+tests\test_instructor_dsl.py:39: in test_generate_sql_different_case
+    assert sql == "SELECT * FROM fundamentals WHERE revenue > %s AND sentiment < %s"
+E   AssertionError: assert 'SELECT s.sym...entiment < %s' == 'SELECT * FRO...entiment < %s'
+E     
+E     - SELECT * FROM fundamentals WHERE revenue > %s AND sentiment < %s
+E     + SELECT s.symbol, s.company_name FROM symbols s JOIN fundamentals f ON s.id = f.company_id WHERE f.revenue > %s AND f.sentiment < %s
+____________________ test_full_query_pipeline_integration _____________________
+tests\test_integration.py:22: in test_full_query_pipeline_integration
+    assert data["results"][0]["symbol"] == "AAPL"
+           ^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+---------------------------- Captured stderr call -----------------------------
+INFO:root:LLM cache hit ? skipping API call
+INFO:root:SQL Compiler cache hit
+INFO:root:Database Results cache hit
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     root:llm.py:46 LLM cache hit ? skipping API call
+INFO     root:compiler.py:180 SQL Compiler cache hit
+INFO     root:db.py:121 Database Results cache hit
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+_______________________ test_quarter_filter_integration _______________________
+tests\test_integration.py:59: in test_quarter_filter_integration
+    assert "JOIN historical_metrics historical" in sql
+E   assert 'JOIN historical_metrics historical' in "SELECT s.symbol, s.company_name, s.sector, f.pe_ratio, f.revenue, f.ebitda, f.debt_to_equity, h.revenue_growth FROM symbols s JOIN fundamentals f ON s.id = f.company_id LEFT JOIN historical_metrics h ON s.id = h.company_id WHERE (f.pe_ratio < %s) AND (h.quarter >= current_date - (interval '1 month' * %s) OR h.quarter IS NULL) LIMIT %s OFFSET %s"
+============================== warnings summary ===============================
+backend\main.py:405
+  C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener\backend\main.py:405: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+..\..\..\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573
+  C:\Users\nneha\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_api.py::test_sql_injection_attempt - AssertionError: assert...
+FAILED tests/test_api.py::test_empty_database_results - AssertionError: asser...
+FAILED tests/test_api.py::test_database_connection_failure - assert (200 == 5...
+FAILED tests/test_instructor_dsl.py::test_generate_sql_simple_condition - Ass...
+FAILED tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_and
+FAILED tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_or
+FAILED tests/test_instructor_dsl.py::test_generate_sql_sqlite_placeholder - A...
+FAILED tests/test_instructor_dsl.py::test_generate_sql_no_values_in_sql - Ass...
+FAILED tests/test_instructor_dsl.py::test_generate_sql_different_case - Asser...
+FAILED tests/test_integration.py::test_full_query_pipeline_integration - Inde...
+FAILED tests/test_integration.py::test_quarter_filter_integration - assert 'J...
+================== 11 failed, 34 passed, 2 warnings in 1.45s ==================

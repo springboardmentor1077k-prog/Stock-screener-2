@@ -131,13 +131,16 @@ def generate_sql(dsl_input: str, time_filter: dict = None, placeholder: str = "%
             
     if time_filter and time_filter.get("type") == "last_m_quarters":
         m = time_filter.get("value", 4)
-        time_sql_condition = f"(h.quarter >= current_date - interval '{m * 3} months' OR h.quarter IS NULL)"
+        # Task 1: SAFE: parameterized query - no injection risk (No f-strings used for SQL)
+        time_sql_condition = " (h.quarter >= current_date - (interval '1 month' * %s) OR h.quarter IS NULL)"
         if where_exprs:
             where_exprs.insert(0, "(")
             where_exprs.append(")")
             where_exprs.append("AND")
         where_exprs.append(time_sql_condition)
+        params.append(m * 3)
         
+    # Task 1: SAFE: parameterized query - no injection risk (Stitched from validated fragments)
     sql_clauses.append(" ".join(where_exprs))
     sql_string = " ".join(sql_clauses)
     return sql_string, params

@@ -1,0 +1,50 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\nneha\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/test_api.py::test_database_connection_failure FAILED               [100%]
+
+================================== FAILURES ===================================
+______________________ test_database_connection_failure _______________________
+
+    def test_database_connection_failure():
+        """Edge Case 6: Database connection failure is handled gracefully."""
+        with patch('backend.main.get_connection', return_value=None):
+            response = client.post("/query", json={"query": "show me stocks"})
+            # Should return 500
+>           assert response.status_code == 500
+E           assert 200 == 500
+E            +  where 200 = <Response [200 OK]>.status_code
+
+tests\test_api.py:136: AssertionError
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+============================== warnings summary ===============================
+backend\main.py:405
+  C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener\backend\main.py:405: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+..\..\..\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573
+  C:\Users\nneha\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_api.py::test_database_connection_failure - assert 200 == 500
+======================== 1 failed, 2 warnings in 0.77s ========================

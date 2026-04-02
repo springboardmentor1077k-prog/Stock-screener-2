@@ -1,0 +1,99 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\nneha\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 45 items
+
+tests/test_alerts.py::test_placeholder PASSED                            [  2%]
+tests/test_api.py::test_query_valid PASSED                               [  4%]
+tests/test_api.py::test_query_empty PASSED                               [  6%]
+tests/test_api.py::test_query_gibberish PASSED                           [  8%]
+tests/test_api.py::test_get_portfolio_structure PASSED                   [ 11%]
+tests/test_api.py::test_portfolio_add_and_get PASSED                     [ 13%]
+tests/test_api.py::test_portfolio_remove PASSED                          [ 15%]
+tests/test_api.py::test_content_type_json PASSED                         [ 17%]
+tests/test_api.py::test_sql_injection_attempt PASSED                     [ 20%]
+tests/test_api.py::test_empty_database_results FAILED                    [ 22%]
+tests/test_api.py::test_large_query_input PASSED                         [ 24%]
+tests/test_api.py::test_database_connection_failure FAILED               [ 26%]
+tests/test_api.py::test_concurrent_requests PASSED                       [ 28%]
+tests/test_compiler.py::test_compile_sql_simple_condition PASSED         [ 31%]
+tests/test_compiler.py::test_compile_sql_multiple_conditions PASSED      [ 33%]
+tests/test_compiler.py::test_compile_sql_time_filter PASSED              [ 35%]
+tests/test_compiler.py::test_compile_sql_no_literals PASSED              [ 37%]
+tests/test_compiler.py::test_compile_sql_joins PASSED                    [ 40%]
+tests/test_dsl.py::test_dsl_simple_condition PASSED                      [ 42%]
+tests/test_dsl.py::test_dsl_multiple_conditions PASSED                   [ 44%]
+tests/test_dsl.py::test_dsl_time_filter PASSED                           [ 46%]
+tests/test_dsl.py::test_validate_dsl_invalid_field PASSED                [ 48%]
+tests/test_dsl.py::test_validate_dsl_invalid_operator PASSED             [ 51%]
+tests/test_dsl.py::test_validate_dsl_empty_conditions PASSED             [ 53%]
+tests/test_dsl.py::test_validate_dsl_invalid_time_filter_value PASSED    [ 55%]
+tests/test_instructor_dsl.py::test_generate_sql_simple_condition PASSED  [ 57%]
+tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_and PASSED [ 60%]
+tests/test_instructor_dsl.py::test_generate_sql_multiple_conditions_or PASSED [ 62%]
+tests/test_instructor_dsl.py::test_generate_sql_sqlite_placeholder PASSED [ 64%]
+tests/test_instructor_dsl.py::test_generate_sql_no_values_in_sql PASSED  [ 66%]
+tests/test_instructor_dsl.py::test_generate_sql_different_case PASSED    [ 68%]
+tests/test_integration.py::test_full_query_pipeline_integration PASSED   [ 71%]
+tests/test_integration.py::test_portfolio_add_and_fetch_integration PASSED [ 73%]
+tests/test_integration.py::test_quarter_filter_integration PASSED        [ 75%]
+tests/test_portfolio.py::test_unrealized_pnl_profit PASSED               [ 77%]
+tests/test_portfolio.py::test_unrealized_pnl_loss PASSED                 [ 80%]
+tests/test_portfolio.py::test_average_buy_price PASSED                   [ 82%]
+tests/test_portfolio.py::test_realized_pnl_profit PASSED                 [ 84%]
+tests/test_portfolio.py::test_realized_pnl_loss PASSED                   [ 86%]
+tests/test_portfolio.py::test_handle_partial_sell PASSED                 [ 88%]
+tests/test_portfolio.py::test_handle_full_sell PASSED                    [ 91%]
+tests/test_portfolio.py::test_handle_sell_more_than_owned PASSED         [ 93%]
+tests/test_portfolio.py::test_portfolio_summary_aggregation PASSED       [ 95%]
+tests/test_portfolio.py::test_unrealized_pnl_zero_buy_price PASSED       [ 97%]
+tests/test_portfolio.py::test_get_current_price_unknown_symbol PASSED    [100%]
+
+================================== FAILURES ===================================
+_________________________ test_empty_database_results _________________________
+tests\test_api.py:121: in test_empty_database_results
+    assert data["status"] == "success"
+E   AssertionError: assert 'error' == 'success'
+E     
+E     - success
+E     + error
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+______________________ test_database_connection_failure _______________________
+tests\test_api.py:135: in test_database_connection_failure
+    assert response.status_code in [500, 503]
+E   assert 200 in [500, 503]
+E    +  where 200 = <Response [200 OK]>.status_code
+---------------------------- Captured stderr call -----------------------------
+INFO:httpx:HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+------------------------------ Captured log call ------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/query "HTTP/1.1 200 OK"
+============================== warnings summary ===============================
+backend\main.py:405
+  C:\Users\nneha\OneDrive\Desktop\AI_Stock_Screener\backend\main.py:405: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+..\..\..\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573
+  C:\Users\nneha\AppData\Local\Programs\Python\Python312\Lib\site-packages\fastapi\applications.py:4573: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_api.py::test_empty_database_results - AssertionError: asser...
+FAILED tests/test_api.py::test_database_connection_failure - assert 200 in [5...
+================== 2 failed, 43 passed, 2 warnings in 1.51s ===================

@@ -103,7 +103,7 @@ def _fallback_local_parser(user_query: str) -> dict:
         }
         
     if not conditions:
-        conditions.append({"field": "pe_ratio", "operator": "<", "value": 50}) # Safe default
+        return {"error": "Could not understand the query. Try something like: Show me stocks with PE ratio less than 20"}
         
     result = {
         "where": {

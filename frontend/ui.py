@@ -21,14 +21,56 @@ def render_results_table(data_list):
         st.info("ℹ️ Your strict logic criteria evaluated to an empty local dataset.")
 
 # Bottleneck 4: Memoize heavy requests automatically 
-@st.cache_data(ttl=60)
 def fetch_screener_data(payload, token):
     headers = {"Authorization": f"Bearer {token}"}
     sess = get_session()
-    res = sess.post(f"{API_BASE}/ask_ai", json=payload, headers=headers)
-    return res.status_code, res.json()
+    
+    max_retries = 3
+    retry_delays = [0.5, 1.0, 2.0] # Exponential backoff
+    
+    for attempt in range(max_retries):
+        try:
+            # Task 2 & 3: Handle Timeout and Retry
+            res = sess.post(f"{API_BASE}/ask_ai", json=payload, headers=headers, timeout=12)
+            
+            # Task 2: Handle Server Error (500)
+            if res.status_code == 500:
+                return 500, "SERVER_ERROR", None
+            
+            # Task 2: Handle Invalid Input (400)
+            if res.status_code == 400:
+                return 400, "INVALID_INPUT", res.json()
+                
+            # Attempt to parse JSON - Task 2: Handle JSON Decode Error
+            try:
+                data = res.json()
+                return res.status_code, "SUCCESS", data
+            except ValueError:
+                return res.status_code, "JSON_ERROR", None
+                
+        except requests.exceptions.Timeout:
+            if attempt < max_retries - 1:
+                # Task 3: Visible retry indicator
+                st.warning(f"⏱️ Request timed out. Retrying... attempt {attempt + 1} of {max_retries}")
+                time.sleep(retry_delays[attempt])
+                continue
+            return 408, "TIMEOUT", None
+            
+        except requests.exceptions.ConnectionError:
+            if attempt < max_retries - 1:
+                # Task 3: Visible retry indicator
+                st.warning(f"🔄 Network issue. Retrying... attempt {attempt + 1} of {max_retries}")
+                time.sleep(retry_delays[attempt])
+                continue
+            return 503, "NETWORK_ERROR", None
+            
+        except Exception as e:
+            # Task 2: Handle Unexpected Error
+            return 0, "UNEXPECTED", str(e)
+            
+    return 0, "FAILED_ALL_RETRIES", None
 
-st.set_page_config(page_title="Vault Engine Pro", page_icon="🏦", layout="wide")
+st.set_page_config(page_title="AI Stock Screener", page_icon="🏦", layout="wide")
 
 # ==========================================
 # REFINED, ELEGANT CSS (ONLY ESSENTIALS)
@@ -243,17 +285,24 @@ else:
             st.caption("Cache telemetry unavailable")
             
         st.write("---")
-        view_selection = st.radio("Navigation Menu", ["🔍 Market Screener", "📊 My Portfolio"])
-        st.write("<br>", unsafe_allow_html=True)
-
-        if st.button("🔌 Terminate Session", width='stretch'):
-            st.session_state['token'] = None
-            st.session_state['user'] = None
-            st.rerun()
-
-    if view_selection == "📊 My Portfolio":
-        from portfolio_ui import render_portfolio
+        nav_choice = st.sidebar.radio(
+        "Navigation Engine",
+        ["📊 Market Screener", "💼 My Portfolio", "🔔 Alert Watchtower"],
+        index=0
+    )
+    
+    st.sidebar.markdown("---")
+    
+    # Render logic
+    if nav_choice == "📊 Market Screener":
+        # Task 5: Use a Fragment for the Main Query Interface
+        render_screener(st.session_state['token'], API_BASE)
+    elif nav_choice == "💼 My Portfolio":
+        from frontend.portfolio_ui import render_portfolio
         render_portfolio(st.session_state['token'], API_BASE, st.session_state['user_id'])
+    elif nav_choice == "🔔 Alert Watchtower":
+        from frontend.alerts_ui import render_alerts
+        render_alerts(st.session_state['token'], API_BASE, st.session_state['user_id'])
         st.stop() # Halts rendering of the screener code when in portfolio mode
         
     st.markdown('<div class="hero-title" style="text-align:left; font-size:2.8rem !important; padding-top:0;">Natural Language DSL Engine</div>', unsafe_allow_html=True)
@@ -307,25 +356,37 @@ else:
                     "page": page,
                     "time_filter": selected_time_filter
                 }
-                status_code, data = fetch_screener_data(payload, st.session_state['token'])
+                status_code, err_type, data = fetch_screener_data(payload, st.session_state['token'])
                 
                 if status_code == 200:
-                    st.success("✅ Deterministic compilation complete. Results strictly parameterized & fetched.")
-                    
-                    # Renders ONLY the dataframe natively without reloading entire sidebar/UI tree
-                    render_results_table(data.get("data", []))
+                    results = data.get("results", [])
+                    if results and len(results) > 0:
+                        st.success("✅ Deterministic compilation complete. Results strictly parameterized & fetched.")
+                        # Renders ONLY the dataframe natively without reloading entire sidebar/UI tree
+                        render_results_table(results)
+                    else:
+                        # Task 1: Handle empty results with a friendly message
+                        st.info("🔍 No companies found for your query. Try adjusting your filters.")
                         
-                    with st.expander("🛠️ Advanced Compiler Provenance Logs"):
-                        st.write("### 📜 Intermediate Validated Node AST (JSON DSL)")
-                        st.json(data.get("dsl", {}))
-                        
+                    if data.get("dsl"):
+                        with st.expander("🛠️ Advanced Compiler Provenance Logs"):
+                            st.write("### 📜 Intermediate Validated Node AST (JSON DSL)")
+                            st.json(data.get("dsl", {}))
+                            
                 elif status_code == 401:
-                    st.error("Authentication expired. Terminate session and re-authenticate.")
+                    st.error("Authentication expired. Terminated session. Re-authenticate.")
+                elif err_type == "NETWORK_ERROR":
+                    st.error("⚠️ Unable to connect to the server. Please check if the backend is running.")
+                elif status_code == 500:
+                    st.error("⚠️ Something went wrong on our end. Please try again in a moment.")
+                elif status_code == 400 or err_type == "INVALID_INPUT":
+                    st.error("⚠️ We could not understand your query. Please try rephrasing it.")
+                elif err_type == "TIMEOUT":
+                    st.error("⏱️ Request timed out. Please try a simpler query.")
+                elif err_type == "JSON_ERROR":
+                    st.error("⚠️ Received an unexpected response. Please try again.")
                 else:
-                    try:
-                        st.error(f"Execution Halt: Code {status_code} - {data.get('detail')}")
-                    except:
-                        st.error(f"Fatal Compiler Interruption Code {status_code}")
+                    st.error(f"Execution Halt: Code {status_code} - {err_type}")
 
 # ==========================================
 # FINAL TASK: SECURE DEBUG PERFORMANCE SUMMARY
@@ -357,3 +418,10 @@ if "debug" in st.query_params and st.query_params["debug"].lower() == "true":
             st.error(p_res.json().get("detail", "Not available"))
     except Exception as e:
         st.error("Dashboard backend unavailable.")
+
+# ==========================================
+# FINAL DISCLAIMER & FOOTER Section
+# ==========================================
+st.write("---")
+st.markdown("<p style='color: #64748B; font-size: 0.8rem; text-align: center;'>⚠️ Disclaimer: Results are for informational purposes only. This is not financial advice. Always consult a qualified financial advisor before making investment decisions.</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #475569; font-size: 0.75rem; text-align: center; margin-top: 5px; font-weight: 500;'>AI Stock Screener v1.0 | Springboard Mentorship Program 2026</p>", unsafe_allow_html=True)

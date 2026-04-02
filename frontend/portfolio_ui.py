@@ -89,7 +89,7 @@ def render_portfolio(token: str, api_base: str, user_id: int):
     
     if holdings and len(holdings) > 0:
         # Table Header Grid
-        cols = st.columns([1.5, 1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
+        cols = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.4, 1.4])
         headers = ["Symbol", "Quantity", "Buy Price (₹)", "Current Price (₹)", "Total Invested (₹)", "Current Value (₹)", "P&L (₹)", "% Change", "", ""]
         for col, header in zip(cols, headers):
             col.markdown(f"**{header}**")
@@ -113,7 +113,7 @@ def render_portfolio(token: str, api_base: str, user_id: int):
             # Price fetched indicator
             indicator = "🟢 " if price_fetched else "🔴 "
             
-            row = st.columns([1.5, 1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1, 1])
+            row = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.4, 1.4])
             row[0].write(f"**{sym}**")
             row[1].write(f"{qty}")
             row[2].write(f"₹{bp:,.2f}")
@@ -151,7 +151,7 @@ def render_portfolio(token: str, api_base: str, user_id: int):
             with st.form(key="edit_holding_form"):
                 e1, e2 = st.columns(2)
                 new_qty = e1.number_input("Update Quantity", min_value=1, value=int(item["quantity"]), step=1)
-                new_bp = e2.number_input("Update Buy Price per share (₹)", min_value=0.01, value=float(item["buy_price"]), step=1.0)
+                new_bp = e2.number_input("Update Buy Price per share (₹)", min_value=1.0, value=float(item["buy_price"]), step=1.0)
                 
                 col_save, col_cancel = st.columns(2)
                 submit_edit = col_save.form_submit_button("Save Changes", type="primary", width='stretch')
@@ -201,7 +201,7 @@ def render_portfolio(token: str, api_base: str, user_id: int):
         c1, c2, c3 = st.columns(3)
         symbol = c1.text_input("Stock Symbol", placeholder="e.g. TCS, INFY, RELIANCE")
         qty = c2.number_input("Quantity", min_value=1, step=1)
-        price = c3.number_input("Buy Price per share (₹)", min_value=0.01, step=1.0)
+        price = c3.number_input("Buy Price per share (₹)", min_value=1.0, step=1.0)
         
         submit_add = st.form_submit_button("Submit Transaction", type="primary", width='stretch')
         if submit_add:
@@ -219,3 +219,8 @@ def render_portfolio(token: str, api_base: str, user_id: int):
                         st.rerun()
                     else:
                         st.error(f"Error adding stock: {rq.json().get('detail', 'Unknown error')}")
+
+    # Section 7: Footer Disclaimer
+    st.write("---")
+    st.markdown("<p style='color: #64748B; font-size: 0.8rem; text-align: center;'>🔒 Your portfolio data is private and accessible only to you. P&L figures are estimated based on live market data.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569; font-size: 0.75rem; text-align: center; margin-top: 5px; font-weight: 500;'>AI Stock Screener v1.0 | Springboard Mentorship Program 2026</p>", unsafe_allow_html=True)

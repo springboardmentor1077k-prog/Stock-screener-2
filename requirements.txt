@@ -11,4 +11,8 @@ passlib[bcrypt]
 openai
 slowapi
 yfinance
+pytest
+pytest-asyncio
 
+
+pytest-cov
