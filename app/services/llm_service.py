@@ -1,63 +1,141 @@
-# app/services/llm_service.py
+# app/services/llm_service.py (updated)
+
 import json
 from groq import Groq
 from app.config import settings
 
 client = Groq(api_key=settings.GROQ_API_KEY)
 
-SYSTEM_PROMPT = """
-You are a strict JSON DSL generator for a stock screener.
+# System prompt for stock screener queries
+SCREENER_PROMPT = """
+You are a strict JSON DSL generator for stock screening.
 
 Return ONLY valid JSON in this format:
 {
+  "type": "screener",
   "logic": "AND",
   "conditions": [
     {"field": "sector", "operator": "=", "value": "IT"},
     {"field": "pe_ratio", "operator": "<", "value": 20}
   ],
-  "time_filter": {"range": "last_4_quarters"},
   "limit": 10
 }
 
-For growth queries, use special condition types:
-
-1. Growth conditions:
-   {"metric": "revenue_growth", "operator": ">", "value": 10, "time_range": "last_4_quarters"}
-
-2. Trend conditions:
-   {"direction": "increasing", "confidence": 0.7, "time_range": "last_4_quarters"}
-
 Allowed fields: sector, pe_ratio, peg_ratio, debt_fcf, promoter_holding, revenue, ebitda
 Allowed operators: =, <, >, <=, >=, !=
-Allowed growth metrics: revenue_growth, profit_growth, avg_revenue_growth
-Allowed time ranges: last_quarter, last_4_quarters, last_8_quarters, last_12_quarters
-Allowed trend directions: increasing, decreasing, volatile
+"""
+
+# New prompt for portfolio commands
+PORTFOLIO_PROMPT = """
+You are a portfolio management assistant. Convert user commands into structured JSON.
+
+Return ONLY valid JSON in one of these formats:
+
+For BUY commands:
+{
+  "type": "buy",
+  "symbol": "AAPL",
+  "quantity": 10,
+  "price": 150.00,
+  "notes": "Initial investment"
+}
+
+For SELL commands:
+{
+  "type": "sell",
+  "symbol": "MSFT",
+  "quantity": 5,
+  "price": 330.25,
+  "notes": "Partial profit booking"
+}
+
+For VIEW commands:
+{
+  "type": "view_portfolio"
+}
+
+For SUMMARY commands:
+{
+  "type": "portfolio_summary"
+}
+
+For TRANSACTIONS commands:
+{
+  "type": "view_transactions",
+  "limit": 10
+}
+
+For WATCHLIST commands:
+{
+  "type": "watchlist_add",
+  "symbol": "NVDA",
+  "alert_price": 900.00,
+  "notes": "AI leader"
+}
 
 Examples:
-- "Companies with revenue growth > 10%": 
-  {"conditions": [{"metric": "revenue_growth", "operator": ">", "value": 10}]}
-
-- "Stocks showing increasing revenue trend": 
-  {"conditions": [{"direction": "increasing", "confidence": 0.7}]}
+- "Buy 10 Apple shares at $150" → {"type": "buy", "symbol": "AAPL", "quantity": 10, "price": 150}
+- "Sell 5 Microsoft shares" → {"type": "sell", "symbol": "MSFT", "quantity": 5}
+- "Show my portfolio" → {"type": "view_portfolio"}
+- "What's my portfolio value?" → {"type": "portfolio_summary"}
+- "Add NVIDIA to watchlist with alert at $900" → {"type": "watchlist_add", "symbol": "NVDA", "alert_price": 900}
 
 Do not include explanation. Return ONLY the JSON.
 """
 
+def detect_query_type(query: str) -> str:
+    """Detect if query is screener or portfolio command"""
+    portfolio_keywords = [
+        'buy', 'sell', 'portfolio', 'watchlist', 'my stocks', 
+        'holdings', 'transaction', 'invested', 'profit', 'loss'
+    ]
+    query_lower = query.lower()
+    for keyword in portfolio_keywords:
+        if keyword in query_lower:
+            return "portfolio"
+    return "screener"
+
 def generate_dsl(query: str):
-    print("Calling LLM for query:", query)
+    """Generate DSL for stock screener queries"""
+    print("Calling LLM for screener query:", query)
+    
     response = client.chat.completions.create(
         model=settings.MODEL_NAME,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SCREENER_PROMPT},
             {"role": "user", "content": query}
         ],
         temperature=0
     )
-
+    
     content = response.choices[0].message.content
     print("LLM RAW OUTPUT:", content)
     
-    # Clean the response (remove markdown code blocks if present)
+    # Clean the response
+    if content.startswith("```json"):
+        content = content.replace("```json", "").replace("```", "")
+    elif content.startswith("```"):
+        content = content.replace("```", "")
+    
+    return json.loads(content)
+
+def generate_portfolio_command(query: str):
+    """Generate portfolio command from natural language"""
+    print("Calling LLM for portfolio command:", query)
+    
+    response = client.chat.completions.create(
+        model=settings.MODEL_NAME,
+        messages=[
+            {"role": "system", "content": PORTFOLIO_PROMPT},
+            {"role": "user", "content": query}
+        ],
+        temperature=0
+    )
+    
+    content = response.choices[0].message.content
+    print("LLM RAW OUTPUT:", content)
+    
+    # Clean the response
     if content.startswith("```json"):
         content = content.replace("```json", "").replace("```", "")
     elif content.startswith("```"):
