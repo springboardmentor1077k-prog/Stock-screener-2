@@ -29,3 +29,56 @@
 2026-04-02 09:33:15,294 - ai_stock_screener - WARNING - Redis is not available.
 2026-04-02 09:33:54,727 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.84ms
 2026-04-02 09:33:55,105 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 383.62}
+2026-04-02 11:53:22,655 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 11:54:22,696 - ai_stock_screener - INFO - SQL Query Executed - Duration: 6.91ms
+2026-04-02 11:54:39,378 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 11:55:22,700 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.02ms
+2026-04-02 11:55:39,429 - ai_stock_screener - INFO - SQL Query Executed - Duration: 6.79ms
+2026-04-02 11:56:22,688 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.07ms
+2026-04-02 11:56:39,416 - ai_stock_screener - INFO - SQL Query Executed - Duration: 2.32ms
+2026-04-02 11:56:54,834 - ai_stock_screener - INFO - SQL Query Executed - Duration: 18.21ms
+2026-04-02 11:56:54,840 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 35.42}
+2026-04-02 11:57:22,688 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.00ms
+2026-04-02 11:57:23,777 - ai_stock_screener - INFO - SQL Query Executed - Duration: 17.72ms
+2026-04-02 11:57:24,467 - ai_stock_screener - INFO - SQL Query Executed - Duration: 8.30ms
+2026-04-02 11:57:24,477 - ai_stock_screener - INFO - API Request - {"endpoint": "/register", "method": "POST", "duration_ms": 725.74}
+2026-04-02 11:57:39,417 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.77ms
+2026-04-02 11:58:22,691 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.63ms
+2026-04-02 11:58:39,417 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.55ms
+2026-04-02 11:58:58,398 - ai_stock_screener - INFO - SQL Query Executed - Duration: 5.54ms
+2026-04-02 11:58:59,067 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 674.28}
+2026-04-02 11:59:22,691 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.00ms
+2026-04-02 11:59:39,414 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.00ms
+2026-04-02 12:00:43,671 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:00:47,678 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:01:03,285 - ai_stock_screener - INFO - SQL Query Executed - Duration: 15.19ms
+2026-04-02 12:01:03,982 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 720.92}
+2026-04-02 12:01:19,335 - ai_stock_screener - INFO - SQL Query Executed - Duration: 2.80ms
+2026-04-02 12:01:20,024 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 695.31}
+2026-04-02 12:01:43,731 - ai_stock_screener - INFO - SQL Query Executed - Duration: 7.39ms
+2026-04-02 12:01:47,735 - ai_stock_screener - INFO - SQL Query Executed - Duration: 7.09ms
+2026-04-02 12:02:43,716 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.55ms
+2026-04-02 12:02:47,731 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.04ms
+2026-04-02 12:03:43,724 - ai_stock_screener - INFO - SQL Query Executed - Duration: 3.12ms
+2026-04-02 12:03:47,728 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.00ms
+2026-04-02 12:04:24,027 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:04:30,991 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:05:00,716 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:05:09,033 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:06:00,776 - ai_stock_screener - INFO - SQL Query Executed - Duration: 8.00ms
+2026-04-02 12:06:09,101 - ai_stock_screener - INFO - SQL Query Executed - Duration: 9.12ms
+2026-04-02 12:06:14,572 - ai_stock_screener - INFO - SQL Query Executed - Duration: 16.86ms
+2026-04-02 12:06:15,243 - ai_stock_screener - INFO - API Request - {"endpoint": "/login", "method": "POST", "duration_ms": 700.83}
+2026-04-02 12:06:19,338 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.54ms
+2026-04-02 12:06:19,343 - ai_stock_screener - INFO - API Request - {"endpoint": "/alerts/8", "method": "GET", "duration_ms": 16.06}
+2026-04-02 12:06:35,450 - ai_stock_screener - INFO - SQL Query Executed - Duration: 24.97ms
+2026-04-02 12:06:35,452 - ai_stock_screener - INFO - API Request - {"endpoint": "/portfolio/8/summary", "method": "GET", "duration_ms": 26.9}
+2026-04-02 12:06:35,472 - ai_stock_screener - INFO - SQL Query Executed - Duration: 0.00ms
+2026-04-02 12:06:35,481 - ai_stock_screener - INFO - API Request - {"endpoint": "/portfolio/8", "method": "GET", "duration_ms": 8.43}
+2026-04-02 12:07:00,767 - ai_stock_screener - INFO - SQL Query Executed - Duration: 1.14ms
+2026-04-02 12:07:32,773 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:07:38,178 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:08:02,098 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:08:10,023 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:09:26,555 - ai_stock_screener - WARNING - Redis is not available.
+2026-04-02 12:09:27,700 - ai_stock_screener - WARNING - Redis is not available.

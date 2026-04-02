@@ -89,8 +89,8 @@ def render_portfolio(token: str, api_base: str, user_id: int):
     
     if holdings and len(holdings) > 0:
         # Table Header Grid
-        cols = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.4, 1.4])
-        headers = ["Symbol", "Quantity", "Buy Price (₹)", "Current Price (₹)", "Total Invested (₹)", "Current Value (₹)", "P&L (₹)", "% Change", "", ""]
+        cols = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.8])
+        headers = ["Symbol", "Quantity", "Buy Price (₹)", "Current Price (₹)", "Total Invested (₹)", "Value (₹)", "P&L (₹)", "%", "Actions"]
         for col, header in zip(cols, headers):
             col.markdown(f"**{header}**")
             
@@ -113,7 +113,9 @@ def render_portfolio(token: str, api_base: str, user_id: int):
             # Price fetched indicator
             indicator = "🟢 " if price_fetched else "🔴 "
             
-            row = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.4, 1.4])
+            # Theme-aware text color
+            txt_color = "#F8FAFC" if st.session_state.get('theme') == 'dark' else "#1E293B"
+            row = st.columns([1.2, 0.8, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.8])
             row[0].write(f"**{sym}**")
             row[1].write(f"{qty}")
             row[2].write(f"₹{bp:,.2f}")
@@ -123,21 +125,22 @@ def render_portfolio(token: str, api_base: str, user_id: int):
             
             # P&L color logic
             pnl_color = "#10B981" if pnl >= 0 else "#EF4444"
-            row[6].markdown(f"<span style='color:{pnl_color}'>₹{pnl:,.2f}</span>", unsafe_allow_html=True)
-            row[7].markdown(f"<span style='color:{pnl_color}'>{pct}%</span>", unsafe_allow_html=True)
+            row[6].markdown(f"<p style='color:{pnl_color}; margin:0; font-weight:600;'>₹{pnl:,.2f}</p>", unsafe_allow_html=True)
+            row[7].markdown(f"<p style='color:{pnl_color}; margin:0; font-weight:600;'>{pct}%</p>", unsafe_allow_html=True)
             
-            # Action Buttons
-            if row[8].button("Edit", key=f"edit_btn_{sym}_{i}", width='stretch'):
-                st.session_state.portfolio_remove_symbol = None
-                st.session_state.portfolio_edit_symbol = sym if st.session_state.portfolio_edit_symbol != sym else None
-                st.rerun()
+            # Action Buttons - Strictly Horizontal Group
+            with row[8]:
+                btn_col1, btn_col2 = st.columns(2)
+                if btn_col1.button("📝 Edit", key=f"edit_btn_{sym}_{i}", use_container_width=True):
+                    st.session_state.portfolio_remove_symbol = None
+                    st.session_state.portfolio_edit_symbol = sym if st.session_state.portfolio_edit_symbol != sym else None
+                    st.rerun()
+                if btn_col2.button("🗑️ Remove", key=f"rem_btn_{sym}_{i}", use_container_width=True):
+                    st.session_state.portfolio_edit_symbol = None
+                    st.session_state.portfolio_remove_symbol = sym if st.session_state.portfolio_remove_symbol != sym else None
+                    st.rerun()
                 
-            if row[9].button("Remove", key=f"rem_btn_{sym}_{i}", width='stretch'):
-                st.session_state.portfolio_edit_symbol = None
-                st.session_state.portfolio_remove_symbol = sym if st.session_state.portfolio_remove_symbol != sym else None
-                st.rerun()
-                
-            st.markdown("<hr style='margin: 0.2rem 0; border-color: rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
+            st.markdown(f"<hr style='margin: 0.2rem 0; border-color: rgba(128,128,128,0.15);'>", unsafe_allow_html=True)
             
     else:
         st.info("You have no holdings yet. Add your first stock below!")

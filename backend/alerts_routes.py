@@ -12,12 +12,12 @@ class AlertCreate(BaseModel):
     user_id: int
     symbol: str
     threshold_price: float = Field(..., gt=0)
-    alert_type: str = Field(..., regex="^(PRICE_ABOVE|PRICE_BELOW)$")
+    alert_type: str = Field(..., pattern="^(PRICE_ABOVE|PRICE_BELOW)$")
 
 class AlertUpdate(BaseModel):
     alert_id: int
     threshold_price: float = Field(..., gt=0)
-    alert_type: str = Field(..., regex="^(PRICE_ABOVE|PRICE_BELOW)$")
+    alert_type: str = Field(..., pattern="^(PRICE_ABOVE|PRICE_BELOW)$")
 
 # --- Endpoints ---
 
