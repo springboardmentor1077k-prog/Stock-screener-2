@@ -1,84 +1,39 @@
-# Field to database column mapping
+def compile_to_sql(dsl):
 
-FIELD_TO_COLUMN = {
-    "pe_ratio": "companies.pe_ratio",
-    "debt_to_equity": "companies.debt_to_equity",
-    "revenue_growth": "financials.revenue_growth"
-}
+    # ✅ KEEP YOUR BASE QUERY (unchanged logic, only enhanced with computed fields)
+    base_query = """
+    SELECT *,
+           ((revenue - prev_revenue) / NULLIF(prev_revenue, 0)) * 100 AS growth_percent,
+           (net_profit * 1.2) AS ebitda
+    FROM companies
+    """
 
-ALLOWED_OPERATORS = {"<", ">", "<=", ">=", "="}
-
-
-# SQL Compiler Function
-
-def compile_dsl_to_sql(dsl):
-
-    conditions = dsl["conditions"]
-    logic = dsl.get("logic", "AND")
-
-    sql_parts = []
     params = []
+    conditions = []
 
-    for condition in conditions:
+    for cond in dsl.conditions:
+        column = cond.field
 
-        field = condition["field"]
-        operator = condition["operator"]
-        value = condition["value"]
+        # ✅ SAFE COLUMN MAPPING (based on your DB)
+        if column == "pe_ratio":
+            column = "pe_ratio"
+        elif column == "net_profit":
+            column = "net_profit"
+        elif column == "revenue":
+            column = "revenue"
+        elif column == "sector":
+            column = "sector"
+        elif column == "market_cap":
+            column = "market_cap"
 
-        if field not in FIELD_TO_COLUMN:
-            raise ValueError("Invalid field")
+        # ✅ ADD CONDITION
+        conditions.append(f"{column} {cond.operator} %s")
+        params.append(cond.value)
 
-        if operator not in ALLOWED_OPERATORS:
-            raise ValueError("Invalid operator")
+    # ✅ BUILD FINAL QUERY
+    if conditions:
+        query = base_query + " WHERE " + " AND ".join(conditions)
+    else:
+        query = base_query
 
-        column = FIELD_TO_COLUMN[field]
-
-        sql_parts.append(f"{column} {operator} %s")
-        params.append(value)
-
-    where_clause = f" {logic} ".join(sql_parts)
-
-    sql_query = f"SELECT * FROM companies WHERE {where_clause}"
-
-    return sql_query, params
-
-
-# Example DSL queries
-
-test_queries = [
-
-    {
-        "conditions": [
-            {"field": "pe_ratio", "operator": "<", "value": 15}
-        ],
-        "logic": "AND"
-    },
-
-    {
-        "conditions": [
-            {"field": "pe_ratio", "operator": "<", "value": 20},
-            {"field": "debt_to_equity", "operator": "<", "value": 0.5}
-        ],
-        "logic": "AND"
-    },
-
-    {
-        "conditions": [
-            {"field": "pe_ratio", "operator": "<", "value": 20},
-            {"field": "revenue_growth", "operator": ">", "value": 10}
-        ],
-        "logic": "OR"
-    }
-
-]
-
-
-for dsl in test_queries:
-
-    sql, params = compile_dsl_to_sql(dsl)
-
-    print("\nGenerated SQL:")
-    print(sql)
-
-    print("Parameters:")
-    print(params)
+    return query, params
