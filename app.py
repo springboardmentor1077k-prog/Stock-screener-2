@@ -2078,7 +2078,7 @@ div[role="radio"][aria-checked="true"] {
 
     with col1:
         symbol_input = st.text_input(
-            "",
+            "Enter Stock Symbol",
             placeholder="Enter Company Symbol (e.g., INFY, AAPL)",
             value=st.session_state.get("selected_company", ""),
             key="company_search_box",
@@ -2171,7 +2171,7 @@ div[role="radio"][aria-checked="true"] {
                     options = ["1D", "1W", "1M", "1Y", "5Y"]
 
                     period = st.radio(
-                        "",
+                        "Select Time Period",
                         options,
                         horizontal=True,
                         index=options.index(st.session_state.chart_period)
