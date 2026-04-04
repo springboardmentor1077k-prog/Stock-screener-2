@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-jose
+passlib[bcrypt]
+python-dotenv
+yfinance
+google-generativeai
+apscheduler
+redis
+slowapi
+streamlit
+pandas
+requests

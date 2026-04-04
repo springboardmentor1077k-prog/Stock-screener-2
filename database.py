@@ -1,4 +1,4 @@
 from sqlalchemy import create_engine
-
-DATABASE_URL = "postgresql://postgres:newpassword123@localhost:5432/stock_screener"
+import os
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
