@@ -2,8 +2,11 @@ import json
 import google.generativeai as genai
 import os
 from functools import lru_cache  
+from dotenv import load_dotenv
 
-genai.configure(api_key="AIzaSyD8hIifr0Sh0JrHV6aGcX_dlEiOPycpPpU") 
+load_dotenv() 
+
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY")) 
 
 # @lru_cache adds in-memory caching. 
 @lru_cache(maxsize=100)

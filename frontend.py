@@ -1,10 +1,111 @@
 import streamlit as st
 import requests
 import pandas as pd
+import random
+import streamlit as st
+import requests
 
+# --- 1. SESSION STATE ---
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'user_id' not in st.session_state:
+    st.session_state.user_id = 1
+if 'username' not in st.session_state:
+    st.session_state.username = ""
+
+# --- 2. MOCK DATABASE ---
+USER_DB = {
+    "sneha": {"password": "Wastegram@99", "id": 1},
+    "panel": {"password": "demo", "id": 2}
+}
+
+if not st.session_state.logged_in:
+
+    st.markdown("""
+        <style>
+        div.stButton > button:first-child {
+            background: linear-gradient(90deg, #9333EA 0%, #4F46E5 100%);
+            color: white;
+            border-radius: 8px;
+            border: none;
+            padding: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:first-child:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+            color: white;
+        }
+        .finsight-title {
+            text-align: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(#d8b4fe, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0px;
+            padding-bottom: 0px;
+        }
+        .finsight-subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Centering the login box
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    
+    with col2:
+        st.markdown('<p class="finsight-title">FinSight Pro</p>', unsafe_allow_html=True)
+        st.markdown('<p class="finsight-subtitle">Institutional Grade Market Analytics</p>', unsafe_allow_html=True)
+        
+        st.write("") 
+        
+        tab1, tab2 = st.tabs(["Access Account", "Create Account"])
+        
+        with tab1:
+            username = st.text_input("Username", placeholder="e.g., ALEX").lower()
+            password = st.text_input("Password", type="password", placeholder="••••••••")
+            
+            st.write("") 
+            if st.button("Enter Dashboard", use_container_width=True):
+                if username in USER_DB and USER_DB[username]["password"] == password:
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = USER_DB[username]["id"]
+                    st.session_state.username = username
+                    st.rerun() 
+                else:
+                    st.error("⚠️ Invalid Credentials. Please try again.")
+
+        with tab2:
+            st.info("Demo Mode: Registration is disabled for the presentation. Please use the existing test accounts.")
+            st.text_input("New Username", disabled=True)
+            st.text_input("New Password", type="password", disabled=True)
+            st.button("Register", disabled=True, use_container_width=True)
+            
+    st.stop() # Stops running the rest of the app until logged in
+
+st.markdown(f"<h2 style='color: #a855f7;'>🎉 Welcome back, {st.session_state.username.capitalize()}!</h2>", unsafe_allow_html=True)
+st.markdown("Here is your institutional market overview for today.")
+st.divider() 
+
+# --- SIDEBAR LOGOUT ---
+st.sidebar.success(f"👤 Logged in as: {st.session_state.username.capitalize()}")
+if st.sidebar.button("Log Out", use_container_width=True):
+    st.session_state.logged_in = False
+    st.session_state.user_id = None
+    st.session_state.username = ""
+    st.rerun()
 # 1. PAGE CONFIGURATION
-st.set_page_config(page_title="AI - Pro Stock Screener", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
-
+st.set_page_config(page_title="FinSight Pro | Intelligent Market Analytics", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
 # 2.CSS
 st.markdown("""
     <style>
@@ -73,11 +174,24 @@ if "current_page" not in st.session_state: st.session_state.current_page = "Scre
 
 def set_query(text): st.session_state.query_text = text
 
+if "suggestions" not in st.session_state:
+    all_suggestions = [
+        ("🔥 PE < 15", "Show companies with pe_ratio < 15"),
+        ("💎 Zero Debt", "Show companies with debt = 0"),
+        ("🚀 High Revenue", "Show companies with revenue > 50000"),
+        ("👑 Top Promoters", "Show companies with promoter_holding > 50"),
+        ("📈 Mega Cap", "Show companies with market_cap > 500000"),
+        ("💰 Value Picks", "Show companies with pe_ratio <= 20 and debt = 0"),
+        ("🛡️ Safe Bets", "Show companies with market_cap > 100000 and promoter_holding > 60"),
+        ("🏢 Cash Cows", "Show companies with ebitda > 10000")
+    ]
+    st.session_state.suggestions = random.sample(all_suggestions, 4)
+
 # ---------------------------------------------------------
 # TOP NAVIGATION BAR
 # ---------------------------------------------------------
-st.markdown("<h1 style='text-align: center; color: white; font-weight: 800; letter-spacing: 2px;'>AURA<span style='color: #00C6FF;'>.AI</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; margin-top: -15px; margin-bottom: 25px;'>Next-Gen Financial Intelligence</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-weight: 800; letter-spacing: -1px; font-size: 3rem;'>FinSight <span style='color: #9333EA;'>Pro</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #6B7280 !important; margin-top: -15px; margin-bottom: 25px; font-size: 1.1rem; font-weight: 500;'>Institutional Grade Market Analytics. Simplified.</p>", unsafe_allow_html=True)
 
 nav1, nav2, nav3, nav4 = st.columns(4)
 with nav1:
@@ -103,18 +217,23 @@ if st.session_state.current_page == "Screener":
     with col_btn:
         search_clicked = st.button("🚀 Search", type="primary", use_container_width=True)
 
+    st.markdown("<br>", unsafe_allow_html=True)
     tag1, tag2, tag3, tag4 = st.columns([1, 1, 1, 1])
-    with tag1:
-        if st.button("🔥 PE < 15", use_container_width=True): set_query("Show companies with pe_ratio < 15"); st.rerun()
-    with tag2:
-        if st.button("💎 Zero Debt", use_container_width=True): set_query("Show companies with debt = 0"); st.rerun()
-    with tag3:
-        if st.button("🚀 High Revenue", use_container_width=True): set_query("Show companies with revenue > 20000"); st.rerun()
-    with tag4:
-        if st.button("👑 Top Promoters", use_container_width=True): set_query("Show companies with promoter_holding > 50"); st.rerun()
 
+    s1, s2, s3, s4 = st.session_state.suggestions
+    
+    with tag1:
+        if st.button(s1[0], use_container_width=True): set_query(s1[1]); st.rerun()
+    with tag2:
+        if st.button(s2[0], use_container_width=True): set_query(s2[1]); st.rerun()
+    with tag3:
+        if st.button(s3[0], use_container_width=True): set_query(s3[1]); st.rerun()
+    with tag4:
+        if st.button(s4[0], use_container_width=True): set_query(s4[1]); st.rerun()
     if search_clicked:
-        if query:
+        if not query.strip(): 
+            st.warning("⚠️ Please enter a market query! (e.g., 'Show IT companies with zero debt')")
+        else:
             with st.spinner("🧠 AI is analyzing your query..."):
                 try:
                     response = requests.post("http://localhost:8000/query", json={"query": query})

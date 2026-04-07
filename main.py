@@ -6,64 +6,36 @@ import sqlite3
 import operator as op
 import os
 import time
-from schemas import DSLQuery
 from llm_parser import parse_natural_language_to_dsl
 from compiler import compile_dsl_to_sql
-
-# Global Error Handler for Pydantic Validation Errors
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
-    # Safe validation error message showing to user
-    return JSONResponse(
-        status_code=422,
-        content={"status": "error", "message": "Invalid input provided. Please check your query."}
-    )
-
-# Global Error Handler for all other System/Database Errors
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    # Logging the real error internally for debugging 
-    print(f"INTERNAL SYSTEM ERROR: {str(exc)}")
-
-    return JSONResponse(
-        status_code=500,
-        content={"status": "error", "message": "Something went wrong on our end. Please try again later."}
-    )
 
 app = FastAPI()
 
 class QueryRequest(BaseModel):
     query: str
 
-# Global Error Handler for Pydantic Validation Errors
+# Global Error Handler for Pydantic Validation Errors 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
-    error_msg = exc.errors()[0].get("msg")
     return JSONResponse(
-        status_code=400,
-        content={
-            "status": "error",
-            "code": "INVALID_FIELD",
-            "message": error_msg
-        }
+        status_code=422,
+        content={"status": "error", "message": "Invalid input provided. Please check your query."}
     )
 
-# Global Error Handler for General/LLM Errors to prevent server crash
+# Global Error Handler for all other System/Database Errors 
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
+async def generic_exception_handler(request: Request, exc: Exception):
+    print(f"INTERNAL SYSTEM ERROR: {str(exc)}")
     return JSONResponse(
         status_code=500,
-        content={
-            "status": "error",
-            "code": "INTERNAL_SERVER_ERROR",
-            "message": str(exc)
-        }
+        content={"status": "error", "message": "Something went wrong on our end. Please try again later."}
     )
 
 @app.post("/query")
 async def process_query(request: QueryRequest):
     # Step 1: Send raw natural language to LLM Parser
     raw_dsl_dict = parse_natural_language_to_dsl(request.query)
+
     
     # Step 2: Pass output through strict Pydantic Validator
     validated_dsl = DSLQuery(**raw_dsl_dict)
@@ -111,31 +83,35 @@ async def process_query(request: QueryRequest):
 # ==========================================
 
 @app.post("/portfolio/add")
-async def add_to_portfolio(item: PortfolioItem):
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
-    cursor = conn.cursor()
-    
-    # Check if stock already exists for this user
-    cursor.execute("SELECT id, quantity, buy_price FROM portfolio WHERE user_id=? AND symbol=?", (item.user_id, item.symbol))
-    existing = cursor.fetchone()
-    
-    if existing:
-        old_qty, old_price = existing[1], existing[2]
-        new_qty = old_qty + item.quantity
-        new_avg_price = ((old_qty * old_price) + (item.quantity * item.buy_price)) / new_qty
+async def add_to_portfolio(item: dict):
+    try:
+        conn = sqlite3.connect('stocks.db')
+        cursor = conn.cursor()
         
-        cursor.execute("UPDATE portfolio SET quantity=?, buy_price=? WHERE id=?", (new_qty, new_avg_price, existing[0]))
-        msg = f"Updated {item.symbol} quantity. New Average Price: {round(new_avg_price, 2)}"
-    else:
-        # Insert fresh stock
-        cursor.execute("INSERT INTO portfolio (user_id, symbol, quantity, buy_price) VALUES (?, ?, ?, ?)", 
-                       (item.user_id, item.symbol, item.quantity, item.buy_price))
-        msg = f"Added {item.symbol} to portfolio"
+        # Check if stock already exists in portfolio
+        cursor.execute("SELECT id, quantity, buy_price FROM portfolio WHERE user_id=? AND symbol=?", (item['user_id'], item['symbol']))
+        existing = cursor.fetchone()
         
-    conn.commit()
-    conn.close()
-    return {"status": "success", "message": msg}
+        if existing:
+            old_id, old_qty, old_price = existing
+            new_qty = old_qty + item['quantity']
+            # Calculate new average buy price
+            new_avg_price = ((old_qty * old_price) + (item['quantity'] * item['buy_price'])) / new_qty
+            
+            cursor.execute("UPDATE portfolio SET quantity=?, buy_price=? WHERE id=?", (new_qty, round(new_avg_price, 2), old_id))
+            message = f"Updated {item['symbol']}. New Avg Price: ₹{round(new_avg_price, 2)}"
+        else:
+            # Insert fresh stock
+            cursor.execute("INSERT INTO portfolio (user_id, symbol, quantity, buy_price) VALUES (?, ?, ?, ?)", 
+                           (item['user_id'], item['symbol'], item['quantity'], item['buy_price']))
+            message = f"Added {item['symbol']} to portfolio!"
+            
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": message}
+    except Exception as e:
+        print(f"INTERNAL ERROR: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Failed to update portfolio."})
 
 @app.get("/portfolio/{user_id}")
 async def get_portfolio(user_id: str):
@@ -155,7 +131,7 @@ async def get_portfolio(user_id: str):
         
         # NOTE: For now, mocking current price (using snapshot idea). Real API can be added later.
         # Assuming current market price is slightly higher/lower than buy price for testing.
-        current_price = buy_price * 1.08 # Dummy 8% growth snapshot
+        current_price = buy_price * 1.08 
         
         #🔥Dynamic Derived Calculations 
         inv_value = qty * buy_price
@@ -219,8 +195,7 @@ async def get_alerts(user_id: str):
     conn = sqlite3.connect(os.path.join(current_dir, 'stocks.db'))
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    # Fetching active alerts only 
+
     cursor.execute("SELECT * FROM alerts WHERE user_id=? AND is_active=1", (user_id,))
     alerts = [dict(row) for row in cursor.fetchall()]
     conn.close()
@@ -260,6 +235,7 @@ async def check_alerts(user_id: str):
         operator_str = alert['operator']
         alert_id = alert['id']
         
+        
         # 3. Get current data from fundamentals (our recent data source)
         try:
             cursor.execute(f"SELECT {field} FROM fundamentals WHERE symbol=?", (symbol,))
@@ -274,9 +250,8 @@ async def check_alerts(user_id: str):
                     # CONDITION MET! Trigger alert! 
                     msg = f"🔔 ALERT TRIGGERED: {symbol} {field} is now {current_value} (Target was {operator_str} {target_value})"
                     triggered_notifications.append({"alert_id": alert_id, "message": msg})
-                    
-                    # Mark alert as inactive after triggering (so it doesn't spam) 
-                    cursor.execute("UPDATE alerts SET is_active=0 WHERE id=?", (alert_id,))
+ 
+                    cursor.execute("DELETE FROM alerts WHERE id=?", (alert_id,))
         except Exception as e:
             print(f"Error evaluating alert {alert_id}: {e}")
             

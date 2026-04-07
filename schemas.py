@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Union
 
 # Whitelists as per constraints
-# 🔥 Added 'revenue_growth' here
 ALLOWED_FIELDS = {"pe_ratio", "debt", "market_cap", "revenue", "ebitda", "promoter_holding", "revenue_growth"}
 ALLOWED_OPERATORS = {"<", ">", "<=", ">=", "="}
 
