@@ -1,0 +1,16 @@
+# FastAPI server
+fastapi
+uvicorn
+
+# Database
+psycopg2-binary
+
+# Authentication & Security
+passlib[bcrypt]
+python-jose
+
+# Data validation
+pydantic
+
+#  caching (you are importing redis_client)
+redis
